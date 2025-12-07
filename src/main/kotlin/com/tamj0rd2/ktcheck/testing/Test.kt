@@ -17,11 +17,16 @@ sealed interface TestResult {
 }
 
 data class TestConfig(
-    // todo: make default configurable via a system property. also, extract this into some Config object?
-    val iterations: Int = 1000,
+    val iterations: Int = defaultIterations,
     val seed: Long = Random.nextLong(),
     val reporter: TestReporter = PrintingTestReporter(),
-)
+) {
+    companion object {
+        val defaultIterations get() = System.getProperty(SYSTEM_PROPERTY_TEST_ITERATIONS)?.toIntOrNull() ?: 1000
+
+        internal const val SYSTEM_PROPERTY_TEST_ITERATIONS = "ktcheck.test.iterations"
+    }
+}
 
 sealed interface Test<T> {
     fun test(input: T): AssertionError?
