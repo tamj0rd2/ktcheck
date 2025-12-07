@@ -77,16 +77,16 @@ private fun <T> Test<T>.getResultFor(t: T): TestResult {
 }
 
 private fun Gen<TestResult>.getSmallestCounterExample(choices: ChoiceSequence): TestResult.Failure? {
-    for (candidate in choices.shrink()) {
+    for (choices in choices.shrink()) {
         val result =
             try {
-                generate(candidate)
+                generate(choices)
             } catch (_: InvalidReplay) {
                 continue
             }
 
         if (result is TestResult.Failure) {
-            return getSmallestCounterExample(candidate) ?: result
+            return getSmallestCounterExample(choices) ?: result
         }
     }
 
