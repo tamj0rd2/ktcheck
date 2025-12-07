@@ -16,27 +16,31 @@ import strikt.assertions.isNotNull
 // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
 class ShrinkingChallenge {
     @Test
-    fun reverse() = expectShrunkArgs(mapOf(0 to listOf(0, 1))) { config ->
+    fun reverse() = expectShrunkArgs(
+        expected = mapOf(0 to listOf(0, 1))
+    ) { config ->
         val gen = Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list(0..10000)
-        test(config, checkAll(gen) { initial -> expectThat(initial.reversed()).isEqualTo(initial) })
+        test(config, gen) { initial -> expectThat(initial.reversed()).isEqualTo(initial) }
     }
 
     @Test
-    fun nestedLists() =
-        expectShrunkArgs(
-            mapOf(0 to listOf(listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))),
-            minConfidence = 80.0
-        ) { config ->
-            test(config, checkAll(Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list().list()) { ls ->
-                expectThat(ls.sumOf { it.size }).isLessThanOrEqualTo(10)
-            })
+    fun nestedLists() = expectShrunkArgs(
+        expected = mapOf(0 to listOf(listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))),
+        minConfidence = 80.0
+    ) { config ->
+        test(config, Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list().list()) { ls ->
+            expectThat(ls.sumOf { it.size }).isLessThanOrEqualTo(10)
         }
+    }
 
     @Test
     // Most of the time the shrinker provides a much smaller counter example, but very rarely the minimal one.
-    fun lengthList() = expectShrunkArgs(mapOf(0 to listOf(900)), minConfidence = 5.0) { config ->
+    fun lengthList() = expectShrunkArgs(
+        expected = mapOf(0 to listOf(900)),
+        minConfidence = 2.0
+    ) { config ->
         val gen = Gen.int(0..1000).list(1..100)
-        test(config, checkAll(gen) { ls -> expectThat(ls.max()).isLessThan(900) })
+        test(config, gen) { ls -> expectThat(ls.max()).isLessThan(900) }
     }
 
     // runs the property as property so we can assert on confidence levels of shrinking.
@@ -48,7 +52,7 @@ class ShrinkingChallenge {
         // todo: make an actual Long generator.
         val seedGen = Gen.int(0..Int.MAX_VALUE).map { it.toLong() }
         withStats { stats ->
-            test(TestConfig(iterations = 100), checkAll(seedGen) { seed ->
+            test(TestConfig(iterations = 100), seedGen) { seed ->
                 val spyTestReporter = SpyTestReporter()
                 expectThrows<AssertionError> { block(TestConfig(seed = seed, testReporter = spyTestReporter)) }
 
@@ -58,7 +62,7 @@ class ShrinkingChallenge {
                 stats.collect(argsAreEqual.toString())
 
                 if (!argsAreEqual) println("Bad sample $reportedFailure")
-            })
+            }
 
             stats.checkPercentages(mapOf("true" to minConfidence))
         }

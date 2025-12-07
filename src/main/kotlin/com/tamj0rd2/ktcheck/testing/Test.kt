@@ -5,6 +5,10 @@ import com.tamj0rd2.ktcheck.gen.ChoiceSequence.Companion.shrink
 import com.tamj0rd2.ktcheck.gen.Gen
 import com.tamj0rd2.ktcheck.gen.InvalidReplay
 import com.tamj0rd2.ktcheck.gen.WritableChoiceSequence
+import com.tamj0rd2.ktcheck.gen.constant
+import com.tamj0rd2.ktcheck.gen.flatMap
+import com.tamj0rd2.ktcheck.util.Tuple
+import sun.nio.ch.IOStatus.checkAll
 import kotlin.random.Random
 
 sealed interface TestResult {
@@ -14,8 +18,6 @@ sealed interface TestResult {
     data class Failure(override val args: List<Any?>, val failure: Throwable) : TestResult
 }
 
-typealias Property = Gen<TestResult>
-
 data class TestConfig(
     // todo: make default configurable via a system property. also, extract this into some Config object?
     val iterations: Int = 1000,
@@ -23,10 +25,14 @@ data class TestConfig(
     val testReporter: TestReporter = PrintingTestReporter(),
 )
 
-fun test(
-    config: TestConfig = TestConfig(),
-    property: Property,
+fun <T> test(gen: Gen<T>, test: (T) -> Unit) = test(TestConfig(), gen, test)
+
+fun <T> test(
+    config: TestConfig,
+    gen: Gen<T>,
+    test: (T) -> Unit,
 ) {
+    val property = checkAll(gen, test)
     val seed = config.seed
     val iterations = config.iterations
     val testReporter = config.testReporter
@@ -53,7 +59,25 @@ fun test(
     testReporter.reportSuccess(seed, iterations)
 }
 
-private fun Property.getSmallestCounterExample(choices: ChoiceSequence): TestResult.Failure? {
+private fun <T> checkAll(gen: Gen<T>, test: (T) -> Unit): Gen<TestResult> =
+    gen.flatMap {
+        val args = when (it) {
+            is Tuple -> it.values
+            else -> listOf(it)
+        }
+
+        val testResult =
+            try {
+                test(it)
+                TestResult.Success(args)
+            } catch (e: AssertionError) {
+                TestResult.Failure(args, e)
+            }
+
+        Gen.constant(testResult)
+    }
+
+private fun Gen<TestResult>.getSmallestCounterExample(choices: ChoiceSequence): TestResult.Failure? {
     for (candidate in choices.shrink()) {
         val result =
             try {
