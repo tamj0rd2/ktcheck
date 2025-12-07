@@ -23,14 +23,19 @@ data class TestConfig(
     val testReporter: TestReporter = PrintingTestReporter(),
 )
 
-fun <T> test(gen: Gen<T>, test: (T) -> Unit) = test(TestConfig(), gen, test)
+fun interface Test<T> {
+    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
+    operator fun invoke(input: T)
+}
+
+fun <T> test(gen: Gen<T>, test: Test<T>) = test(TestConfig(), gen, test)
 
 fun <T> test(
     config: TestConfig,
     gen: Gen<T>,
-    test: (T) -> Unit,
+    test: Test<T>,
 ) {
-    val property = checkAll(gen, test)
+    val testResultsGen = gen.map { test.getResultFor(it) }
     val seed = config.seed
     val iterations = config.iterations
     val testReporter = config.testReporter
@@ -38,11 +43,11 @@ fun <T> test(
 
     (1..iterations).forEach { iteration ->
         val choices = WritableChoiceSequence(rand)
-        when (val testResult = property.generate(choices)) {
+        when (val testResult = testResultsGen.generate(choices)) {
             is TestResult.Success -> return@forEach
 
             is TestResult.Failure -> {
-                val shrunkResult = property.getSmallestCounterExample(choices)
+                val shrunkResult = testResultsGen.getSmallestCounterExample(choices)
                 testReporter.reportFailure(
                     seed = seed,
                     failedIteration = iteration,
@@ -57,20 +62,19 @@ fun <T> test(
     testReporter.reportSuccess(seed, iterations)
 }
 
-private fun <T> checkAll(gen: Gen<T>, test: (T) -> Unit): Gen<TestResult> =
-    gen.map {
-        val args = when (it) {
-            is Tuple -> it.values
-            else -> listOf(it)
-        }
-
-        try {
-            test(it)
-            TestResult.Success(args)
-        } catch (e: AssertionError) {
-            TestResult.Failure(args, e)
-        }
+private fun <T> Test<T>.getResultFor(t: T): TestResult {
+    val args = when (t) {
+        is Tuple -> t.values
+        else -> listOf(t)
     }
+
+    return try {
+        this(t)
+        TestResult.Success(args)
+    } catch (e: AssertionError) {
+        TestResult.Failure(args, e)
+    }
+}
 
 private fun Gen<TestResult>.getSmallestCounterExample(choices: ChoiceSequence): TestResult.Failure? {
     for (candidate in choices.shrink()) {
