@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.testing
 import kotlin.math.roundToInt
 
 class Stats {
+    // todo: make key Any?
     private val recorded = mutableMapOf<String, Int>()
     private var totalStatsRecorded = 0
 

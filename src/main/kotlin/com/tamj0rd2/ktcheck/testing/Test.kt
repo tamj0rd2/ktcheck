@@ -19,6 +19,7 @@ typealias Property = Gen<TestResult>
 
 fun test(
     arb: Property,
+    // todo: make default configurable via a system property
     iterations: Int = 1000,
     seed: Long = Random.nextLong(),
     showAllDiagnostics: Boolean = true,
