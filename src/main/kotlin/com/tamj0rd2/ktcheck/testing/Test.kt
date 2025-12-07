@@ -13,29 +13,51 @@ sealed interface TestResult {
     val args: List<Any?>
 
     data class Success(override val args: List<Any?>) : TestResult
-    data class Failure(override val args: List<Any?>, val failure: Throwable) : TestResult
+    data class Failure(override val args: List<Any?>, val failure: AssertionError) : TestResult
 }
 
 data class TestConfig(
     // todo: make default configurable via a system property. also, extract this into some Config object?
     val iterations: Int = 1000,
     val seed: Long = Random.nextLong(),
+    // todo: rename to just reporter
     val testReporter: TestReporter = PrintingTestReporter(),
 )
 
-fun interface Test<T> {
-    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
-    operator fun invoke(input: T)
+sealed interface Test<T> {
+    fun test(input: T): AssertionError?
 }
 
-@Suppress("unused")
-fun <T> checkAll(gen: Gen<T>, test: Test<T>) = checkAll(TestConfig(), gen, test)
+fun interface TestByThrowing<T> : Test<T> {
+    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
+    operator fun invoke(input: T)
 
-fun <T> checkAll(
-    config: TestConfig,
-    gen: Gen<T>,
-    test: Test<T>,
-) {
+    override fun test(input: T): AssertionError? = try {
+        invoke(input)
+        null
+    } catch (e: AssertionError) {
+        e
+    }
+}
+
+fun interface TestByBool<T> : Test<T> {
+    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
+    operator fun invoke(input: T): Boolean
+
+    override fun test(input: T): AssertionError? =
+        if (invoke(input)) null else AssertionError("Test falsified")
+}
+
+
+@Suppress("unused")
+fun <T> forAll(gen: Gen<T>, test: TestByBool<T>) = forAll(TestConfig(), gen, test)
+fun <T> forAll(config: TestConfig, gen: Gen<T>, test: TestByBool<T>) = test(config, gen, test as Test<T>)
+
+@Suppress("unused")
+fun <T> checkAll(gen: Gen<T>, test: TestByThrowing<T>) = checkAll(TestConfig(), gen, test)
+fun <T> checkAll(config: TestConfig, gen: Gen<T>, test: TestByThrowing<T>) = test(config, gen, test as Test<T>)
+
+private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     val testResultsGen = gen.map { test.getResultFor(it) }
     val seed = config.seed
     val iterations = config.iterations
@@ -69,12 +91,8 @@ private fun <T> Test<T>.getResultFor(t: T): TestResult {
         else -> listOf(t)
     }
 
-    return try {
-        this(t)
-        TestResult.Success(args)
-    } catch (e: AssertionError) {
-        TestResult.Failure(args, e)
-    }
+    val failure = test(t) ?: return TestResult.Success(args)
+    return TestResult.Failure(args, failure)
 }
 
 private fun Gen<TestResult>.getSmallestCounterExample(choices: ChoiceSequence): TestResult.Failure? {
