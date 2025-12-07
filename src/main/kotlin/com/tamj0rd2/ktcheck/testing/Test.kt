@@ -8,8 +8,11 @@ import com.tamj0rd2.ktcheck.gen.WritableChoiceSequence
 import java.io.PrintStream
 import kotlin.random.Random
 
-data class TestResult(val failure: Throwable?, val args: List<Any?>) {
-    val didSucceed = failure == null
+sealed interface TestResult {
+    val args: List<Any?>
+
+    data class Success(override val args: List<Any?>) : TestResult
+    data class Failure(override val args: List<Any?>, val failure: Throwable) : TestResult
 }
 
 typealias Property = Gen<TestResult>
@@ -23,7 +26,7 @@ fun test(
 ) {
     val rand = Random(seed)
 
-    fun getSmallestCounterExample(choices: ChoiceSequence): TestResult? {
+    fun getSmallestCounterExample(choices: ChoiceSequence): TestResult.Failure? {
         for (candidate in choices.shrink()) {
             val result =
                 try {
@@ -32,7 +35,7 @@ fun test(
                     continue
                 }
 
-            if (!result.didSucceed) {
+            if (result is TestResult.Failure) {
                 return getSmallestCounterExample(candidate) ?: result
             }
         }
@@ -40,7 +43,7 @@ fun test(
         return null
     }
 
-    fun formatResults(prefix: String, result: TestResult): String = buildString {
+    fun formatResults(prefix: String, result: TestResult.Failure): String = buildString {
         appendLine("${prefix}Arguments:")
         appendLine("-----------------")
         result.args.forEachIndexed { index, arg -> appendLine("Arg $index -> $arg") }
@@ -54,29 +57,32 @@ fun test(
     }
 
     repeat(iterations) {
-        val cs = WritableChoiceSequence(rand)
-        val result = arb.generate(cs)
-        if (result.didSucceed) return@repeat
-        val shrunkResult = getSmallestCounterExample(cs)
+        val choices = WritableChoiceSequence(rand)
+        when (val result = arb.generate(choices)) {
+            is TestResult.Success -> return@repeat
 
-        buildString {
-                appendLine("Seed: $seed\n")
+            is TestResult.Failure -> {
+                val shrunkResult = getSmallestCounterExample(choices)
 
-                if (shrunkResult != null) {
-                    appendLine(formatResults(prefix = "", result = shrunkResult))
-                } else {
-                    appendLine("Warning - Could not shrink the input arguments")
-                }
+                buildString {
+                    appendLine("Seed: $seed\n")
 
-                if (showAllDiagnostics || shrunkResult == null) {
-                    appendLine()
-                    appendLine(formatResults(prefix = "Original ", result = result))
-                    appendLine("-----------------")
-                }
+                    if (shrunkResult != null) {
+                        appendLine(formatResults(prefix = "", result = shrunkResult))
+                    } else {
+                        appendLine("Warning - Could not shrink the input arguments")
+                    }
+
+                    if (showAllDiagnostics || shrunkResult == null) {
+                        appendLine()
+                        appendLine(formatResults(prefix = "Original ", result = result))
+                        appendLine("-----------------")
+                    }
+                }.also(printStream::println)
+
+                throw (shrunkResult ?: result).failure
             }
-            .also(printStream::println)
-
-        throw (shrunkResult ?: result).failure!!
+        }
     }
 
     printStream.println("Success: $iterations iterations succeeded")
