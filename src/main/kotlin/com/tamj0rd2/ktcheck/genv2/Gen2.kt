@@ -14,8 +14,19 @@ fun interface Gen2<T> {
         rightValue to combineShrinks(tree, leftShrinks, rightShrinks)
     }
 
+    fun list(size: IntRange = 0..100): Gen2<List<T>> = Gen2.int(size).flatMap(::list)
+
+    fun list(n: Int): Gen2<List<T>> = List(n) { this }
+        .fold(Gen2.constant(emptyList())) { listGen, elementGen ->
+            listGen.flatMap { listSoFar ->
+                elementGen.map { value -> listSoFar + value }
+            }
+        }
+
     companion object
 }
+
+fun <T> Gen2.Companion.constant(value: T): Gen2<T> = sample().map { value }
 
 fun interface Shrinker<T> {
     operator fun invoke(value: T): Sequence<T>
