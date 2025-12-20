@@ -69,6 +69,7 @@ class Shrinking {
             val failures = mutableListOf<SpyTestReporter.ReportedFailure>()
             val counter = withCounter {
                 checkAll(TestConfig(iterations = iterations), seedGen) { seed ->
+                    println("seed: $seed")
                     val spyTestReporter = SpyTestReporter()
                     val x = runCatching { block(TestConfig(seed = seed, reporter = spyTestReporter)) }.exceptionOrNull()
                     when (x) {

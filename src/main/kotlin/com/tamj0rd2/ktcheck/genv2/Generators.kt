@@ -1,17 +1,8 @@
 package com.tamj0rd2.ktcheck.genv2
 
+import com.tamj0rd2.ktcheck.gen.OneOfEmpty
+
 fun <T> Gen.Companion.constant(value: T): Gen<T> = sample().map { value }
-
-fun <T> Gen<T>.list(size: IntRange = 0..100): Gen<List<T>> = list(Gen.int(size))
-
-fun <T> Gen<T>.list(size: Gen<Int>): Gen<List<T>> = size.flatMap(::list)
-
-fun <T> Gen<T>.list(size: Int): Gen<List<T>> = List(size) { this }
-    .fold(Gen.constant(emptyList())) { listGen, elementGen ->
-        listGen.flatMap { listSoFar ->
-            elementGen.map { value -> listSoFar + value }
-        }
-    }
 
 fun <T> Gen.Companion.oneOf(gens: List<Gen<T>>): Gen<T> {
     if (gens.isEmpty()) throw OneOfEmpty()
