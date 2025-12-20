@@ -21,6 +21,15 @@ sealed class Gen<T> {
         GenResult(rightValue, combineShrinks(tree, leftShrinks, rightShrinks))
     }
 
+    fun <T2, R> combineWith(nextGen: Gen<T2>, combine: (T, T2) -> R): Gen<R> = Gen { tree ->
+        val (thisValue, thisShrinks) = generate(tree.left)
+        val (nextValue, nextShrinks) = nextGen.generate(tree.right)
+        GenResult(
+            value = combine(thisValue, nextValue),
+            shrinks = combineShrinks(tree, thisShrinks, nextShrinks)
+        )
+    }
+
     companion object
 }
 

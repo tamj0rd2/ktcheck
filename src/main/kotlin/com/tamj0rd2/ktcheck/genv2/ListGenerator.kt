@@ -12,14 +12,7 @@ private class ListGenerator<T>(
 
     private fun list1(): Gen<List<T>> = gen.map(::listOf)
 
-    private fun list2(): Gen<List<T>> = Gen { tree ->
-        val (leftValue, leftShrinks) = gen.generate(tree.left)
-        val (rightValue, rightShrinks) = gen.generate(tree.right)
-        GenResult(
-            value = listOf(leftValue, rightValue),
-            shrinks = combineShrinks(tree, leftShrinks, rightShrinks)
-        )
-    }
+    private fun list2(): Gen<List<T>> = (gen + gen).map { (a, b) -> listOf(a, b) }
 
     private tailrec fun listN(
         currentTree: SampleTree,
