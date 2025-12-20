@@ -28,4 +28,5 @@ private class InternalGenerator<T>(private val generator: (SampleTree) -> GenRes
     override fun generate(tree: SampleTree): GenResult<T> = generator(tree)
 }
 
-private operator fun <T> Gen.Companion.invoke(generator: (SampleTree) -> GenResult<T>) = InternalGenerator(generator)
+internal operator fun <T> Gen.Companion.invoke(generator: (SampleTree) -> GenResult<T>): Gen<T> =
+    InternalGenerator(generator)
