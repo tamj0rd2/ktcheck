@@ -18,25 +18,22 @@ fun <T> checkAll(config: TestConfig, gen: Gen<T>, test: TestByThrowing<T>) = tes
 
 private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     val testResultsGen = gen.map { test.getResultFor(it) }
-    val seed = config.seed
+    val startingSeed = config.seed
     val iterations = config.iterations
     val testReporter = config.reporter
-    val random = Random(seed)
+    val random = Random(startingSeed)
 
     (1..iterations).forEach { iteration ->
-        val seed = random.nextLong()
-        println("iteration $iteration/$iterations with seed $seed")
-        val sampleTree = SampleTree.from(seed)
+        val sampleTree = SampleTree.from(random.nextLong())
         val (testResult, shrinks) = testResultsGen.generate(sampleTree)
 
         when (testResult) {
             is TestResult.Success -> return@forEach
 
             is TestResult.Failure -> {
-                println("attempting to shrink")
                 val shrunkResult = testResultsGen.getSmallestCounterExample(testResult, shrinks.iterator())
                 testReporter.reportFailure(
-                    seed = seed,
+                    seed = startingSeed,
                     failedIteration = iteration,
                     originalFailure = testResult,
                     shrunkFailure = shrunkResult,
@@ -46,10 +43,10 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
         }
     }
 
-    testReporter.reportSuccess(seed, iterations)
+    testReporter.reportSuccess(startingSeed, iterations)
 }
 
-internal fun <T> Test<T>.getResultFor(t: T): TestResult {
+private fun <T> Test<T>.getResultFor(t: T): TestResult {
     val args = when (t) {
         is Tuple -> t.values
         else -> listOf(t)
@@ -59,7 +56,7 @@ internal fun <T> Test<T>.getResultFor(t: T): TestResult {
     return TestResult.Failure(args, failure)
 }
 
-internal tailrec fun Gen<TestResult>.getSmallestCounterExample(
+private tailrec fun Gen<TestResult>.getSmallestCounterExample(
     testResult: TestResult.Failure,
     iterator: Iterator<SampleTree>,
 ): TestResult.Failure {
@@ -69,10 +66,8 @@ internal tailrec fun Gen<TestResult>.getSmallestCounterExample(
     val (shrunkTestResult, newShrinks) = generate(shrunkTree)
 
     return if (shrunkTestResult is TestResult.Failure) {
-        // Found a smaller failure, recursively shrink it further
         getSmallestCounterExample(shrunkTestResult, newShrinks.iterator())
     } else {
-        // Continue searching through remaining shrinks
         getSmallestCounterExample(testResult, iterator)
     }
 }
