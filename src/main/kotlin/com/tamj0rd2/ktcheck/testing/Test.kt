@@ -39,12 +39,12 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
 
     if (config.replayIteration != null) {
         runIteration(config.replayIteration)
-        config.reporter.reportSuccess(config.seed, 1)
+        config.reporter.reportSuccess(1)
         return
     }
 
     (1..config.iterations).forEach(::runIteration)
-    config.reporter.reportSuccess(config.seed, config.iterations)
+    config.reporter.reportSuccess(config.iterations)
 }
 
 private fun <T> Test<T>.getResultFor(t: T): TestResult {

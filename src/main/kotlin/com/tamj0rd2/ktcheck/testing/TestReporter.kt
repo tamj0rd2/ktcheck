@@ -3,7 +3,7 @@ package com.tamj0rd2.ktcheck.testing
 import java.io.PrintStream
 
 interface TestReporter {
-    fun reportSuccess(seed: Long, iterations: Int)
+    fun reportSuccess(iterations: Int)
 
     fun reportFailure(
         seed: Long,
@@ -17,7 +17,7 @@ class PrintingTestReporter(
     private val printStream: PrintStream = System.out,
     private val showAllDiagnostics: Boolean = true,
 ) : TestReporter {
-    override fun reportSuccess(seed: Long, iterations: Int) {
+    override fun reportSuccess(iterations: Int) {
         printStream.println("Success: $iterations iterations succeeded")
     }
 

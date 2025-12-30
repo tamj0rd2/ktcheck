@@ -129,7 +129,7 @@ class Shrinking {
     }
 
     private class SpyTestReporter : TestReporter {
-        override fun reportSuccess(seed: Long, iterations: Int) {}
+        override fun reportSuccess(iterations: Int) {}
 
         data class ReportedFailure(
             val seed: Long,

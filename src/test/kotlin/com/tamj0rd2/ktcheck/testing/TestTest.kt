@@ -90,7 +90,7 @@ class TestTest {
     private class SpyTestReporter : TestReporter {
         var reporting: Reporting = Reporting.None
 
-        override fun reportSuccess(seed: Long, iterations: Int) {
+        override fun reportSuccess(iterations: Int) {
             reporting = Reporting.ReportedSuccess(iterations)
         }
 
