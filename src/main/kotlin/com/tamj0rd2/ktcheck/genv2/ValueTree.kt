@@ -6,18 +6,30 @@ import kotlin.random.nextInt
 
 internal sealed interface Value {
     fun int(range: IntRange): Int
+    fun bool(): Boolean
 
     data class Undetermined(val seed: Long) : Value {
         private val random get() = Random(seed)
 
         override fun int(range: IntRange): Int = random.nextInt(range)
+
+        override fun bool(): Boolean = random.nextBoolean()
     }
 
     data class Predetermined(val value: Any?) : Value {
+        init {
+            if (value is Value) error("Nested Value instances are not allowed. Developer error?")
+        }
+
         override fun int(range: IntRange): Int = when (value) {
             !is Int -> TODO("handle this")
             !in range -> TODO("handle int out of range")
             else -> value
+        }
+
+        override fun bool(): Boolean {
+            if (value !is Boolean) TODO("handle this")
+            return value
         }
     }
 }

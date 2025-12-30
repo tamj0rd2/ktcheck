@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.stats
 import kotlin.math.roundToInt
 
 class Counter {
+    // todo: make this thread safe eventually
     private val recorded = mutableMapOf<String?, Map<Any?, Int>>()
 
     fun collect(value: Any?) = collect(null, value)
