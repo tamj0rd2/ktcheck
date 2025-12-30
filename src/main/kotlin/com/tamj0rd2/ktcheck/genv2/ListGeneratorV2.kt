@@ -8,7 +8,7 @@ private class ListGenerator<T>(
         require(size >= 0) { "Size must be non-negative" }
     }
 
-    override fun generate(tree: ChoiceTree): GenResult<List<T>> = when (size) {
+    override fun generate(tree: ValueTree): GenResult<List<T>> = when (size) {
         0 -> GenResult(emptyList(), emptySequence())
         1 -> list1().generate(tree)
         2 -> list2().generate(tree)
@@ -39,11 +39,11 @@ private class ListGenerator<T>(
      * - Shrink individual elements by replacing their subtree while keeping others unchanged
      */
     private tailrec fun listN(
-        rootTree: ChoiceTree,
-        currentTree: ChoiceTree = rootTree,
+        rootTree: ValueTree,
+        currentTree: ValueTree = rootTree,
         index: Int = 0,
         values: List<T> = emptyList(),
-        shrinksByIndex: List<Sequence<ChoiceTree>> = emptyList(),
+        shrinksByIndex: List<Sequence<ValueTree>> = emptyList(),
     ): GenResult<List<T>> {
         if (index == size) return GenResult(value = values, shrinks = rootTree.combineShrinks(shrinksByIndex))
 
@@ -65,16 +65,15 @@ private class ListGenerator<T>(
      * This enables element-wise shrinking where each element can shrink independently.
      *
      * @param shrinksByIndex A list of shrink sequences, one for each list element position
-     * @return A sequence of choice trees, each representing the original tree with one element shrunk
      */
-    private fun ChoiceTree.combineShrinks(
-        shrinksByIndex: List<Sequence<ChoiceTree>>,
-    ): Sequence<ChoiceTree> {
+    private fun ValueTree.combineShrinks(
+        shrinksByIndex: List<Sequence<ValueTree>>,
+    ): Sequence<ValueTree> {
         fun reconstructTreeWithShrinkAtIndex(
-            tree: ChoiceTree,
+            tree: ValueTree,
             index: Int,
-            shrunkTree: ChoiceTree,
-        ): ChoiceTree =
+            shrunkTree: ValueTree,
+        ): ValueTree =
             if (index == 0) {
                 tree.withLeft(shrunkTree)
             } else {

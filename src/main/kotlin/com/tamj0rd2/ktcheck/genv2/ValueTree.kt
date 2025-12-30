@@ -4,16 +4,16 @@ import com.tamj0rd2.ktcheck.gen.deriveSeed
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-internal sealed interface Choice {
+internal sealed interface Value {
     fun int(range: IntRange): Int
 
-    data class Undetermined(val seed: Long) : Choice {
+    data class Undetermined(val seed: Long) : Value {
         private val random get() = Random(seed)
 
         override fun int(range: IntRange): Int = random.nextInt(range)
     }
 
-    data class Predetermined(val value: Any?) : Choice {
+    data class Predetermined(val value: Any?) : Value {
         override fun int(range: IntRange): Int = when (value) {
             !is Int -> TODO("handle this")
             !in range -> TODO("handle int out of range")
@@ -23,41 +23,30 @@ internal sealed interface Choice {
 }
 
 @ConsistentCopyVisibility
-internal data class ChoiceTree private constructor(
-    private val choice: Choice,
-    private val lazyLeft: Lazy<ChoiceTree>,
-    private val lazyRight: Lazy<ChoiceTree>,
+internal data class ValueTree private constructor(
+    internal val value: Value,
+    private val lazyLeft: Lazy<ValueTree>,
+    private val lazyRight: Lazy<ValueTree>,
 ) {
     constructor(seed: Long) : this(
-        choice = Choice.Undetermined(seed),
-        lazyLeft = lazy { ChoiceTree(deriveSeed(seed, 1)) },
-        lazyRight = lazy { ChoiceTree(deriveSeed(seed, 2)) },
+        value = Value.Undetermined(seed),
+        lazyLeft = lazy { ValueTree(deriveSeed(seed, 1)) },
+        lazyRight = lazy { ValueTree(deriveSeed(seed, 2)) },
     )
 
-    val left: ChoiceTree by lazyLeft
-    val right: ChoiceTree by lazyRight
+    val left: ValueTree by lazyLeft
+    val right: ValueTree by lazyRight
 
-    fun int(range: IntRange): Int = when (choice) {
-        is Choice.Predetermined ->
-            when (val value = choice.value) {
-                !is Int -> TODO("handle this")
-                !in range -> TODO("handle int out of range")
-                else -> value
-            }
+    internal fun withValue(value: Any?) = copy(value = Value.Predetermined(value))
 
-        is Choice.Undetermined -> Random(choice.seed).nextInt(range)
-    }
+    internal fun withLeft(left: ValueTree) = copy(lazyLeft = lazyOf(left))
 
-    internal fun withChoice(value: Any?) = copy(choice = Choice.Predetermined(value))
-
-    internal fun withLeft(left: ChoiceTree) = copy(lazyLeft = lazyOf(left))
-
-    internal fun withRight(right: ChoiceTree) = copy(lazyRight = lazyOf(right))
+    internal fun withRight(right: ValueTree) = copy(lazyRight = lazyOf(right))
 
     @Suppress("unused")
     internal fun visualise(maxDepth: Int = 3, forceEval: Boolean = false): String {
         fun visualise(
-            tree: ChoiceTree,
+            tree: ValueTree,
             indent: String,
             prefix: String,
             isLast: Boolean?,
@@ -65,12 +54,12 @@ internal data class ChoiceTree private constructor(
         ): String {
             if (currentDepth >= maxDepth) return "${indent}${prefix}...\n"
 
-            val displayValue = when (val choice = tree.choice) {
-                is Choice.Undetermined -> "seed(${choice.seed})"
-                is Choice.Predetermined -> "choice(${choice.value})"
+            val displayValue = when (val value = tree.value) {
+                is Value.Undetermined -> "seed(${value.seed})"
+                is Value.Predetermined -> "value(${value.value})"
             }
 
-            fun visualiseBranch(lazyTree: Lazy<ChoiceTree>, side: String): String? {
+            fun visualiseBranch(lazyTree: Lazy<ValueTree>, side: String): String? {
                 val newIndent = when (isLast) {
                     null -> "" // Root level, no indentation
                     true -> "$indent    "

@@ -3,12 +3,12 @@ package com.tamj0rd2.ktcheck.genv2
 private data class IntGeneratorV2(
     private val range: IntRange,
 ) : Gen<Int>() {
-    override fun generate(tree: ChoiceTree): GenResult<Int> {
-        val value = tree.int(range)
+    override fun generate(tree: ValueTree): GenResult<Int> {
+        val value = tree.value.int(range)
         val shrinks = shrink(value)
             .distinct()
             .filter { it in range }
-            .map { tree.withChoice(it) }
+            .map { tree.withValue(it) }
 
         return GenResult(value, shrinks)
     }

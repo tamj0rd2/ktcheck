@@ -22,7 +22,7 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     val testResultsGen = gen.map { test.getResultFor(it) }
 
     fun runIteration(iteration: Int) {
-        val sampleTree = ChoiceTree(deriveSeed(config.seed, iteration))
+        val sampleTree = ValueTree(deriveSeed(config.seed, iteration))
         val (testResult, shrinks) = testResultsGen.generate(sampleTree)
 
         when (testResult) {
@@ -63,7 +63,7 @@ private fun <T> Test<T>.getResultFor(t: T): TestResult {
 
 private tailrec fun Gen<TestResult>.getSmallestCounterExample(
     testResult: TestResult.Failure,
-    iterator: Iterator<ChoiceTree>,
+    iterator: Iterator<ValueTree>,
 ): TestResult.Failure {
     if (!iterator.hasNext()) return testResult
 
