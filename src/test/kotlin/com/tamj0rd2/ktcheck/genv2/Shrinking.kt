@@ -92,8 +92,7 @@ class Shrinking {
             minConfidence: Double = 100.0,
             block: (TestConfig) -> Unit,
         ) {
-            // todo: make an actual Long generator.
-            val seedGen = Gen.int(0..Int.MAX_VALUE).map { it.toLong() }
+            val seedGen = Gen.long()
             val failures = mutableListOf<SpyTestReporter.ReportedFailure>()
             val counter = withCounter {
                 checkAll(TestConfig().withIterations(100), seedGen) { seed ->
