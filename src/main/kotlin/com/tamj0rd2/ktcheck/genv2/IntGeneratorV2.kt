@@ -5,6 +5,9 @@ private data class IntGeneratorV2(
 ) : Gen<Int>() {
     override fun generate(tree: ValueTree): GenResult<Int> {
         val value = tree.value.int(range)
+
+        // todo: isn't there a potential optimisation here - don't shrink if already shrunk? isn't that why I end up
+        //  with millions of shrink candidates?
         val shrinks = shrink(value)
             .distinct()
             .filter { it in range }

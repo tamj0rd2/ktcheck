@@ -28,11 +28,13 @@ internal data class ValueTree private constructor(
     private val lazyLeft: Lazy<ValueTree>,
     private val lazyRight: Lazy<ValueTree>,
 ) {
-    constructor(seed: Long) : this(
-        value = Value.Undetermined(seed),
-        lazyLeft = lazy { ValueTree(deriveSeed(seed, 1)) },
-        lazyRight = lazy { ValueTree(deriveSeed(seed, 2)) },
-    )
+    companion object {
+        internal fun fromSeed(seed: Long): ValueTree = ValueTree(
+            value = Value.Undetermined(seed),
+            lazyLeft = lazy { fromSeed(deriveSeed(seed, 1)) },
+            lazyRight = lazy { fromSeed(deriveSeed(seed, 2)) },
+        )
+    }
 
     val left: ValueTree by lazyLeft
     val right: ValueTree by lazyRight

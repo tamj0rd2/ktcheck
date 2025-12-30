@@ -22,7 +22,7 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     val testResultsGen = gen.map { test.getResultFor(it) }
 
     fun runIteration(iteration: Int) {
-        val sampleTree = ValueTree(deriveSeed(config.seed, iteration))
+        val sampleTree = ValueTree.fromSeed(deriveSeed(config.seed, iteration))
         val (testResult, shrinks) = testResultsGen.generate(sampleTree)
 
         when (testResult) {
