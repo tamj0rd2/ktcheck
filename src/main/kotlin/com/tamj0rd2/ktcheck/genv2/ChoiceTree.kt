@@ -3,15 +3,21 @@ package com.tamj0rd2.ktcheck.genv2
 import com.tamj0rd2.ktcheck.gen.deriveSeed
 import kotlin.random.Random
 
-internal sealed interface ChoiceTree {
-    val left: ChoiceTree
-    val right: ChoiceTree
+internal sealed interface Choice {
+    data class Undetermined(val seed: Long) : Choice
+    data class Predetermined(val value: Any?) : Choice
+}
 
-    fun int(range: IntRange): Int
+internal sealed class ChoiceTree {
+    protected abstract val choice: Choice
+    abstract val left: ChoiceTree
+    abstract val right: ChoiceTree
+
+    abstract fun int(range: IntRange): Int
 
     companion object {
         internal fun from(seed: Long): ChoiceTree = RandomTree(
-            seed = seed,
+            choice = Choice.Undetermined(seed),
             lazyLeft = lazy { from(deriveSeed(seed, 1)) },
             lazyRight = lazy { from(deriveSeed(seed, 2)) },
         )
@@ -36,19 +42,19 @@ internal sealed interface ChoiceTree {
         ): String {
             if (currentDepth >= maxDepth) return "${indent}${prefix}...\n"
 
-            val displayValue = when (this) {
-                is RandomTree -> "seed(${seed})"
-                is RecordedChoiceTree<*> -> "choice(${choice})"
+            val displayValue = when (val choice = choice) {
+                is Choice.Undetermined -> "seed(${choice.seed})"
+                is Choice.Predetermined -> "choice(${choice.value})"
             }
 
             val lazyLeft = when (this) {
                 is RandomTree -> lazyLeft
-                is RecordedChoiceTree<*> -> lazyLeft
+                is RecordedChoiceTree -> lazyLeft
             }
 
             val lazyRight = when (this) {
                 is RandomTree -> lazyRight
-                is RecordedChoiceTree<*> -> lazyRight
+                is RecordedChoiceTree -> lazyRight
             }
 
             fun visualise(lazyTree: Lazy<ChoiceTree>, side: String): String? {
@@ -73,11 +79,11 @@ internal sealed interface ChoiceTree {
 }
 
 internal data class RandomTree(
-    internal val seed: Long,
+    override val choice: Choice.Undetermined,
     internal val lazyLeft: Lazy<ChoiceTree>,
     internal val lazyRight: Lazy<ChoiceTree>,
-) : ChoiceTree {
-    private val random get() = Random(seed)
+) : ChoiceTree() {
+    private val random get() = Random(choice.seed)
 
     override val left: ChoiceTree by lazyLeft
     override val right: ChoiceTree by lazyRight
@@ -85,30 +91,32 @@ internal data class RandomTree(
     override fun int(range: IntRange) = range.random(random)
 }
 
-internal data class RecordedChoiceTree<out T>(
-    internal val choice: T,
+internal data class RecordedChoiceTree(
+    override val choice: Choice.Predetermined,
     internal val lazyLeft: Lazy<ChoiceTree>,
     internal val lazyRight: Lazy<ChoiceTree>,
-) : ChoiceTree {
+) : ChoiceTree() {
     override val left: ChoiceTree by lazyLeft
     override val right: ChoiceTree by lazyRight
 
     override fun int(range: IntRange): Int {
-        if (choice !is Int) TODO("handle this")
-        if (choice !in range) TODO("handle int out of range")
-        return choice
+        val value = choice.value
+
+        if (value !is Int) TODO("handle this")
+        if (value !in range) TODO("handle int out of range")
+        return value
     }
 }
 
 internal fun <T> ChoiceTree.withChoice(value: T): ChoiceTree = when (this) {
     is RandomTree -> RecordedChoiceTree(
-        choice = value,
+        choice = Choice.Predetermined(value),
         lazyLeft = lazyLeft,
         lazyRight = lazyRight,
     )
 
-    is RecordedChoiceTree<*> -> RecordedChoiceTree(
-        choice = value,
+    is RecordedChoiceTree -> RecordedChoiceTree(
+        choice = Choice.Predetermined(value),
         lazyLeft = lazyLeft,
         lazyRight = lazyRight,
     )
@@ -116,10 +124,10 @@ internal fun <T> ChoiceTree.withChoice(value: T): ChoiceTree = when (this) {
 
 internal fun ChoiceTree.withLeft(left: ChoiceTree): ChoiceTree = when (this) {
     is RandomTree -> copy(lazyLeft = lazyOf(left))
-    is RecordedChoiceTree<*> -> copy(lazyLeft = lazyOf(left))
+    is RecordedChoiceTree -> copy(lazyLeft = lazyOf(left))
 }
 
 internal fun ChoiceTree.withRight(right: ChoiceTree): ChoiceTree = when (this) {
     is RandomTree -> copy(lazyRight = lazyOf(right))
-    is RecordedChoiceTree<*> -> copy(lazyRight = lazyOf(right))
+    is RecordedChoiceTree -> copy(lazyRight = lazyOf(right))
 }
