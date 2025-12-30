@@ -64,6 +64,8 @@ internal data class ValueTree private constructor(
 
     internal fun withRight(right: ValueTree) = copy(lazyRight = lazyOf(right))
 
+    override fun toString(): String = visualise()
+
     @Suppress("unused")
     internal fun visualise(maxDepth: Int = 3, forceEval: Boolean = false): String {
         fun visualise(
