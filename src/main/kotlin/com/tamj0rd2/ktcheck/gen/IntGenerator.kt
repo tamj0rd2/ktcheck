@@ -7,25 +7,21 @@ private data class IntGenerator(
 ) : Gen<Int>() {
     override fun generate(tree: ProducerTree): GenResult<Int> {
         val value = tree.producer.int(range)
-
-        // todo: isn't there a potential optimisation here - don't shrink if already shrunk? isn't that why I end up
-        //  with millions of shrink candidates?
-        val shrinks = shrink(value)
-            .distinct()
-            .filter { it in range }
-            .map { tree.withValue(it) }
-
-        return GenResult(value, shrinks)
+        return GenResult(
+            value = value,
+            shrinks = shrink(value, range).map { tree.withValue(it) }
+        )
     }
 }
 
-internal fun shrink(value: Int): Sequence<Int> = sequence {
+// todo: generate directly within range rather than using filter
+internal fun shrink(value: Int, range: IntRange): Sequence<Int> = sequence {
     var current = value
     while (current != 0) {
         yield(value - current)
         current /= 2
     }
-}
+}.filter { it in range }
 
 fun Gen.Companion.int(range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE): Gen<Int> = IntGenerator(range)
 

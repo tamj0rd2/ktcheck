@@ -13,7 +13,7 @@ private class ListGenerator<T>(
         return GenResult(
             value = list,
             shrinks = sequence {
-                val sizeShrinks = shrink(size).filter { it in sizeRange }
+                val sizeShrinks = shrink(size, sizeRange).filter { it in sizeRange }
 
                 // reduce size - elements are "removed" from the end of the list
                 yieldAll(sizeShrinks.map { tree.withLeft(tree.left.withValue(it)) })
