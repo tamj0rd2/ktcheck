@@ -1,6 +1,6 @@
 package com.tamj0rd2.ktcheck.genv2
 
-private data class IntGeneratorV2(
+private data class IntGenerator(
     private val range: IntRange,
 ) : Gen<Int>() {
     override fun generate(tree: ValueTree): GenResult<Int> {
@@ -25,7 +25,7 @@ internal fun shrink(value: Int): Sequence<Int> = sequence {
     }
 }
 
-fun Gen.Companion.int(range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE): Gen<Int> = IntGeneratorV2(range)
+fun Gen.Companion.int(range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE): Gen<Int> = IntGenerator(range)
 
 // todo: implement this property
 internal fun Gen.Companion.long() = Gen.int().map { it.toLong() }

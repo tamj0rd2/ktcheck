@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.genv2
 
 import com.tamj0rd2.ktcheck.genv2.Gen.Companion.sample
 import com.tamj0rd2.ktcheck.testing.TestConfig
+import com.tamj0rd2.ktcheck.testing.checkAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import strikt.api.Assertion.Builder

@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.genv2
 import com.tamj0rd2.ktcheck.genv2.Gen.Companion.samples
 import com.tamj0rd2.ktcheck.genv2.ListGeneratorTest.Companion.generateAllIncludingShrinks
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
+import com.tamj0rd2.ktcheck.testing.checkAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat

@@ -1,6 +1,5 @@
 package com.tamj0rd2.ktcheck.testing
 
-import com.tamj0rd2.ktcheck.genv2.PropertyFalsifiedException
 import java.io.PrintStream
 
 interface TestReporter {

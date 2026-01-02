@@ -2,9 +2,12 @@ package com.tamj0rd2.ktcheck.genv2
 
 import com.tamj0rd2.ktcheck.stats.Counter
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
+import com.tamj0rd2.ktcheck.testing.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.testing.TestByBool
 import com.tamj0rd2.ktcheck.testing.TestConfig
 import com.tamj0rd2.ktcheck.testing.TestReporter
+import com.tamj0rd2.ktcheck.testing.checkAll
+import com.tamj0rd2.ktcheck.testing.forAll
 import org.junit.jupiter.api.Test
 import strikt.api.expectThrows
 
