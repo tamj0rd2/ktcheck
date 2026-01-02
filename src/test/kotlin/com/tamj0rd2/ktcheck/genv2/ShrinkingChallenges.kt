@@ -5,57 +5,38 @@ import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.testing.TestByBool
 import com.tamj0rd2.ktcheck.testing.TestConfig
 import com.tamj0rd2.ktcheck.testing.TestReporter
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import strikt.api.expectThrows
 
-class Shrinking {
-
+// based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
+class ShrinkingChallenges {
     @Test
-    fun `can shrink a number`() = testShrinking(
-        gen = Gen.int(1..100),
-        test = { false },
-        didShrinkCorrectly = { it == 1 },
-    )
-
-    @Test
-    fun `can shrink a list`() = testShrinking(
+    fun reverse() = testShrinking(
         gen = Gen.int().list(),
-        test = { false },
-        didShrinkCorrectly = { it.isEmpty() },
+        test = { it.reversed() == it },
+        didShrinkCorrectly = { it in setOf(listOf(0, 1), listOf(0, -1)) },
     )
 
-    // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
-    @Nested
-    inner class Challenges {
-        @Test
-        fun reverse() = testShrinking(
-            gen = Gen.int().list(),
-            test = { it.reversed() == it },
-            didShrinkCorrectly = { it in setOf(listOf(0, 1), listOf(0, -1)) },
+    @Test
+    fun nestedLists() {
+        testShrinking(
+            gen = Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list().list(),
+            test = { listOfLists -> listOfLists.sumOf { it.size } <= 10 },
+            // todo: although it works, it'd may be nice if later I can make it normalise the list to a single list.
+            didShrinkCorrectly = { listOfLists ->
+                val flattened = listOfLists.flatten()
+                flattened.size == 11 && flattened.all { it == 0 }
+            },
         )
+    }
 
-        @Test
-        fun nestedLists() {
-            testShrinking(
-                gen = Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list().list(),
-                test = { listOfLists -> listOfLists.sumOf { it.size } <= 10 },
-                // todo: although it works, it'd may be nice if later I can make it normalise the list to a single list.
-                didShrinkCorrectly = { listOfLists ->
-                    val flattened = listOfLists.flatten()
-                    flattened.size == 11 && flattened.all { it == 0 }
-                },
-            )
-        }
-
-        @Test
-        fun lengthList() {
-            testShrinking(
-                gen = Gen.int(0..1000).list(1..100),
-                test = { it.max() < 900 },
-                didShrinkCorrectly = { it == listOf(900) },
-            )
-        }
+    @Test
+    fun lengthList() {
+        testShrinking(
+            gen = Gen.int(0..1000).list(1..100),
+            test = { it.max() < 900 },
+            didShrinkCorrectly = { it == listOf(900) },
+        )
     }
 
     private fun <T> testShrinking(
