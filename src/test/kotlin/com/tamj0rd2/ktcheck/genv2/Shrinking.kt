@@ -55,14 +55,20 @@ class Shrinking {
         @Test
         fun nestedLists() {
             testShrinking(
+                testConfig = TestConfig().withIterations(1000),
                 test = { testConfig ->
                     val gen = Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list().list()
                     checkAll(testConfig, gen) { listOfLists ->
                         expectThat(listOfLists.sumOf { it.size }).isLessThanOrEqualTo(10)
                     }
                 },
-                didShrinkCorrectly = { it.single() == listOf(listOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)) },
-                minConfidence = 85.0,
+                // todo: although it works, it'd may be nice if later I can make it normalise the list to a single list.
+                didShrinkCorrectly = { args ->
+                    @Suppress("UNCHECKED_CAST")
+                    val listOfLists = args.single() as List<List<Int>>
+                    val flattened = listOfLists.flatten()
+                    flattened.size == 11 && flattened.all { it == 0 }
+                },
             )
         }
 
@@ -86,7 +92,7 @@ class Shrinking {
         test: (TestConfig) -> Unit,
         didShrinkCorrectly: (List<Any?>) -> Boolean,
         minConfidence: Double = 100.0,
-        categoriseBadShrinks: Counter.(List<Any?>, List<Any?>) -> Unit = { _, _ -> },
+        categoriseShrinks: Counter.(Boolean, List<Any?>, List<Any?>) -> Unit = { _, _, _ -> },
     ) {
         val exceptionsWithBadShrinks = mutableListOf<PropertyFalsifiedException>()
 
@@ -101,11 +107,10 @@ class Shrinking {
 
                 val fullyShrunk = didShrinkCorrectly(shrunkArgs)
                 collect("shrunk fully", fullyShrunk)
+                categoriseShrinks(fullyShrunk, originalArgs, shrunkArgs)
 
-                if (!fullyShrunk) {
-                    exceptionsWithBadShrinks.add(exception)
-                    categoriseBadShrinks(originalArgs, shrunkArgs)
-                }
+                if (fullyShrunk) collect("fully shrunk args", shrunkArgs.toString())
+                else exceptionsWithBadShrinks.add(exception)
             }
         }
 
