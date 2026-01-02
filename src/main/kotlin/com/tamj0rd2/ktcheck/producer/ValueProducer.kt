@@ -1,4 +1,4 @@
-package com.tamj0rd2.ktcheck.gen
+package com.tamj0rd2.ktcheck.producer
 
 import kotlin.random.Random
 import kotlin.random.nextInt
@@ -35,3 +35,5 @@ data class PredeterminedValue(private val choice: Choice) : ValueProducer {
         else -> choice.value
     }
 }
+
+internal class InvalidReplay(message: String) : IllegalStateException(message)

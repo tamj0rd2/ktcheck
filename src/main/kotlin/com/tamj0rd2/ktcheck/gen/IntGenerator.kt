@@ -1,5 +1,7 @@
 package com.tamj0rd2.ktcheck.gen
 
+import com.tamj0rd2.ktcheck.producer.ValueTree
+
 private data class IntGenerator(
     private val range: IntRange,
 ) : Gen<Int>() {

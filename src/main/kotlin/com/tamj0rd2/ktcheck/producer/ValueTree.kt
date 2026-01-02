@@ -1,6 +1,4 @@
-package com.tamj0rd2.ktcheck.gen
-
-internal class InvalidReplay(message: String) : IllegalStateException(message)
+package com.tamj0rd2.ktcheck.producer
 
 @ConsistentCopyVisibility
 internal data class ValueTree private constructor(
@@ -29,12 +27,12 @@ internal data class ValueTree private constructor(
 
     internal fun withRight(right: ValueTree) = copy(lazyRight = lazyOf(right))
 
-    fun combineShrinks(
+    internal fun combineShrinks(
         leftShrinks: Sequence<ValueTree>,
         rightShrinks: Sequence<ValueTree>,
     ): Sequence<ValueTree> = leftShrinks.map { withLeft(it) } + rightShrinks.map { withRight(it) }
 
-    override fun toString(): String = visualise()
+    override fun toString(): String = visualise(maxDepth = 10)
 
     @Suppress("unused")
     internal fun visualise(maxDepth: Int = 3, forceEval: Boolean = false): String {

@@ -1,5 +1,7 @@
 package com.tamj0rd2.ktcheck.gen
 
+import com.tamj0rd2.ktcheck.producer.ValueTree
+
 /**
  * A generator that chooses between multiple generators using an index. Shrinks towards
  * earlier specified generators.
