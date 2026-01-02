@@ -6,8 +6,11 @@ import com.tamj0rd2.ktcheck.producer.ProducerTree
 import kotlin.reflect.KClass
 
 private sealed interface PredicateResult<T> {
-    data class Succeeded<T>(val genResult: GenResult<T>) : PredicateResult<T>
-    data class Failed<T>(val failure: Exception? = null) : PredicateResult<T>
+    @JvmInline
+    value class Succeeded<T>(val genResult: GenResult<T>) : PredicateResult<T>
+
+    @JvmInline
+    value class Failed<T>(val failure: Exception? = null) : PredicateResult<T>
 }
 
 private class FilterGenerator<T>(

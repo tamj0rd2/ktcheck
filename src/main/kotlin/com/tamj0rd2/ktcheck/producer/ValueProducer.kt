@@ -8,7 +8,8 @@ internal sealed interface ValueProducer {
     fun bool(): Boolean
 }
 
-internal data class RandomValueProducer(val seed: Seed) : ValueProducer {
+@JvmInline
+internal value class RandomValueProducer(val seed: Seed) : ValueProducer {
     private val random get() = Random(seed.value)
 
     override fun int(range: IntRange): Int = random.nextInt(range)
@@ -19,11 +20,15 @@ internal data class RandomValueProducer(val seed: Seed) : ValueProducer {
 internal sealed interface Primitive {
     val value: Any?
 
-    data class Int(override val value: kotlin.Int) : Primitive
-    data class Bool(override val value: Boolean) : Primitive
+    @JvmInline
+    value class Int(override val value: kotlin.Int) : Primitive
+
+    @JvmInline
+    value class Bool(override val value: Boolean) : Primitive
 }
 
-internal data class PredeterminedValue(private val primitive: Primitive) : ValueProducer {
+@JvmInline
+internal value class PredeterminedValue(private val primitive: Primitive) : ValueProducer {
     override fun int(range: IntRange): Int = when {
         primitive !is Primitive.Int -> error("Expected IntChoice but got ${primitive::class.simpleName}")
         primitive.value !in range -> error("IntChoice value ${primitive.value} not in range $range")
