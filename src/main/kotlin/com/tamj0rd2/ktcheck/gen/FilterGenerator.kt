@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.PredicateResult.Failed
 import com.tamj0rd2.ktcheck.gen.PredicateResult.Succeeded
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 import kotlin.reflect.KClass
 
 private sealed interface PredicateResult<T> {
@@ -12,9 +12,9 @@ private sealed interface PredicateResult<T> {
 
 private class FilterGenerator<T>(
     private val threshold: Int,
-    private val getResult: (ValueTree) -> PredicateResult<T>,
+    private val getResult: (ProducerTree) -> PredicateResult<T>,
 ) : Gen<T>() {
-    override fun generate(tree: ValueTree): GenResult<T> {
+    override fun generate(tree: ProducerTree): GenResult<T> {
         var attempts = 0
         var currentTree = tree
         var lastFailure: Exception? = null

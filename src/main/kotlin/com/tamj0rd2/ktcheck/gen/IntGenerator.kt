@@ -1,11 +1,11 @@
 package com.tamj0rd2.ktcheck.gen
 
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 
 private data class IntGenerator(
     private val range: IntRange,
 ) : Gen<Int>() {
-    override fun generate(tree: ValueTree): GenResult<Int> {
+    override fun generate(tree: ProducerTree): GenResult<Int> {
         val value = tree.producer.int(range)
 
         // todo: isn't there a potential optimisation here - don't shrink if already shrunk? isn't that why I end up

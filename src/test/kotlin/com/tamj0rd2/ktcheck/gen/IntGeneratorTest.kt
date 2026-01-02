@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
 import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateAllIncludingShrinks
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Nested
@@ -83,7 +83,7 @@ class IntGeneratorTest {
         @Test
         fun `shrinks appropriately for a fixed seed`() {
             val gen = Gen.int(0..10)
-            val (originalValue, shrinks) = gen.generate(ValueTree.fromSeed(0))
+            val (originalValue, shrinks) = gen.generate(ProducerTree.fromSeed(0))
             expectThat(originalValue).isEqualTo(10)
 
             val shrunkValues = shrinks.map { gen.generate(it).value }.toList()
@@ -92,7 +92,7 @@ class IntGeneratorTest {
 
         @Test
         fun `shrinking zero produces no shrinks`() {
-            val (originalValue, shrinks) = Gen.int().generateAllIncludingShrinks(ValueTree.fromSeed(0).withValue(0))
+            val (originalValue, shrinks) = Gen.int().generateAllIncludingShrinks(ProducerTree.fromSeed(0).withValue(0))
             expectThat(originalValue).isEqualTo(0)
             expectThat(shrinks).isEmpty()
         }
@@ -101,7 +101,7 @@ class IntGeneratorTest {
         fun `shrinks for non-zero numbers always include 0`() {
             val gen = Gen.int()
 
-            generateSequence { ValueTree.fromSeed(Random.nextLong()) }
+            generateSequence { ProducerTree.fromSeed(Random.nextLong()) }
                 .map { gen.generateAllIncludingShrinks(it) }
                 .filter { (originalValue) -> originalValue != 0 }
                 .take(100)
@@ -112,7 +112,7 @@ class IntGeneratorTest {
         fun `the original generated number is not included in shrinks`() {
             val gen = Gen.int()
 
-            generateSequence { ValueTree.fromSeed(Random.nextLong()) }
+            generateSequence { ProducerTree.fromSeed(Random.nextLong()) }
                 .map { gen.generateAllIncludingShrinks(it) }
                 .take(100)
                 .forEach { (originalValue, shrunkValues) ->
@@ -125,7 +125,7 @@ class IntGeneratorTest {
             val gen = Gen.int(-50..50)
 
             withCounter {
-                generateSequence { ValueTree.fromSeed(Random.nextLong()) }
+                generateSequence { ProducerTree.fromSeed(Random.nextLong()) }
                     .map { gen.generateAllIncludingShrinks(it) }
                     .filter { (originalValue) -> originalValue != 0 }
                     .take(100)

@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.sample
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.testing.TestConfig
 import com.tamj0rd2.ktcheck.testing.checkAll
 import org.junit.jupiter.api.Test
@@ -22,7 +22,7 @@ class ListGeneratorTest {
     fun `shrinks a list of 1 element depth first`() {
         val gen = Gen.int(0..4).list(1)
 
-        val tree = ValueTree.`that will generate`(listOf(4), from = gen)
+        val tree = ProducerTree.`that will generate`(listOf(4), from = gen)
         val (value, shrunkValues) = gen.generateAllIncludingShrinks(tree)
         expectThat(value).isEqualTo(listOf(4))
 
@@ -44,7 +44,7 @@ class ListGeneratorTest {
     fun `shrinks a list of 2 elements depth first`() {
         val gen = Gen.int(0..5).list(2)
 
-        val tree = ValueTree.`that will generate`(listOf(1, 4), from = gen)
+        val tree = ProducerTree.`that will generate`(listOf(1, 4), from = gen)
         val (value, shrunkValues) = gen.generateAllIncludingShrinks(tree)
         expectThat(value).isEqualTo(listOf(1, 4))
 
@@ -72,7 +72,7 @@ class ListGeneratorTest {
     fun `shrinks a list of 3 elements depth first`() {
         val gen = Gen.int(0..4).list(3)
 
-        val tree = ValueTree.`that will generate`(listOf(2, 0, 3), from = gen)
+        val tree = ProducerTree.`that will generate`(listOf(2, 0, 3), from = gen)
         val (value, shrunkValues) = gen.generateAllIncludingShrinks(tree)
         expectThat(value).isEqualTo(listOf(2, 0, 3))
 
@@ -103,7 +103,7 @@ class ListGeneratorTest {
         Gen.int(1..100),
     ) { size ->
         val (originalList, shrunkLists) = Gen.int().list(size)
-            .generateAllIncludingShrinks(ValueTree.fromSeed(0), limit = 1000)
+            .generateAllIncludingShrinks(ProducerTree.fromSeed(0), limit = 1000)
         expectThat(originalList.size).isEqualTo(size)
 
         assertTimeoutPreemptively(Duration.ofMillis(100)) {
@@ -119,7 +119,7 @@ class ListGeneratorTest {
         Gen.int(1..100),
     ) { size ->
         val (originalList, shrunkLists) = Gen.int().list(size)
-            .generateAllIncludingShrinks(ValueTree.fromSeed(0), maxDepth = 1, limit = 1000)
+            .generateAllIncludingShrinks(ProducerTree.fromSeed(0), maxDepth = 1, limit = 1000)
 
         assertTimeoutPreemptively(Duration.ofMillis(100)) {
             shrunkLists.forEach { shrunkList ->
@@ -141,20 +141,20 @@ class ListGeneratorTest {
                 if (passedCount == count) pass() else fail()
             }
 
-        internal fun <T> ValueTree.Companion.`that will generate`(value: T, from: Gen<T>) =
+        internal fun <T> ProducerTree.Companion.`that will generate`(value: T, from: Gen<T>) =
             generateSequence(0) { it + 1 }
-                .map { ValueTree.fromSeed(it.toLong()) }
+                .map { ProducerTree.fromSeed(it.toLong()) }
                 .first { from.generate(it).value == value }
 
         // generates the value and all shrinks depth-first. its done this way to avoid stack overflows and OOMs on large shrink trees.
         internal fun <T> Gen<T>.generateAllIncludingShrinks(
-            tree: ValueTree,
+            tree: ProducerTree,
             maxDepth: Int? = null,
             limit: Int = 100_000,
         ): Pair<T, List<T>> {
             val collection = sequence {
                 // Stack of iterators tracking our position in each level of the tree
-                val stack = ArrayDeque<Iterator<ValueTree>>()
+                val stack = ArrayDeque<Iterator<ProducerTree>>()
                 stack.addFirst(sequenceOf(tree).iterator())
 
                 while (stack.isNotEmpty()) {

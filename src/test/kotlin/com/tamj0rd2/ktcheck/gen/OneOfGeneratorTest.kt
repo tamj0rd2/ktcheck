@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
 import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateAllIncludingShrinks
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -24,10 +24,10 @@ class OneOfGeneratorTest {
     fun `shrinking a oneOf generator can shrink between types without failure`() {
         val treeChoosingGenAtIndex1AndFirstIntAs4 = generateSequence(0L) { it + 1 }
             .first {
-                ValueTree.fromSeed(it).left.producer.int(0..1) == 1 &&
-                        ValueTree.fromSeed(it).right.producer.int(0..4) == 4
+                ProducerTree.fromSeed(it).left.producer.int(0..1) == 1 &&
+                        ProducerTree.fromSeed(it).right.producer.int(0..4) == 4
             }
-            .let { ValueTree.fromSeed(it) }
+            .let { ProducerTree.fromSeed(it) }
 
         val multiTypeGen = Gen.oneOf(
             Gen.bool().map { it as Any },

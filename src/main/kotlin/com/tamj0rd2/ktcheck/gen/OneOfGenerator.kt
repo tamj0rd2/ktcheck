@@ -1,6 +1,6 @@
 package com.tamj0rd2.ktcheck.gen
 
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 
 /**
  * A generator that chooses between multiple generators using an index. Shrinks towards
@@ -23,7 +23,7 @@ private class OneOfGenerator<T>(
         require(gens.isNotEmpty()) { "oneOf requires at least one generator" }
     }
 
-    override fun generate(tree: ValueTree): GenResult<T> {
+    override fun generate(tree: ProducerTree): GenResult<T> {
         val (index, indexShrinks) = Gen.int(0..<gens.size).generate(tree.left)
         val (value, valueShrinks) = gens[index].generate(tree.right)
 

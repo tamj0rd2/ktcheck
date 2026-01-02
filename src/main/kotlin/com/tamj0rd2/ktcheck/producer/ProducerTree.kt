@@ -1,21 +1,21 @@
 package com.tamj0rd2.ktcheck.producer
 
 @ConsistentCopyVisibility
-internal data class ValueTree private constructor(
+internal data class ProducerTree private constructor(
     internal val producer: ValueProducer,
-    private val lazyLeft: Lazy<ValueTree>,
-    private val lazyRight: Lazy<ValueTree>,
+    private val lazyLeft: Lazy<ProducerTree>,
+    private val lazyRight: Lazy<ProducerTree>,
 ) {
     companion object {
-        internal fun fromSeed(seed: Long): ValueTree = ValueTree(
+        internal fun fromSeed(seed: Long): ProducerTree = ProducerTree(
             producer = RandomValueProducer(seed),
             lazyLeft = lazy { fromSeed(deriveSeed(seed, 1)) },
             lazyRight = lazy { fromSeed(deriveSeed(seed, 2)) },
         )
     }
 
-    val left: ValueTree by lazyLeft
-    val right: ValueTree by lazyRight
+    val left: ProducerTree by lazyLeft
+    val right: ProducerTree by lazyRight
 
     internal fun withValue(value: Int) =
         copy(producer = PredeterminedValue(Choice.Int(value)))
@@ -23,21 +23,21 @@ internal data class ValueTree private constructor(
     internal fun withValue(value: Boolean) =
         copy(producer = PredeterminedValue(Choice.Bool(value)))
 
-    internal fun withLeft(left: ValueTree) = copy(lazyLeft = lazyOf(left))
+    internal fun withLeft(left: ProducerTree) = copy(lazyLeft = lazyOf(left))
 
-    internal fun withRight(right: ValueTree) = copy(lazyRight = lazyOf(right))
+    internal fun withRight(right: ProducerTree) = copy(lazyRight = lazyOf(right))
 
     internal fun combineShrinks(
-        leftShrinks: Sequence<ValueTree>,
-        rightShrinks: Sequence<ValueTree>,
-    ): Sequence<ValueTree> = leftShrinks.map { withLeft(it) } + rightShrinks.map { withRight(it) }
+        leftShrinks: Sequence<ProducerTree>,
+        rightShrinks: Sequence<ProducerTree>,
+    ): Sequence<ProducerTree> = leftShrinks.map { withLeft(it) } + rightShrinks.map { withRight(it) }
 
     override fun toString(): String = visualise(maxDepth = 10)
 
     @Suppress("unused")
     internal fun visualise(maxDepth: Int = 3, forceEval: Boolean = false): String {
         fun visualise(
-            tree: ValueTree,
+            tree: ProducerTree,
             indent: String,
             prefix: String,
             isLast: Boolean?,
@@ -45,7 +45,7 @@ internal data class ValueTree private constructor(
         ): String {
             if (currentDepth >= maxDepth) return "${indent}${prefix}...\n"
 
-            fun visualiseBranch(lazyTree: Lazy<ValueTree>, side: String): String? {
+            fun visualiseBranch(lazyTree: Lazy<ProducerTree>, side: String): String? {
                 val newIndent = when (isLast) {
                     null -> "" // Root level, no indentation
                     true -> "$indent    "

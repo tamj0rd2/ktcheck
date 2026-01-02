@@ -1,12 +1,12 @@
 package com.tamj0rd2.ktcheck.gen
 
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 
 private class ListGenerator<T>(
     private val sizeRange: IntRange,
     private val gen: Gen<T>,
 ) : Gen<List<T>>() {
-    override fun generate(tree: ValueTree): GenResult<List<T>> {
+    override fun generate(tree: ProducerTree): GenResult<List<T>> {
         val size = tree.left.producer.int(sizeRange)
         val (list, listValueShrinks) = listN(rootTree = tree.right, targetSize = size)
 
@@ -29,7 +29,7 @@ private class ListGenerator<T>(
         )
     }
 
-    private fun ValueTree.traverseRight(steps: Int): ValueTree =
+    private fun ProducerTree.traverseRight(steps: Int): ProducerTree =
         if (steps == 0) this else right.traverseRight(steps - 1)
 
     /**
@@ -52,12 +52,12 @@ private class ListGenerator<T>(
      * - Shrink individual elements by replacing their subtree while keeping others unchanged
      */
     private tailrec fun listN(
-        rootTree: ValueTree,
+        rootTree: ProducerTree,
         targetSize: Int,
-        currentTree: ValueTree = rootTree,
+        currentTree: ProducerTree = rootTree,
         index: Int = 0,
         values: List<T> = emptyList(),
-        shrinksByIndex: List<Sequence<ValueTree>> = emptyList(),
+        shrinksByIndex: List<Sequence<ProducerTree>> = emptyList(),
     ): GenResult<List<T>> {
         if (index == targetSize) return GenResult(value = values, shrinks = rootTree.combineShrinks(shrinksByIndex))
 
@@ -81,14 +81,14 @@ private class ListGenerator<T>(
      *
      * @param shrinksByIndex A list of shrink sequences, one for each list element position
      */
-    private fun ValueTree.combineShrinks(
-        shrinksByIndex: List<Sequence<ValueTree>>,
-    ): Sequence<ValueTree> {
+    private fun ProducerTree.combineShrinks(
+        shrinksByIndex: List<Sequence<ProducerTree>>,
+    ): Sequence<ProducerTree> {
         fun reconstructTreeWithShrinkAtIndex(
-            tree: ValueTree,
+            tree: ProducerTree,
             index: Int,
-            shrunkTree: ValueTree,
-        ): ValueTree =
+            shrunkTree: ProducerTree,
+        ): ProducerTree =
             if (index == 0) {
                 tree.withLeft(shrunkTree)
             } else {

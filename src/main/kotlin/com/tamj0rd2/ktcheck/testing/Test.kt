@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck.testing
 
 import com.tamj0rd2.ktcheck.gen.Gen
-import com.tamj0rd2.ktcheck.producer.ValueTree
+import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.producer.deriveSeed
 
 @Suppress("unused")
@@ -17,7 +17,7 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     val testResultsGen = gen.map { test.getResultFor(it) }
 
     fun runIteration(iteration: Int) {
-        val sampleTree = ValueTree.fromSeed(deriveSeed(config.seed, iteration))
+        val sampleTree = ProducerTree.fromSeed(deriveSeed(config.seed, iteration))
         val (testResult, shrinks) = testResultsGen.generate(sampleTree)
 
         when (testResult) {
@@ -55,7 +55,7 @@ private fun <T> Test<T>.getResultFor(t: T): TestResult<T> {
 
 private tailrec fun <T> Gen<TestResult<T>>.getSmallestCounterExample(
     testResult: TestResult.Failure<T>,
-    iterator: Iterator<ValueTree>,
+    iterator: Iterator<ProducerTree>,
     steps: Int = 0,
 ): Pair<TestResult.Failure<T>, Int> {
     if (!iterator.hasNext()) return testResult to steps
