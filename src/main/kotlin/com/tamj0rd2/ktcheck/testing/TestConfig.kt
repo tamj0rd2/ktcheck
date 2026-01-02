@@ -1,12 +1,22 @@
 package com.tamj0rd2.ktcheck.testing
 
+import com.tamj0rd2.ktcheck.util.Tuple
 import kotlin.random.Random
 
-sealed interface TestResult {
-    val args: List<Any?>
+sealed class TestResult<T> {
+    internal abstract val input: T
 
-    data class Success(override val args: List<Any?>) : TestResult
-    data class Failure(override val args: List<Any?>, val failure: AssertionError) : TestResult
+    val args: List<Any?>
+        get() = input.let {
+            when (it) {
+                is Tuple -> it.values
+                else -> listOf(input)
+            }
+        }
+
+    data class Success<T>(override val input: T) : TestResult<T>()
+
+    data class Failure<T>(override val input: T, val failure: AssertionError) : TestResult<T>()
 }
 
 @RequiresOptIn(

@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.genv2
 import com.tamj0rd2.ktcheck.stats.Counter
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.testing.HardcodedTestConfig
+import com.tamj0rd2.ktcheck.testing.TestByBool
 import com.tamj0rd2.ktcheck.testing.TestConfig
 import com.tamj0rd2.ktcheck.testing.TestReporter
 import com.tamj0rd2.ktcheck.testing.TestResult
@@ -11,22 +12,22 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
-import strikt.assertions.isEqualTo
 import strikt.assertions.isLessThan
-import strikt.assertions.isLessThanOrEqualTo
 
 class Shrinking {
 
     @Test
     fun `can shrink a number`() = testShrinking(
-        test = { testConfig -> forAll(testConfig, Gen.int(1..100)) { false } },
-        didShrinkCorrectly = { it.single() == 1 },
+        gen = Gen.int(1..100),
+        test = { false },
+        didShrinkCorrectly = { it == 1 },
     )
 
     @Test
     fun `can shrink a list`() = testShrinking(
-        test = { testConfig -> forAll(testConfig, Gen.int().list()) { false } },
-        didShrinkCorrectly = { it.single() == emptyList<Int>() },
+        gen = Gen.int().list(),
+        test = { false },
+        didShrinkCorrectly = { it.isEmpty() },
     )
 
     @OptIn(HardcodedTestConfig::class)
@@ -44,28 +45,18 @@ class Shrinking {
     inner class Challenges {
         @Test
         fun reverse() = testShrinking(
-            test = { testConfig ->
-                checkAll(testConfig, Gen.int().list()) {
-                    expectThat(it.reversed()).isEqualTo(it)
-                }
-            },
-            didShrinkCorrectly = { it.single() in setOf(listOf(0, 1), listOf(0, -1)) },
+            gen = Gen.int().list(),
+            test = { it.reversed() == it },
+            didShrinkCorrectly = { it in setOf(listOf(0, 1), listOf(0, -1)) },
         )
 
         @Test
         fun nestedLists() {
             testShrinking(
-                testConfig = TestConfig().withIterations(1000),
-                test = { testConfig ->
-                    val gen = Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list().list()
-                    checkAll(testConfig, gen) { listOfLists ->
-                        expectThat(listOfLists.sumOf { it.size }).isLessThanOrEqualTo(10)
-                    }
-                },
+                gen = Gen.int(Int.MIN_VALUE..Int.MAX_VALUE).list().list(),
+                test = { listOfLists -> listOfLists.sumOf { it.size } <= 10 },
                 // todo: although it works, it'd may be nice if later I can make it normalise the list to a single list.
-                didShrinkCorrectly = { args ->
-                    @Suppress("UNCHECKED_CAST")
-                    val listOfLists = args.single() as List<List<Int>>
+                didShrinkCorrectly = { listOfLists ->
                     val flattened = listOfLists.flatten()
                     flattened.size == 11 && flattened.all { it == 0 }
                 },
@@ -76,34 +67,34 @@ class Shrinking {
         @Disabled
         fun lengthList() {
             testShrinking(
-                test = { testConfig ->
-                    val gen = Gen.int(0..1000).list(1..100)
-                    checkAll(testConfig, gen) { ls -> expectThat(ls.max()).isLessThan(900) }
-                },
-                didShrinkCorrectly = { it.single() == listOf(900) },
+                gen = Gen.int(0..1000).list(1..100),
+                test = { it.max() < 900 },
+                didShrinkCorrectly = { it == listOf(900) },
                 // Most of the time the shrinker provides a much smaller counter example, but very rarely the minimal one.
                 minConfidence = 5.0,
             )
         }
     }
 
-    private fun testShrinking(
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> testShrinking(
         testConfig: TestConfig = TestConfig().withIterations(500),
-        test: (TestConfig) -> Unit,
-        didShrinkCorrectly: (List<Any?>) -> Boolean,
+        gen: Gen<T>,
+        test: TestByBool<T>,
+        didShrinkCorrectly: (T) -> Boolean,
         minConfidence: Double = 100.0,
-        categoriseShrinks: Counter.(Boolean, List<Any?>, List<Any?>) -> Unit = { _, _, _ -> },
+        categoriseShrinks: Counter.(Boolean, T, T) -> Unit = { _, _, _ -> },
     ) {
         val exceptionsWithBadShrinks = mutableListOf<PropertyFalsifiedException>()
 
         val counter = withCounter {
             checkAll(testConfig, Gen.long()) { seed ->
                 val exception = expectThrows<PropertyFalsifiedException> {
-                    test(TestConfig().withSeed(seed).withReporter(NoOpTestReporter))
+                    forAll(TestConfig().withSeed(seed).withReporter(NoOpTestReporter), gen, test)
                 }.subject
 
-                val originalArgs = exception.originalResult.args
-                val shrunkArgs = exception.shrunkResult.args
+                val originalArgs = exception.originalResult.input as T
+                val shrunkArgs = exception.shrunkResult.input as T
 
                 val fullyShrunk = didShrinkCorrectly(shrunkArgs)
                 collect("shrunk fully", fullyShrunk)
@@ -145,8 +136,8 @@ class Shrinking {
         override fun reportFailure(
             seed: Long,
             failedIteration: Int,
-            originalFailure: TestResult.Failure,
-            shrunkFailure: TestResult.Failure,
+            originalFailure: TestResult.Failure<*>,
+            shrunkFailure: TestResult.Failure<*>,
         ) {
         }
     }

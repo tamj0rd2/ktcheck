@@ -3,7 +3,6 @@ package com.tamj0rd2.ktcheck.testing
 import com.tamj0rd2.ktcheck.gen.Gen
 import com.tamj0rd2.ktcheck.gen.SampleTree
 import com.tamj0rd2.ktcheck.gen.deriveSeed
-import com.tamj0rd2.ktcheck.util.Tuple
 
 @Suppress("unused")
 fun <T> forAll(gen: Gen<T>, test: TestByBool<T>) = forAll(TestConfig(), gen, test)
@@ -47,20 +46,15 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     config.reporter.reportSuccess(config.iterations)
 }
 
-private fun <T> Test<T>.getResultFor(t: T): TestResult {
-    val args = when (t) {
-        is Tuple -> t.values
-        else -> listOf(t)
-    }
-
-    val failure = test(t) ?: return TestResult.Success(args)
-    return TestResult.Failure(args, failure)
+private fun <T> Test<T>.getResultFor(t: T): TestResult<*> {
+    val failure = test(t) ?: return TestResult.Success(t)
+    return TestResult.Failure(t, failure)
 }
 
-private tailrec fun Gen<TestResult>.getSmallestCounterExample(
-    testResult: TestResult.Failure,
+private tailrec fun Gen<TestResult<*>>.getSmallestCounterExample(
+    testResult: TestResult.Failure<*>,
     iterator: Iterator<SampleTree>,
-): TestResult.Failure {
+): TestResult.Failure<*> {
     if (!iterator.hasNext()) return testResult
 
     val shrunkTree = iterator.next()

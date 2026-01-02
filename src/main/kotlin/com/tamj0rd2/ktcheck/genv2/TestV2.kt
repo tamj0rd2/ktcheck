@@ -7,7 +7,6 @@ import com.tamj0rd2.ktcheck.testing.TestByBool
 import com.tamj0rd2.ktcheck.testing.TestByThrowing
 import com.tamj0rd2.ktcheck.testing.TestConfig
 import com.tamj0rd2.ktcheck.testing.TestResult
-import com.tamj0rd2.ktcheck.util.Tuple
 
 @Suppress("unused")
 fun <T> forAll(gen: Gen<T>, test: TestByBool<T>) = forAll(TestConfig(), gen, test)
@@ -51,20 +50,15 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     config.reporter.reportSuccess(config.iterations)
 }
 
-private fun <T> Test<T>.getResultFor(t: T): TestResult {
-    val args = when (t) {
-        is Tuple -> t.values
-        else -> listOf(t)
-    }
-
-    val failure = test(t) ?: return TestResult.Success(args)
-    return TestResult.Failure(args, failure)
+private fun <T> Test<T>.getResultFor(t: T): TestResult<T> {
+    val failure = test(t) ?: return TestResult.Success(t)
+    return TestResult.Failure(t, failure)
 }
 
-private tailrec fun Gen<TestResult>.getSmallestCounterExample(
-    testResult: TestResult.Failure,
+private tailrec fun <T> Gen<TestResult<T>>.getSmallestCounterExample(
+    testResult: TestResult.Failure<T>,
     iterator: Iterator<ValueTree>,
-): TestResult.Failure {
+): TestResult.Failure<T> {
     if (!iterator.hasNext()) return testResult
 
     val shrunkTree = iterator.next()
@@ -80,8 +74,8 @@ private tailrec fun Gen<TestResult>.getSmallestCounterExample(
 internal class PropertyFalsifiedException(
     val seed: Long,
     val iteration: Int,
-    val originalResult: TestResult.Failure,
-    val shrunkResult: TestResult.Failure,
+    val originalResult: TestResult.Failure<*>,
+    val shrunkResult: TestResult.Failure<*>,
 ) : AssertionError() {
     override val cause: Throwable = shrunkResult.failure
 }

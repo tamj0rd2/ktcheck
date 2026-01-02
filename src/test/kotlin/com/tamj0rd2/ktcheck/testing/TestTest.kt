@@ -97,8 +97,8 @@ class TestTest {
         override fun reportFailure(
             seed: Long,
             failedIteration: Int,
-            originalFailure: TestResult.Failure,
-            shrunkFailure: TestResult.Failure,
+            originalFailure: TestResult.Failure<*>,
+            shrunkFailure: TestResult.Failure<*>,
         ) {
             reporting = Reporting.ReportedFailure(originalFailure.failure)
         }

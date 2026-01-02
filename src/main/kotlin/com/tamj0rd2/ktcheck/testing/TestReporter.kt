@@ -8,8 +8,8 @@ interface TestReporter {
     fun reportFailure(
         seed: Long,
         failedIteration: Int,
-        originalFailure: TestResult.Failure,
-        shrunkFailure: TestResult.Failure,
+        originalFailure: TestResult.Failure<*>,
+        shrunkFailure: TestResult.Failure<*>,
     )
 }
 
@@ -24,8 +24,8 @@ class PrintingTestReporter(
     override fun reportFailure(
         seed: Long,
         failedIteration: Int,
-        originalFailure: TestResult.Failure,
-        shrunkFailure: TestResult.Failure,
+        originalFailure: TestResult.Failure<*>,
+        shrunkFailure: TestResult.Failure<*>,
     ) {
         val shrunkFailure = shrunkFailure.takeIf { it != originalFailure }
         val output = buildString {
@@ -47,7 +47,7 @@ class PrintingTestReporter(
         printStream.println(output)
     }
 
-    private fun formatFailure(prefix: String, result: TestResult.Failure): String = buildString {
+    private fun formatFailure(prefix: String, result: TestResult.Failure<*>): String = buildString {
         appendLine("${prefix}Arguments:")
         appendLine("-----------------")
         result.args.forEachIndexed { index, arg -> appendLine("Arg $index -> $arg") }

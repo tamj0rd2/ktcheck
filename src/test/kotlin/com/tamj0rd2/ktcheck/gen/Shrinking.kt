@@ -115,8 +115,8 @@ class Shrinking {
         override fun reportFailure(
             seed: Long,
             failedIteration: Int,
-            originalFailure: TestResult.Failure,
-            shrunkFailure: TestResult.Failure,
+            originalFailure: TestResult.Failure<*>,
+            shrunkFailure: TestResult.Failure<*>,
         ) {
             this.reportedFailure = ReportedFailure(
                 seed = seed,
