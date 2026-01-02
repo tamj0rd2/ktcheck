@@ -1,14 +1,18 @@
 package com.tamj0rd2.ktcheck.genv2
 
 private class ListGenerator<T>(
-    private val size: Int,
+    private val sizeGen: Gen<Int>,
     private val gen: Gen<T>,
 ) : Gen<List<T>>() {
-    init {
-        require(size >= 0) { "Size must be non-negative" }
-    }
 
-    override fun generate(tree: ValueTree): GenResult<List<T>> = listN(rootTree = tree)
+    override fun generate(tree: ValueTree): GenResult<List<T>> {
+        val (leftValue, leftShrinks) = sizeGen.generate(tree.left)
+        val (rightValue, rightShrinks) = listN(rootTree = tree.right, targetSize = leftValue)
+        return GenResult(
+            value = rightValue,
+            shrinks = leftShrinks.map { tree.withLeft(it) } + rightShrinks.map { tree.withRight(it) }
+        )
+    }
 
     /**
      * Generates a list of N elements using a left-right tree traversal pattern, where left is used to generate data,
@@ -31,17 +35,19 @@ private class ListGenerator<T>(
      */
     private tailrec fun listN(
         rootTree: ValueTree,
+        targetSize: Int,
         currentTree: ValueTree = rootTree,
         index: Int = 0,
         values: List<T> = emptyList(),
         shrinksByIndex: List<Sequence<ValueTree>> = emptyList(),
     ): GenResult<List<T>> {
-        if (index == size) return GenResult(value = values, shrinks = rootTree.combineShrinks(shrinksByIndex))
+        if (index == targetSize) return GenResult(value = values, shrinks = rootTree.combineShrinks(shrinksByIndex))
 
         val (value, shrinks) = gen.generate(currentTree.left)
 
         return listN(
             rootTree = rootTree,
+            targetSize = targetSize,
             currentTree = currentTree.right,
             index = index + 1,
             values = values + value,
@@ -81,6 +87,6 @@ private class ListGenerator<T>(
 
 fun <T> Gen<T>.list(size: IntRange = 0..100): Gen<List<T>> = list(Gen.int(size))
 
-fun <T> Gen<T>.list(size: Gen<Int>): Gen<List<T>> = size.flatMap(::list)
+fun <T> Gen<T>.list(size: Gen<Int>): Gen<List<T>> = ListGenerator(size, this)
 
-fun <T> Gen<T>.list(size: Int): Gen<List<T>> = ListGenerator(size, this)
+fun <T> Gen<T>.list(size: Int): Gen<List<T>> = ListGenerator(Gen.int(size..size), this)
