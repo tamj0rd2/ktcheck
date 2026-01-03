@@ -6,6 +6,7 @@ import kotlin.random.nextInt
 internal sealed interface ValueProducer {
     fun int(range: IntRange): Int
     fun bool(): Boolean
+    fun char(chars: Set<Char>): Char
 }
 
 @JvmInline
@@ -15,6 +16,8 @@ internal value class RandomValueProducer(val seed: Seed) : ValueProducer {
     override fun int(range: IntRange): Int = random.nextInt(range)
 
     override fun bool(): Boolean = random.nextBoolean()
+
+    override fun char(chars: Set<Char>): Char = chars.random(random)
 }
 
 internal sealed interface Primitive {
@@ -25,6 +28,9 @@ internal sealed interface Primitive {
 
     @JvmInline
     value class Bool(override val value: Boolean) : Primitive
+
+    @JvmInline
+    value class Char(override val value: kotlin.Char) : Primitive
 }
 
 @JvmInline
@@ -37,6 +43,12 @@ internal value class PredeterminedValue(private val primitive: Primitive) : Valu
 
     override fun bool(): Boolean = when (primitive) {
         !is Primitive.Bool -> error("Expected BooleanChoice but got ${primitive::class.simpleName}")
+        else -> primitive.value
+    }
+
+    override fun char(chars: Set<Char>): Char = when {
+        primitive !is Primitive.Char -> error("Expected CharChoice but got ${primitive::class.simpleName}")
+        primitive.value !in chars -> error("CharChoice value ${primitive.value} not in set $chars")
         else -> primitive.value
     }
 }

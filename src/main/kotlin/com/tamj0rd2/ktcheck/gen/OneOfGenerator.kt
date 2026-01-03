@@ -44,9 +44,9 @@ fun <T> Gen.Companion.oneOf(vararg gens: Gen<T>): Gen<T> = oneOf(gens.toList())
 /** Shrinks toward the first value */
 fun <T> Gen.Companion.oneOf(gens: Collection<Gen<T>>): Gen<T> = OneOfGenerator(gens.toList())
 
-/** Shrinks toward the first value. Individual values will not be shrunk unless produced by a prior generator */
+/** Shrinks toward the first value. Individual values will not be shrunk. */
 @JvmName("oneOfValues")
-fun <T> Gen.Companion.oneOf(values: Collection<T>): Gen<T> = Gen.oneOf(values.map { Gen.constant(it) })
+fun <T> Gen.Companion.oneOf(values: Iterable<T>): Gen<T> = Gen.oneOf(values.map { Gen.constant(it) })
 
 @Suppress("unused")
 class OneOfEmpty : IllegalStateException("Gen.oneOf() called with no generators")
