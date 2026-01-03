@@ -20,7 +20,7 @@ private class OneOfGenerator<T>(
     private val gens: List<Gen<T>>,
 ) : Gen<T>() {
     init {
-        require(gens.isNotEmpty()) { "oneOf requires at least one generator" }
+        if (gens.isEmpty()) throw OneOfEmpty()
     }
 
     override fun generate(tree: ProducerTree): GenResult<T> {
@@ -38,4 +38,15 @@ private class OneOfGenerator<T>(
     }
 }
 
-fun <T> Gen.Companion.oneOf(vararg gens: Gen<T>): Gen<T> = OneOfGenerator(gens.toList())
+/** Shrinks toward the first value */
+fun <T> Gen.Companion.oneOf(vararg gens: Gen<T>): Gen<T> = oneOf(gens.toList())
+
+/** Shrinks toward the first value */
+fun <T> Gen.Companion.oneOf(gens: Collection<Gen<T>>): Gen<T> = OneOfGenerator(gens.toList())
+
+/** Shrinks toward the first value. Individual values will not be shrunk unless produced by a prior generator */
+@JvmName("oneOfValues")
+fun <T> Gen.Companion.oneOf(values: Collection<T>): Gen<T> = Gen.oneOf(values.map { Gen.constant(it) })
+
+@Suppress("unused")
+class OneOfEmpty : IllegalStateException("Gen.oneOf() called with no generators")

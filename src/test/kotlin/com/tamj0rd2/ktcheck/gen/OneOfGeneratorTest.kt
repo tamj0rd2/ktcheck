@@ -57,4 +57,20 @@ class OneOfGeneratorTest {
             )
         )
     }
+
+    @Test
+    fun `oneOfValues shrinks toward first value in collection`() {
+        val values = listOf("banana", "apple", "cherry")
+        val gen = Gen.oneOf(values)
+
+        withCounter {
+            gen.samples().take(100_000).forEach { collect(it) }
+        }.checkPercentages(values.associateWith { 32.0 })
+
+        val tree = ProducerTree.fromSeed(0).withLeft(ProducerTree.fromSeed(0).withValue(2))
+        val (value, shrinks) = gen.generateAllIncludingShrinks(tree, maxDepth = 1)
+        expectThat(value).isEqualTo("cherry")
+
+        expectThat(shrinks.toList()).isEqualTo(listOf("banana", "apple"))
+    }
 }
