@@ -15,14 +15,39 @@ private data class IntGenerator(
     }
 }
 
-// todo: generate directly within range rather than using filter
-internal fun shrink(value: Int, range: IntRange): Sequence<Int> = sequence {
-    var current = value
-    while (current != 0) {
-        yield(value - current)
-        current /= 2
+internal fun shrink(value: Int, range: IntRange) = shrink(
+    value = value,
+    range = range,
+    origin = when {
+        range.last < 0 -> range.last
+        range.first > 0 -> range.first
+        else -> 0
     }
-}.filter { it in range }
+)
+
+internal fun shrink(value: Int, range: IntRange, origin: Int): Sequence<Int> = sequence {
+    require(origin in range) { "Origin $origin must be within range $range" }
+
+    if (value == origin) return@sequence
+
+    // Always yield the origin first
+    yield(origin)
+
+    // Then yield progressively closer values by repeatedly halving the original distance
+    val originalDistance = value - origin
+    var divisor = 2
+    while (true) {
+        val shrinkAmount = originalDistance / divisor
+        if (shrinkAmount == 0) break
+
+        val candidate = value - shrinkAmount
+        if (candidate in range && candidate != origin) {
+            yield(candidate)
+        }
+        divisor *= 2
+    }
+}
+
 
 fun Gen.Companion.int(range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE): Gen<Int> = IntGenerator(range)
 

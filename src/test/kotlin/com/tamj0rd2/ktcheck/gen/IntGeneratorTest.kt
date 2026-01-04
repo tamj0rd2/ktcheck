@@ -80,13 +80,23 @@ class IntGeneratorTest {
     @Nested
     inner class Shrinking {
         @Test
-        fun `shrinks appropriately for a fixed seed`() {
+        fun `10 shrinks correctly`() {
             val gen = Gen.int(0..10)
             val tree = ProducerTree.new().withValue(10)
 
             val (originalValue, shrunkValues) = gen.generateWithShrunkValues(tree)
             expectThat(originalValue).isEqualTo(10)
             expectThat(shrunkValues).isEqualTo(listOf(0, 5, 8, 9))
+        }
+
+        @Test
+        fun `-10 shrinks correctly`() {
+            val gen = Gen.int(-10..0)
+            val tree = ProducerTree.new().withValue(-10)
+
+            val (originalValue, shrunkValues) = gen.generateWithShrunkValues(tree)
+            expectThat(originalValue).isEqualTo(-10)
+            expectThat(shrunkValues).isEqualTo(listOf(0, -5, -8, -9))
         }
 
         @Test
