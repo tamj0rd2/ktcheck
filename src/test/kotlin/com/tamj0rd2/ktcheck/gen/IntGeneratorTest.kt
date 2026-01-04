@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
 import com.tamj0rd2.ktcheck.gen.GenTests.Companion.generateWithShrunkValues
-import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateWithDepthFirstShrinks
 import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
 import org.junit.jupiter.api.DynamicTest
@@ -93,7 +92,7 @@ class IntGeneratorTest {
         @Test
         fun `shrinking zero produces no shrinks`() {
             val tree = ProducerTree.new().withValue(0)
-            val (originalValue, shrinks) = Gen.int().generateWithDepthFirstShrinks(tree)
+            val (originalValue, shrinks) = Gen.int().generateWithShrunkValues(tree)
             expectThat(originalValue).isEqualTo(0)
             expectThat(shrinks).isEmpty()
         }
@@ -102,7 +101,7 @@ class IntGeneratorTest {
         fun `shrinks for non-zero numbers always include 0`() {
             val gen = Gen.int()
 
-            Gen.tree().samples().map { gen.generateWithDepthFirstShrinks(it) }
+            Gen.tree().samples().map { gen.generateWithShrunkValues(it) }
                 .filter { (originalValue) -> originalValue != 0 }
                 .take(100)
                 .forEach { (_, shrunkValues) -> expectThat(shrunkValues).isNotEmpty().contains(0) }
@@ -112,7 +111,7 @@ class IntGeneratorTest {
         fun `the original generated number is not included in shrinks`() {
             val gen = Gen.int()
 
-            Gen.tree().samples().map { gen.generateWithDepthFirstShrinks(it) }
+            Gen.tree().samples().map { gen.generateWithShrunkValues(it) }
                 .take(100)
                 .forEach { (originalValue, shrunkValues) ->
                     expectThat(shrunkValues).isNotEmpty().doesNotContain(originalValue)
@@ -124,7 +123,7 @@ class IntGeneratorTest {
             val gen = Gen.int(-50..50)
 
             withCounter {
-                Gen.tree().samples().map { gen.generateWithDepthFirstShrinks(it) }
+                Gen.tree().samples().map { gen.generateWithShrunkValues(it) }
                     .filter { (originalValue) -> originalValue != 0 }
                     .take(100)
                     .forEach { (originalValue, shrunkValues) ->

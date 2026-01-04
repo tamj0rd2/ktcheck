@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
-import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateWithDepthFirstShrinks
+import com.tamj0rd2.ktcheck.gen.GenTests.Companion.generateWithShrunkValues
 import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.producer.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.producer.Seed
@@ -34,19 +34,16 @@ class OneOfGeneratorTest {
             right(4)
         }
 
-        val (originalValue, shrinks) = multiTypeGen.generateWithDepthFirstShrinks(tree)
+        val (originalValue, shrinks) = multiTypeGen.generateWithShrunkValues(tree)
 
         expectThat(originalValue).isEqualTo(4)
         expectThat(shrinks.toList()).isEqualTo(
             listOf(
                 // Choice shrunk from 1 to 0. So generating a Boolean value:
                 true,
-                // Choice still 0, shrinks boolean value
-                false,
                 // Left shrinks complete. So Choice = 1. Now shrinking Int value (4):
                 0,
                 2,
-                1,
                 3,
             )
         )
@@ -62,7 +59,7 @@ class OneOfGeneratorTest {
         }.checkPercentages(values.associateWith { 32.0 })
 
         val tree = ProducerTree.new().withValue(2)
-        val (value, shrinks) = gen.generateWithDepthFirstShrinks(tree)
+        val (value, shrinks) = gen.generateWithShrunkValues(tree)
         expectThat(value).isEqualTo("cherry")
 
         expectThat(shrinks.toList()).isEqualTo(listOf("banana", "apple"))

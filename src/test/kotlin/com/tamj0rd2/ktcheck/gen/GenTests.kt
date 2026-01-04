@@ -1,7 +1,6 @@
 package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
-import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateWithDepthFirstShrinks
 import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.producer.ProducerTreeDsl.Companion.producerTree
 import org.junit.jupiter.api.Nested
@@ -30,8 +29,8 @@ class GenTests {
             val doublingGen = originalGen.map { it * 2 }
 
             val tree = ProducerTree.new()
-            val (originalNumber, originalShrinks) = originalGen.generateWithDepthFirstShrinks(tree)
-            val (doubledValue, doubledShrinks) = doublingGen.generateWithDepthFirstShrinks(tree)
+            val (originalNumber, originalShrinks) = originalGen.generateWithShrunkValues(tree)
+            val (doubledValue, doubledShrinks) = doublingGen.generateWithShrunkValues(tree)
 
             expectThat(doubledValue).isEqualTo(originalNumber * 2)
             expectThat(doubledShrinks).isEqualTo(originalShrinks.map { it * 2 })
@@ -105,7 +104,7 @@ class GenTests {
                 right(6)
             }
 
-            val (value, shrinks) = gen.generateWithDepthFirstShrinks(tree)
+            val (value, shrinks) = gen.generateWithShrunkValues(tree)
             expectThat(value).isEqualTo(9)
 
             val threeShrunk = shrink(3, range = 1..3)

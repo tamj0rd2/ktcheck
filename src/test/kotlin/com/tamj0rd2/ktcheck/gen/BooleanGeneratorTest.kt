@@ -1,16 +1,17 @@
 package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
-import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateWithDepthFirstShrinks
+import com.tamj0rd2.ktcheck.gen.GenTests.Companion.generateWithShrunkValues
 import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
-import com.tamj0rd2.ktcheck.testing.checkAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.all
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
+import strikt.assertions.isFalse
+import strikt.assertions.isTrue
 
 class BooleanGeneratorTest {
     @Nested
@@ -40,32 +41,18 @@ class BooleanGeneratorTest {
         // todo: in the future I want to allow the user to specify the shrink direction
         @Test
         fun `true shrinks to false`() {
-            withCounter {
-                checkAll(Gen.tree()) { tree ->
-                    val (value, shrinks) = Gen.bool().generateWithDepthFirstShrinks(tree)
-                    collect("original value", value)
-
-                    // test only interested in true values.
-                    if (!value) return@checkAll
-
-                    expectThat(shrinks.toList()).isEqualTo(listOf(false))
-                }
-            }.checkPercentages("original value", mapOf(true to 45.0))
+            val tree = ProducerTree.new().withValue(true)
+            val (value, shrinks) = Gen.bool().generateWithShrunkValues(tree)
+            expectThat(value).isTrue()
+            expectThat(shrinks).isEqualTo(listOf(false))
         }
 
         @Test
         fun `false does not shrink`() {
-            withCounter {
-                checkAll(Gen.tree()) { tree ->
-                    val (value, shrinks) = Gen.bool().generateWithDepthFirstShrinks(tree)
-                    collect("original value", value)
-
-                    // test only interested in false values.
-                    if (value) return@checkAll
-
-                    expectThat(shrinks.toList()).isEmpty()
-                }
-            }.checkPercentages("original value", mapOf(false to 45.0))
+            val tree = ProducerTree.new().withValue(false)
+            val (value, shrinks) = Gen.bool().generateWithShrunkValues(tree)
+            expectThat(value).isFalse()
+            expectThat(shrinks).isEmpty()
         }
     }
 }

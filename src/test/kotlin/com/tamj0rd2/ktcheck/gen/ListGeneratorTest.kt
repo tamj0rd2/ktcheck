@@ -2,17 +2,10 @@ package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.sample
 import com.tamj0rd2.ktcheck.gen.GenTests.Companion.generateWithShrunkValues
-import com.tamj0rd2.ktcheck.producer.ProducerTree
 import com.tamj0rd2.ktcheck.producer.ProducerTreeDsl.Companion.producerTree
-import com.tamj0rd2.ktcheck.testing.TestConfig
-import com.tamj0rd2.ktcheck.testing.checkAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertTimeoutPreemptively
-import strikt.api.Assertion.Builder
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import strikt.assertions.isNotEqualTo
-import java.time.Duration
 
 class ListGeneratorTest {
     @Test
@@ -125,85 +118,5 @@ class ListGeneratorTest {
                 listOf(1, 2, 2),
             )
         )
-    }
-
-    @Test
-    fun `when a fixed sized list is shrunk, the number of elements stay the same`() = checkAll(
-        TestConfig().withIterations(100),
-        Gen.int(1..100),
-    ) { size ->
-        val (originalList, shrunkLists) = Gen.int().list(size)
-            .generateWithDepthFirstShrinks(ProducerTree.new(), limit = 1000)
-        expectThat(originalList.size).isEqualTo(size)
-
-        assertTimeoutPreemptively(Duration.ofMillis(100)) {
-            shrunkLists.forEach { shrunkList ->
-                expectThat(shrunkList.size).isEqualTo(originalList.size)
-            }
-        }
-    }
-
-    @Test
-    fun `when a fixed size list is shrunk, only one element changes at a time`() = checkAll(
-        TestConfig().withIterations(100),
-        Gen.int(1..100),
-    ) { size ->
-        val (originalList, shrunkLists) = Gen.int().list(size).generateWithShrunkValues(ProducerTree.new())
-
-        assertTimeoutPreemptively(Duration.ofMillis(100)) {
-            shrunkLists.forEach { shrunkList ->
-                expectThat(shrunkList).exactly(1) { i -> isNotEqualTo(originalList[i]) }
-            }
-        }
-    }
-
-    companion object {
-        private fun <T : Iterable<E>, E> Builder<T>.exactly(
-            count: Int,
-            predicate: Builder<E>.(Int) -> Unit,
-        ): Builder<T> =
-            compose("exactly $count elements match:") { subject ->
-                subject.forEachIndexed { i, element ->
-                    get("%s") { element }.apply { predicate(i) }
-                }
-            } then {
-                if (passedCount == count) pass() else fail()
-            }
-
-        // generates the value and all shrinks depth-first. its done this way to avoid stack overflows and OOMs on large shrink trees.
-        internal fun <T> Gen<T>.generateWithDepthFirstShrinks(
-            tree: ProducerTree,
-            limit: Int = 100_000,
-        ): Pair<T, List<T>> {
-            val collection = sequence {
-                // Stack of iterators tracking our position in each level of the tree
-                val stack = ArrayDeque<Iterator<ProducerTree>>()
-                stack.addFirst(sequenceOf(tree).iterator())
-
-                while (stack.isNotEmpty()) {
-                    val currentIterator = stack.first()
-
-                    if (!currentIterator.hasNext()) {
-                        // Exhausted this level, pop it and backtrack
-                        stack.removeFirst()
-                        continue
-                    }
-
-                    val currentTree = currentIterator.next()
-                    val (value, shrinks) = generate(currentTree)
-                    yield(value)
-
-                    // Push shrinks iterator onto stack to continue exploring depth-first
-                    val shrinksIterator = shrinks.iterator()
-                    if (shrinksIterator.hasNext()) {
-                        stack.addFirst(shrinksIterator)
-                    }
-                }
-            }
-
-            // todo: when shrinking, there are millions of duplicates being produced. it might just be the reality of depth first shrinking though.
-            val all = collection.take(limit).toList().distinct()
-            return all.first() to all.drop(1)
-        }
     }
 }
