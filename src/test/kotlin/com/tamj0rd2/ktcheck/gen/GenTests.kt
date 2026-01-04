@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.gen
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
 import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateWithDepthFirstShrinks
 import com.tamj0rd2.ktcheck.producer.ProducerTree
+import com.tamj0rd2.ktcheck.producer.ProducerTreeDsl.Companion.producerTree
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -45,9 +46,10 @@ class GenTests {
             val bigGen = Gen.int(10..20)
             val gen = smallGen.flatMap { a -> bigGen.map { b -> a + b } }
 
-            val tree = ProducerTree.new()
-                .withLeftValue(5)
-                .withRightValue(20)
+            val tree = producerTree {
+                left(5)
+                right(20)
+            }
 
             val value = gen.generate(tree).value
             expectThat(value).isEqualTo(25)
@@ -59,9 +61,10 @@ class GenTests {
             val biggerGen = Gen.int(4..6)
             val gen = smallGen.flatMap { a -> biggerGen.map { b -> a + b } }
 
-            val tree = ProducerTree.new()
-                .withLeftValue(3)
-                .withRightValue(6)
+            val tree = producerTree {
+                left(3)
+                right(6)
+            }
 
             val (value, shrinks) = gen.generateWithShrunkValues(tree)
             expectThat(value).isEqualTo(9)
@@ -82,9 +85,10 @@ class GenTests {
             val bigGen = Gen.int(10..20)
             val gen = smallGen.combineWith(bigGen) { a, b -> a + b }
 
-            val tree = ProducerTree.new()
-                .withLeftValue(5)
-                .withRightValue(20)
+            val tree = producerTree {
+                left(5)
+                right(20)
+            }
 
             val value = gen.generate(tree).value
             expectThat(value).isEqualTo(25)
@@ -96,9 +100,10 @@ class GenTests {
             val bigGen = Gen.int(4..6)
             val gen = smallGen.combineWith(bigGen) { a, b -> a + b }
 
-            val tree = ProducerTree.new()
-                .withLeftValue(3)
-                .withRightValue(6)
+            val tree = producerTree {
+                left(3)
+                right(6)
+            }
 
             val (value, shrinks) = gen.generateWithDepthFirstShrinks(tree)
             expectThat(value).isEqualTo(9)

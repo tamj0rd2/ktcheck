@@ -18,15 +18,8 @@ internal data class ProducerTree private constructor(
     }
 
     internal fun withValue(value: Any) = copy(producer = PredeterminedValue(value))
-
     internal fun withLeft(left: ProducerTree) = copy(lazyLeft = lazyOf(left))
     internal fun withRight(right: ProducerTree) = copy(lazyRight = lazyOf(right))
-
-    internal fun withLeft(block: ProducerTree.() -> ProducerTree) = withLeft(block(left))
-    internal fun withRight(block: ProducerTree.() -> ProducerTree) = withRight(block(right))
-
-    internal fun withLeftValue(value: Any) = withLeft { withValue(value) }
-    internal fun withRightValue(value: Any) = withRight { withValue(value) }
 
     internal fun combineShrinks(
         leftShrinks: Sequence<ProducerTree>,
@@ -72,5 +65,51 @@ internal data class ProducerTree private constructor(
         }
 
         return visualise(tree = this, indent = "", prefix = "", isLast = null, currentDepth = 0)
+    }
+}
+
+internal class ProducerTreeDsl(private var subject: ProducerTree) {
+    fun left(tree: ProducerTree) {
+        subject = subject.withLeft(tree)
+    }
+
+    fun left(value: Any) {
+        left(subject.left.withValue(value))
+    }
+
+    fun left(block: ProducerTreeDsl.() -> Unit) {
+        val newLeftTree = ProducerTreeDsl(subject.left).apply(block).subject
+        subject = subject.withLeft(newLeftTree)
+    }
+
+    fun left(value: Any, block: ProducerTreeDsl.() -> Unit) {
+        left(value)
+        left(block)
+    }
+
+    fun right(tree: ProducerTree) {
+        subject = subject.withRight(tree)
+    }
+
+    fun right(value: Any) {
+        right(subject.right.withValue(value))
+    }
+
+    fun right(block: ProducerTreeDsl.() -> Unit) {
+        val newRightTree = ProducerTreeDsl(subject.right).apply(block).subject
+        subject = subject.withRight(newRightTree)
+    }
+
+    fun right(value: Any, block: ProducerTreeDsl.() -> Unit) {
+        right(value)
+        right(block)
+    }
+
+    companion object {
+        fun producerTree(seed: Seed = Seed.random(), block: ProducerTreeDsl.() -> Unit): ProducerTree =
+            ProducerTree.new(seed).copy(block)
+
+        fun ProducerTree.copy(block: ProducerTreeDsl.() -> Unit): ProducerTree =
+            ProducerTreeDsl(this).apply(block).subject
     }
 }

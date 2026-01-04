@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.gen
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.sample
 import com.tamj0rd2.ktcheck.gen.GenTests.Companion.generateWithShrunkValues
 import com.tamj0rd2.ktcheck.producer.ProducerTree
+import com.tamj0rd2.ktcheck.producer.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.testing.TestConfig
 import com.tamj0rd2.ktcheck.testing.checkAll
 import org.junit.jupiter.api.Test
@@ -23,9 +24,12 @@ class ListGeneratorTest {
     fun `shrinks a list of 1 element`() {
         val gen = Gen.int(0..4).list()
 
-        val tree = ProducerTree.new()
-            .withLeftValue(1)
-            .withRight { withLeftValue(4) }
+        val tree = producerTree {
+            left(1)
+            right {
+                left(4)
+            }
+        }
 
         val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
         expectThat(value).isEqualTo(listOf(4))
@@ -46,15 +50,15 @@ class ListGeneratorTest {
     fun `shrinks a list of 2 elements`() {
         val gen = Gen.int(0..5).list()
 
-        val tree = ProducerTree.new()
-            .withLeftValue(2)
-            .withRight {
-                this
-                    .withLeftValue(1)
-                    .withRight {
-                        withLeftValue(4)
-                    }
+        val tree = producerTree {
+            left(2)
+            right {
+                left(1)
+                right {
+                    left(4)
+                }
             }
+        }
 
         val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
         expectThat(value).isEqualTo(listOf(1, 4))
@@ -85,19 +89,18 @@ class ListGeneratorTest {
     fun `shrinks a list of 3 elements`() {
         val gen = Gen.int(0..4).list()
 
-        val tree = ProducerTree.new()
-            .withLeftValue(3)
-            .withRight {
-                this
-                    .withLeftValue(1)
-                    .withRight {
-                        this
-                            .withLeftValue(2)
-                            .withRight {
-                                withLeftValue(3)
-                            }
+        val tree = producerTree {
+            left(3)
+            right {
+                left(1)
+                right {
+                    left(2)
+                    right {
+                        left(3)
                     }
+                }
             }
+        }
 
         val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
         expectThat(value).isEqualTo(listOf(1, 2, 3))
@@ -106,7 +109,7 @@ class ListGeneratorTest {
         // 2 shrinks to 0 and 1
         // 1 shrinks to 0
 
-        expectThat(shrunkValues.toList()).isEqualTo(
+        expectThat(shrunkValues).isEqualTo(
             listOf(
                 // reduce list size (0)
                 listOf(),

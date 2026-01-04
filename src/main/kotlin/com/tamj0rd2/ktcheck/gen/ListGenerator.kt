@@ -1,6 +1,7 @@
 package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.producer.ProducerTree
+import com.tamj0rd2.ktcheck.producer.ProducerTreeDsl.Companion.copy
 
 private class ListGenerator<T>(
     private val sizeRange: IntRange,
@@ -16,14 +17,17 @@ private class ListGenerator<T>(
                 val sizeShrinks = shrink(size, sizeRange).filter { it in sizeRange && it != 0 }
 
                 // this and the condition above prevents yielding duplicate empty list shrinks
-                if (size != 0 && 0 in sizeRange) yield(tree.withLeftValue(0))
+                if (size != 0 && 0 in sizeRange) yield(tree.copy { left(value = 0) })
 
                 // reduce size - elements are "removed" from the end of the list
-                yieldAll(sizeShrinks.map { tree.withLeftValue(it) })
+                yieldAll(sizeShrinks.map { tree.copy { left(value = it) } })
                 yieldAll(
                     sizeShrinks.map {
                         // reduces size by "removing" elements from the start of the list
-                        tree.withLeftValue(it).withRight(tree.traverseRight(1 + size - it))
+                        tree.copy {
+                            left(value = it)
+                            right(tree = tree.traverseRight(1 + size - it))
+                        }
                     }
                 )
 

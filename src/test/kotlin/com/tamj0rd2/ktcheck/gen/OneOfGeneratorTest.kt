@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.gen
 import com.tamj0rd2.ktcheck.gen.Gen.Companion.samples
 import com.tamj0rd2.ktcheck.gen.ListGeneratorTest.Companion.generateWithDepthFirstShrinks
 import com.tamj0rd2.ktcheck.producer.ProducerTree
+import com.tamj0rd2.ktcheck.producer.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.producer.Seed
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
 import org.junit.jupiter.api.Test
@@ -28,9 +29,10 @@ class OneOfGeneratorTest {
             Gen.int(0..4).map { it as Any },
         )
 
-        val tree = ProducerTree.new(Seed(1))
-            .withLeftValue(1)
-            .withRightValue(4)
+        val tree = producerTree(Seed(1)) {
+            left(1)
+            right(4)
+        }
 
         val (originalValue, shrinks) = multiTypeGen.generateWithDepthFirstShrinks(tree)
 
