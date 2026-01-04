@@ -19,14 +19,8 @@ internal data class ProducerTree private constructor(
     val left: ProducerTree by lazyLeft
     val right: ProducerTree by lazyRight
 
-    internal fun withValue(value: Int) =
-        copy(producer = PredeterminedValue(Primitive.Int(value)))
-
-    internal fun withValue(value: Boolean) =
-        copy(producer = PredeterminedValue(Primitive.Bool(value)))
-
-    internal fun withValue(value: Char) =
-        copy(producer = PredeterminedValue(Primitive.Char(value)))
+    internal fun withValue(value: Any) =
+        copy(producer = PredeterminedValue(value))
 
     internal fun withLeft(left: ProducerTree) = copy(lazyLeft = lazyOf(left))
 

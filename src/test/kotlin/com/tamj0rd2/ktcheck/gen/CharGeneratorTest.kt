@@ -49,7 +49,7 @@ class CharGeneratorTest {
         @Test
         fun `generates a variety of characters over multiple runs`() {
             withCounter {
-                Gen.char(('a'..'z').toList()).samples().take(10000).forEach { value ->
+                Gen.char(('a'..'z').toList()).samples().take(100000).forEach { value ->
                     collect(
                         when (value) {
                             in 'a'..'i' -> "a-i"

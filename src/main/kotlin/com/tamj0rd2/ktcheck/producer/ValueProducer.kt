@@ -20,24 +20,22 @@ internal value class RandomValueProducer(val seed: Seed) : ValueProducer {
     override fun char(chars: Set<Char>): Char = chars.random(random)
 }
 
-internal sealed interface Primitive {
-    val value: Any?
-
-    @JvmInline
-    value class Int(override val value: kotlin.Int) : Primitive
-
-    @JvmInline
-    value class Bool(override val value: Boolean) : Primitive
-
-    @JvmInline
-    value class Char(override val value: kotlin.Char) : Primitive
-}
-
 @JvmInline
-internal value class PredeterminedValue(private val primitive: Primitive) : ValueProducer {
-    override fun int(range: IntRange): Int = (primitive as Primitive.Int).value
+internal value class PredeterminedValue(val value: Any) : ValueProducer {
+    init {
+        when (value) {
+            is Int,
+            is Boolean,
+            is Char,
+                -> Unit
 
-    override fun bool(): Boolean = (primitive as Primitive.Bool).value
+            else -> throw IllegalArgumentException("Unsupported predetermined value type: ${value::class.simpleName}")
+        }
+    }
 
-    override fun char(chars: Set<Char>): Char = (primitive as Primitive.Char).value
+    override fun int(range: IntRange): Int = value as Int
+
+    override fun bool(): Boolean = value as Boolean
+
+    override fun char(chars: Set<Char>): Char = value as Char
 }
