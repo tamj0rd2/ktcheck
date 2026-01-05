@@ -2,10 +2,10 @@ package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.stats.Counter
 import com.tamj0rd2.ktcheck.stats.Counter.Companion.withCounter
+import com.tamj0rd2.ktcheck.testing.NoOpTestReporter
 import com.tamj0rd2.ktcheck.testing.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.testing.TestByBool
 import com.tamj0rd2.ktcheck.testing.TestConfig
-import com.tamj0rd2.ktcheck.testing.TestReporter
 import com.tamj0rd2.ktcheck.testing.checkAll
 import com.tamj0rd2.ktcheck.testing.forAll
 import org.junit.jupiter.api.Test
@@ -108,10 +108,5 @@ class ShrinkingChallenges {
             |Original args: $shortenedOriginalArgs
             |Shrunk args: ${smallestResult.args}
             """.trimMargin()
-    }
-
-    private object NoOpTestReporter : TestReporter {
-        override fun reportSuccess(iterations: Int) {}
-        override fun reportFailure(exception: PropertyFalsifiedException) {}
     }
 }

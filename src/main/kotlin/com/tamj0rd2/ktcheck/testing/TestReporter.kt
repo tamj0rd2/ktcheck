@@ -8,6 +8,11 @@ interface TestReporter {
     fun reportFailure(exception: PropertyFalsifiedException)
 }
 
+object NoOpTestReporter : TestReporter {
+    override fun reportSuccess(iterations: Int) {}
+    override fun reportFailure(exception: PropertyFalsifiedException) {}
+}
+
 class PrintingTestReporter(
     private val printStream: PrintStream = System.out,
     private val showAllDiagnostics: Boolean = true,
