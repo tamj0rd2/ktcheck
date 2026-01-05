@@ -67,13 +67,9 @@ private class ListGenerator<T>(
         index: Int = 0,
         values: List<T> = emptyList(),
         shrinksByIndex: List<Sequence<ProducerTree>> = emptyList(),
-        retriesRemaining: Int = 1000,
+        retriesRemaining: Int = MAX_DISTINCT_ATTEMPTS,
     ): GenResult<List<T>> {
         if (index == targetSize) return GenResult(value = values, shrinks = rootTree.combineShrinks(shrinksByIndex))
-
-        if (distinct && retriesRemaining == 0) {
-            throw ImpossibleSetSize(targetSize, values.size, 1000)
-        }
 
         val (value, shrinks) = gen.generate(currentTree.left, mode)
 
@@ -81,8 +77,16 @@ private class ListGenerator<T>(
         if (distinct && value in values) {
             // If the current list size is within the acceptable range, accept the smaller list
             // This prevents generating more complex values to fill back up to target size
-            if (values.size in sizeRange) {
+            if (mode == GenMode.Shrinking || values.size in sizeRange) {
                 return GenResult(value = values, shrinks = rootTree.combineShrinks(shrinksByIndex))
+            }
+
+            if (retriesRemaining <= 0) {
+                throw DistinctCollectionSizeImpossible(
+                    targetSize = targetSize,
+                    achievedSize = values.size,
+                    attempts = MAX_DISTINCT_ATTEMPTS,
+                )
             }
 
             // Otherwise, skip duplicate and try to reach target size
@@ -106,7 +110,7 @@ private class ListGenerator<T>(
             index = index + 1,
             values = values + value,
             shrinksByIndex = shrinksByIndex + listOf(shrinks),
-            retriesRemaining = retriesRemaining,
+            retriesRemaining = MAX_DISTINCT_ATTEMPTS,
         )
     }
 
@@ -138,9 +142,13 @@ private class ListGenerator<T>(
             }
         }
     }
+
+    companion object {
+        private const val MAX_DISTINCT_ATTEMPTS = 1000
+    }
 }
 
-class ImpossibleSetSize(targetSize: Int, achievedSize: Int, attempts: Int) : GenerationException(
+class DistinctCollectionSizeImpossible(targetSize: Int, achievedSize: Int, attempts: Int) : GenerationException(
     "Failed to generate a list of size $targetSize with distinct elements after $attempts attempts. Only achieved size $achievedSize."
 )
 
