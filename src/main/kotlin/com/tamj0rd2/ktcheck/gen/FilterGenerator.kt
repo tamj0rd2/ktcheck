@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.gen.PredicateResult.Failed
 import com.tamj0rd2.ktcheck.gen.PredicateResult.Succeeded
-import com.tamj0rd2.ktcheck.producer.ProducerTree
 import kotlin.reflect.KClass
 
 private sealed interface PredicateResult<T> {
@@ -17,14 +16,14 @@ private sealed interface PredicateResult<T> {
 
 private class FilterGenerator<T>(
     private val threshold: Int,
-    private val getResult: (ProducerTree) -> PredicateResult<T>,
+    private val getResult: GenContext.() -> PredicateResult<T>,
 ) : Gen<T>() {
-    override fun generate(tree: ProducerTree): GenResult<T> {
+    override fun GenContext.generate(): GenResult<T> {
         var lastFailure: Exception? = null
 
         return generateSequence(tree) { it.right }
             .take(threshold)
-            .map { getResult(it.left) }
+            .map { getResult(GenContext(it.left, mode)) }
             .onEach { if (it is Failed) lastFailure = it.failure }
             .filterIsInstance<Succeeded<T>>()
             .map { (genResult) -> genResult.copy(shrinks = emptySequence()) }
@@ -46,8 +45,9 @@ fun <T> Gen<T>.filter(predicate: (T) -> Boolean) = filter(100, predicate)
  * Filters generated values using the given [predicate]. Shrinking is not supported when using this generator. Instead,
  * use generators that only generate valid values.
  */
-fun <T> Gen<T>.filter(threshold: Int, predicate: (T) -> Boolean): Gen<T> = FilterGenerator(threshold) { tree ->
-    val result = generate(tree)
+fun <T> Gen<T>.filter(threshold: Int, predicate: (T) -> Boolean): Gen<T> =
+    FilterGenerator(threshold) {
+        val result = generate(tree, mode)
     if (predicate(result.value)) Succeeded(result) else Failed()
 }
 
@@ -56,9 +56,9 @@ fun <T> Gen<T>.filter(threshold: Int, predicate: (T) -> Boolean): Gen<T> = Filte
  * Instead, use generators that only generate valid values.
  */
 fun <T> Gen<T>.ignoreExceptions(klass: KClass<out Exception>, threshold: Int = 100): Gen<T> =
-    FilterGenerator(threshold) { tree ->
+    FilterGenerator(threshold) {
         try {
-            val result = generate(tree)
+            val result = generate(tree, mode)
             Succeeded(result)
         } catch (e: Exception) {
             when {

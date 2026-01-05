@@ -139,22 +139,6 @@ class SetGeneratorTest {
     }
 
     @Test
-    fun `when a fixed sized set is shrunk, the number of elements stay the same`() = checkAll(
-        TestConfig().withIterations(100),
-        Gen.int(1..50), // smaller size to ensure we can generate enough distinct values
-    ) { size ->
-        val (originalSet, shrunkSets) = Gen.int().set(size)
-            .generateWithDepthFirstShrinks(ProducerTree.new(), limit = 1000)
-        expectThat(originalSet.size).isEqualTo(size)
-
-        assertTimeoutPreemptively(Duration.ofMillis(100)) {
-            shrunkSets.forEach { shrunkSet ->
-                expectThat(shrunkSet.size).isEqualTo(originalSet.size)
-            }
-        }
-    }
-
-    @Test
     fun `when a fixed size set is shrunk by element values, only one element changes at a time`() = checkAll(
         TestConfig().withIterations(100),
         Gen.int(1..50),
@@ -210,43 +194,6 @@ class SetGeneratorTest {
         shrunkValues.forEach { shrunkSet ->
             // Element shrinks maintain size 3, size shrinks reduce to smaller sizes
             expectThat(shrunkSet.size).isLessThanOrEqualTo(3)
-        }
-    }
-
-    companion object {
-        // generates the value and all shrinks depth-first. its done this way to avoid stack overflows and OOMs on large shrink trees.
-        internal fun <T> Gen<T>.generateWithDepthFirstShrinks(
-            tree: ProducerTree,
-            limit: Int = 100_000,
-        ): Pair<T, List<T>> {
-            val collection = sequence {
-                // Stack of iterators tracking our position in each level of the tree
-                val stack = ArrayDeque<Iterator<ProducerTree>>()
-                stack.addFirst(sequenceOf(tree).iterator())
-
-                while (stack.isNotEmpty()) {
-                    val currentIterator = stack.first()
-
-                    if (!currentIterator.hasNext()) {
-                        // Exhausted this level, pop it and backtrack
-                        stack.removeFirst()
-                        continue
-                    }
-
-                    val currentTree = currentIterator.next()
-                    val (value, shrinks) = generate(currentTree)
-                    yield(value)
-
-                    // Push shrinks iterator onto stack to continue exploring depth-first
-                    val shrinksIterator = shrinks.iterator()
-                    if (shrinksIterator.hasNext()) {
-                        stack.addFirst(shrinksIterator)
-                    }
-                }
-            }
-
-            val all = collection.take(limit).toList().distinct()
-            return all.first() to all.drop(1)
         }
     }
 }

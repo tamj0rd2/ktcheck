@@ -6,7 +6,7 @@ import com.tamj0rd2.ktcheck.producer.Seed
 private data class IntGenerator(
     private val range: IntRange,
 ) : Gen<Int>() {
-    override fun generate(tree: ProducerTree): GenResult<Int> {
+    override fun GenContext.generate(): GenResult<Int> {
         val value = tree.producer.int(range)
         return GenResult(
             value = value,

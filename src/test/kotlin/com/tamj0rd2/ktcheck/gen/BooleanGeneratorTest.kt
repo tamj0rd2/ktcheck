@@ -30,7 +30,7 @@ class BooleanGeneratorTest {
         fun `using the same seed generates the same value`() {
             val gen = Gen.bool()
             val tree = ProducerTree.new()
-            val values = List(1000) { gen.generate(tree).value }
+            val values = List(1000) { gen.generate(tree, GenMode.Initial).value }
             val firstValue = values.first()
             expectThat(values.drop(1)).all { isEqualTo(firstValue) }
         }

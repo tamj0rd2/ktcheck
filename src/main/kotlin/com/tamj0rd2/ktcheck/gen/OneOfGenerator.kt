@@ -1,7 +1,5 @@
 package com.tamj0rd2.ktcheck.gen
 
-import com.tamj0rd2.ktcheck.producer.ProducerTree
-
 /**
  * A generator that chooses between multiple generators using an index. Shrinks towards
  * earlier specified generators.
@@ -23,9 +21,9 @@ private class OneOfGenerator<T>(
         if (gens.isEmpty()) throw OneOfEmpty()
     }
 
-    override fun generate(tree: ProducerTree): GenResult<T> {
-        val (index, indexShrinks) = Gen.int(0..<gens.size).generate(tree.left)
-        val (value, valueShrinks) = gens[index].generate(tree.right)
+    override fun GenContext.generate(): GenResult<T> {
+        val (index, indexShrinks) = Gen.int(0..<gens.size).generate(tree.left, mode)
+        val (value, valueShrinks) = gens[index].generate(tree.right, mode)
 
         val shrinks = sequence {
             // allows switching between generators by shrinking the index with a fresh (undetermined) right tree

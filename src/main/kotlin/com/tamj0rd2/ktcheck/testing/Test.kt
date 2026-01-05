@@ -1,6 +1,7 @@
 package com.tamj0rd2.ktcheck.testing
 
 import com.tamj0rd2.ktcheck.gen.Gen
+import com.tamj0rd2.ktcheck.gen.GenMode
 import com.tamj0rd2.ktcheck.gen.GenerationException
 import com.tamj0rd2.ktcheck.producer.ProducerTree
 
@@ -18,7 +19,7 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
 
     fun runIteration(iteration: Int) {
         val sampleTree = ProducerTree.new(config.seed.next(iteration))
-        val (testResult, shrinks) = testResultsGen.generate(sampleTree)
+        val (testResult, shrinks) = testResultsGen.generate(sampleTree, GenMode.Initial)
 
         when (testResult) {
             is TestResult.Success -> return
@@ -61,7 +62,7 @@ private tailrec fun <T> Gen<TestResult<T>>.getSmallestCounterExample(
     if (!iterator.hasNext()) return testResult to steps
 
     val genResult = try {
-        generate(iterator.next())
+        generate(iterator.next(), GenMode.Shrinking)
     } catch (_: GenerationException) {
         null
     }

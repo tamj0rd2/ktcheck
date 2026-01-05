@@ -13,18 +13,7 @@ class GenTests {
     @Nested
     inner class MapTests {
         @Test
-        fun `map transforms generated values`() {
-            val gen = Gen.int(0..10).map { it * 2 }
-
-            val tree = ProducerTree.new()
-            val result = gen.generate(tree)
-            val originalValue = Gen.int(0..10).generate(tree).value
-
-            expectThat(result.value).isEqualTo(originalValue * 2)
-        }
-
-        @Test
-        fun `map preserves shrinks`() {
+        fun `map maps the original value and shrinks`() {
             val originalGen = Gen.int(0..10)
             val doublingGen = originalGen.map { it * 2 }
 
@@ -50,7 +39,7 @@ class GenTests {
                 right(20)
             }
 
-            val value = gen.generate(tree).value
+            val value = gen.generate(tree, GenMode.Initial).value
             expectThat(value).isEqualTo(25)
         }
 
@@ -89,7 +78,7 @@ class GenTests {
                 right(20)
             }
 
-            val value = gen.generate(tree).value
+            val value = gen.generate(tree, GenMode.Initial).value
             expectThat(value).isEqualTo(25)
         }
 
@@ -132,8 +121,8 @@ class GenTests {
     companion object {
         /** For testing purposes only: generates a value along with all its shrunk values as a list. */
         internal fun <T> Gen<T>.generateWithShrunkValues(tree: ProducerTree): Pair<T, List<T>> {
-            val (value, shrinks) = generate(tree)
-            return value to shrinks.map { generate(it).value }.toList()
+            val (value, shrinks) = generate(tree, GenMode.Initial)
+            return value to shrinks.map { generate(it, GenMode.Shrinking).value }.toList()
         }
     }
 }

@@ -8,9 +8,9 @@ private class ListGenerator<T>(
     private val distinct: Boolean,
     private val gen: Gen<T>,
 ) : Gen<List<T>>() {
-    override fun generate(tree: ProducerTree): GenResult<List<T>> {
+    override fun GenContext.generate(): GenResult<List<T>> {
         val size = tree.left.producer.int(sizeRange)
-        val (list, listValueShrinks) = listN(rootTree = tree.right, targetSize = size)
+        val (list, listValueShrinks) = listN(rootTree = tree.right, targetSize = size, mode = mode)
 
         return GenResult(
             value = list,
@@ -62,6 +62,7 @@ private class ListGenerator<T>(
     private tailrec fun listN(
         rootTree: ProducerTree,
         targetSize: Int,
+        mode: GenMode,
         currentTree: ProducerTree = rootTree,
         index: Int = 0,
         values: List<T> = emptyList(),
@@ -74,7 +75,7 @@ private class ListGenerator<T>(
             throw ImpossibleSetSize(targetSize, values.size, 1000)
         }
 
-        val (value, shrinks) = gen.generate(currentTree.left)
+        val (value, shrinks) = gen.generate(currentTree.left, mode)
 
         // Handle duplicates when distinct=true
         if (distinct && value in values) {
@@ -88,6 +89,7 @@ private class ListGenerator<T>(
             return listN(
                 rootTree = rootTree,
                 targetSize = targetSize,
+                mode = mode,
                 currentTree = currentTree.right,
                 index = index,
                 values = values,
@@ -99,6 +101,7 @@ private class ListGenerator<T>(
         return listN(
             rootTree = rootTree,
             targetSize = targetSize,
+            mode = mode,
             currentTree = currentTree.right,
             index = index + 1,
             values = values + value,
