@@ -48,11 +48,9 @@ class PrintingTestReporter(
         appendLine("-----------------")
         result.args.forEachIndexed { index, arg -> appendLine("Arg $index -> $arg") }
 
-        if (showAllDiagnostics) {
-            appendLine()
-            appendLine("${prefix}Failure:")
-            appendLine("-----------------")
-            appendLine(result.failure)
-        }
+        appendLine()
+        appendLine("${prefix}Failure:")
+        appendLine("-----------------")
+        appendLine(result.failure)
     }
 }

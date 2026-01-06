@@ -88,7 +88,7 @@ class PropertyFalsifiedException(
     val originalResult: TestResult.Failure<*>,
     val shrunkResult: TestResult.Failure<*>?,
     val shrinkSteps: Int,
-) : AssertionError() {
+) : AssertionError("Property falsified") {
     internal val smallestResult = shrunkResult ?: originalResult
     override val cause: Throwable = smallestResult.failure
 }
