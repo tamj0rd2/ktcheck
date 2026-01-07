@@ -1,9 +1,6 @@
 package com.tamj0rd2.ktcheck.gen
 
 import com.tamj0rd2.ktcheck.producer.ProducerTree
-import com.tamj0rd2.ktcheck.util.Tuple2
-import com.tamj0rd2.ktcheck.util.Tuple3
-import com.tamj0rd2.ktcheck.util.Tuple4
 
 private class CombinerGenerator<T>(
     private val block: CombinerContext.() -> T,
@@ -63,13 +60,13 @@ fun <T> Gen.Companion.combine(block: CombinerContext.() -> T): Gen<T> = Combiner
  *
  * Example:
  * ```
- * // Gen<Tuple2<Int, Boolean>>
- * val gen = Gen.int() + Gen.boolean()
- * // Gen<Tuple3<Int, Boolean, String>>
+ * // Gen<Pair<Int, Boolean>>
+ * val gen2 = Gen.int() + Gen.boolean()
+ * // Gen<Triple<Int, Boolean, String>>
  * val gen3 = Gen.int() + Gen.boolean() + Gen.string()
  * ```
  *
- * To combine more than 5 generators, use [Gen.Companion.combine] instead.
+ * To combine more than 3 generators, use [Gen.Companion.combine] instead.
  *
  * For dependent generation (where the second generator depends on the first value),
  * use [flatMap] or [Gen.Companion.combine] instead.
@@ -77,19 +74,9 @@ fun <T> Gen.Companion.combine(block: CombinerContext.() -> T): Gen<T> = Combiner
 @JvmName("zip2")
 infix operator fun <T1, T2> Gen<T1>.plus(
     nextGen: Gen<T2>,
-) = combineWith(nextGen) { first, second -> Tuple2(first, second) }
+) = combineWith(nextGen, ::Pair)
 
 @JvmName("zip3")
-infix operator fun <T1, T2, T3> Gen<Tuple2<T1, T2>>.plus(
+infix operator fun <T1, T2, T3> Gen<Pair<T1, T2>>.plus(
     nextGen: Gen<T3>,
-) = combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-@JvmName("zip4")
-infix operator fun <T1, T2, T3, T4> Gen<Tuple3<T1, T2, T3>>.plus(
-    nextGen: Gen<T4>,
-) = combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-@JvmName("zip5")
-infix operator fun <T1, T2, T3, T4, T5> Gen<Tuple4<T1, T2, T3, T4>>.plus(
-    nextGen: Gen<T5>,
-) = combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+) = combineWith(nextGen) { pair, nextValue -> Triple(pair.first, pair.second, nextValue) }

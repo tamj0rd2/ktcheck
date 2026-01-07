@@ -1,6 +1,5 @@
 package com.tamj0rd2.ktcheck.testing
 
-import com.tamj0rd2.ktcheck.util.Tuple
 import java.io.PrintStream
 
 interface TestReporter {
@@ -48,7 +47,6 @@ class PrintingTestReporter(
         appendLine("${prefix}Arguments:")
         appendLine("-----------------")
         when (result.input) {
-            is Tuple -> result.input.values.forEachIndexed { index, arg -> appendLine("Arg $index -> $arg") }
             is Pair<*, *> -> {
                 appendLine("1st -> ${result.input.first}")
                 appendLine("2nd -> ${result.input.second}")

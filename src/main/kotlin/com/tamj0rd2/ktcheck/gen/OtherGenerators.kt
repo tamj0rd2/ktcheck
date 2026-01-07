@@ -15,4 +15,4 @@ fun Gen.Companion.char(
 fun Gen<Char>.string(size: IntRange): Gen<String> = list(size).map { it.joinToString("") }
 fun Gen<Char>.string(size: Int) = string(size..size)
 
-fun Gen.Companion.uuid(): Gen<UUID> = (Gen.long() + Gen.long()).map { UUID(it.val1, it.val2) }
+fun Gen.Companion.uuid(): Gen<UUID> = (Gen.long() + Gen.long()).map { UUID(it.first, it.second) }
