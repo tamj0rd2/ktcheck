@@ -13,5 +13,6 @@ fun Gen.Companion.char(
 ): Gen<Char> = Gen.oneOf(chars.distinct().sorted())
 
 fun Gen<Char>.string(size: IntRange): Gen<String> = list(size).map { it.joinToString("") }
+fun Gen<Char>.string(size: Int) = string(size..size)
 
 fun Gen.Companion.uuid(): Gen<UUID> = (Gen.long() + Gen.long()).map { UUID(it.val1, it.val2) }
