@@ -12,4 +12,6 @@ fun Gen.Companion.char(
     chars: Iterable<Char> = Char.MIN_VALUE..Char.MAX_VALUE,
 ): Gen<Char> = Gen.oneOf(chars.distinct().sorted())
 
+fun Gen<Char>.string(size: IntRange): Gen<String> = list(size).map { it.joinToString("") }
+
 fun Gen.Companion.uuid(): Gen<UUID> = (Gen.long() + Gen.long()).map { UUID(it.val1, it.val2) }

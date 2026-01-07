@@ -31,7 +31,6 @@ private class ListGenerator<T>(
                         }
                     }
                 )
-
                 yieldAll(listValueShrinks.map { tree.withRight(it) })
             }
         )
@@ -112,35 +111,6 @@ private class ListGenerator<T>(
             shrinksByIndex = shrinksByIndex + listOf(shrinks),
             retriesRemaining = MAX_DISTINCT_ATTEMPTS,
         )
-    }
-
-    /**
-     * Combines shrinks from values generated using the left-right tree traversal pattern.
-     *
-     * Each shrink applies to one element at a specific index, while keeping other elements unchanged.
-     * This enables element-wise shrinking where each element can shrink independently.
-     *
-     * @param shrinksByIndex A list of shrink sequences, one for each list element position
-     */
-    private fun ProducerTree.combineShrinks(
-        shrinksByIndex: List<Sequence<ProducerTree>>,
-    ): Sequence<ProducerTree> {
-        fun reconstructTreeWithShrinkAtIndex(
-            tree: ProducerTree,
-            index: Int,
-            shrunkTree: ProducerTree,
-        ): ProducerTree =
-            if (index == 0) {
-                tree.withLeft(shrunkTree)
-            } else {
-                tree.withRight(reconstructTreeWithShrinkAtIndex(tree.right, index - 1, shrunkTree))
-            }
-
-        return shrinksByIndex.asSequence().flatMapIndexed { i, shrinks ->
-            shrinks.map { shrunkTree ->
-                reconstructTreeWithShrinkAtIndex(this, i, shrunkTree)
-            }
-        }
     }
 
     companion object {

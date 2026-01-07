@@ -12,6 +12,21 @@ import com.tamj0rd2.ktcheck.util.Tuple8
 import com.tamj0rd2.ktcheck.util.Tuple9
 import com.tamj0rd2.ktcheck.util.tuple
 
+/**
+ * Combines two independent generators into a single generator that produces a tuple of both values.
+ * Shrinking is performed independently on each component.
+ *
+ * Example:
+ * ```
+ * // Gen<Tuple2<Int, Boolean>>
+ * val gen = Gen.int() + Gen.boolean()
+ * // Gen<Tuple3<Int, Boolean, String>>
+ * val gen3 = Gen.int() + Gen.boolean() + Gen.string()
+ * ```
+ *
+ * For dependent generation (where the second generator depends on the first value),
+ * use [flatMap] instead.
+ */
 @JvmName("zip2")
 infix operator fun <T1, T2> Gen<T1>.plus(
     nextGen: Gen<T2>,
