@@ -34,7 +34,7 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
                     seed = config.seed.value,
                     iteration = iteration,
                     originalResult = testResult,
-                    shrunkResult = shrunkResult.takeIf { it.args != testResult.args },
+                    shrunkResult = shrunkResult.takeIf { it.input != testResult.input },
                     shrinkSteps = shrinkSteps
                 ).also {
                     config.reporter.reportFailure(it)

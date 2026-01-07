@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.testing
 
+import com.tamj0rd2.ktcheck.util.Tuple
 import java.io.PrintStream
 
 interface TestReporter {
@@ -46,7 +47,21 @@ class PrintingTestReporter(
     private fun formatFailure(prefix: String, result: TestResult.Failure<*>): String = buildString {
         appendLine("${prefix}Arguments:")
         appendLine("-----------------")
-        result.args.forEachIndexed { index, arg -> appendLine("Arg $index -> $arg") }
+        when (result.input) {
+            is Tuple -> result.input.values.forEachIndexed { index, arg -> appendLine("Arg $index -> $arg") }
+            is Pair<*, *> -> {
+                appendLine("1st -> ${result.input.first}")
+                appendLine("2nd -> ${result.input.second}")
+            }
+
+            is Triple<*, *, *> -> {
+                appendLine("1st -> ${result.input.first}")
+                appendLine("2nd -> ${result.input.second}")
+                appendLine("3rd -> ${result.input.third}")
+            }
+
+            else -> appendLine(result.input)
+        }
 
         appendLine()
         appendLine("${prefix}Failure:")

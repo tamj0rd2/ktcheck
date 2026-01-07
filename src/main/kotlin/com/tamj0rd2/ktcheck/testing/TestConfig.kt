@@ -1,19 +1,10 @@
 package com.tamj0rd2.ktcheck.testing
 
 import com.tamj0rd2.ktcheck.producer.Seed
-import com.tamj0rd2.ktcheck.util.Tuple
 import kotlin.random.Random
 
 sealed class TestResult<T> {
-    internal abstract val input: T
-
-    val args: List<Any?>
-        get() = input.let {
-            when (it) {
-                is Tuple -> it.values
-                else -> listOf(input)
-            }
-        }
+    abstract val input: T
 
     data class Success<T>(override val input: T) : TestResult<T>()
 

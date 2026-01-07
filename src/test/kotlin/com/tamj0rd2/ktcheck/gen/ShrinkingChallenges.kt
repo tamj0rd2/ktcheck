@@ -82,7 +82,7 @@ class ShrinkingChallenges {
             println("\nSome bad shrinks encountered:")
 
             exceptionsWithBadShrinks
-                .sortedBy { it.smallestResult.args.toString().length }
+                .sortedBy { it.smallestResult.input.toString().length }
                 .take(5)
                 .forEach { println(it.asBadShrinkExample()) }
         }
@@ -97,7 +97,7 @@ class ShrinkingChallenges {
     }
 
     private fun PropertyFalsifiedException.asBadShrinkExample(): String {
-        val shortenedOriginalArgs = originalResult.args.toString().let {
+        val shortenedOriginalInput = originalResult.input.toString().let {
             if (it.length > 100) it.take(100) + " (remaining args truncated)" else it
         }
 
@@ -105,8 +105,8 @@ class ShrinkingChallenges {
             |----
             |Seed: $seed
             |Iteration: $iteration
-            |Original args: $shortenedOriginalArgs
-            |Shrunk args: ${smallestResult.args}
+            |Original args: $shortenedOriginalInput
+            |Shrunk args: ${smallestResult.input}
             """.trimMargin()
     }
 }
