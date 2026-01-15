@@ -1,32 +1,33 @@
 package com.tamj0rd2.ktcheck.v1
 
-import com.tamj0rd2.ktcheck.core.PredeterminedValue
-import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.filter
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.ignoreExceptions
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
 import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.expectGenerationAndShrinkingToEventuallyComplete
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import strikt.api.Assertion
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.all
 import strikt.assertions.isEqualTo
 import strikt.assertions.isFalse
+import strikt.assertions.isGreaterThan
 import strikt.assertions.isNotEmpty
 import strikt.assertions.isNotEqualTo
 
 
-class FilterGeneratorTest {
+internal class FilterGeneratorTest : BaseV1GeneratorTest() {
     @Nested
     inner class PredicateFiltering {
         @Test
         fun `can filter generated values`() {
             val gen = GenV1.int(1..10).filter { it % 2 == 0 }
 
-            gen.samples().take(100).onEach { expectThat(it % 2).isEqualTo(0) }.toList()
+            gen.samples()
+                .take(100)
+                .forEach { expectThat(it % 2).isEqualTo(0) }
         }
 
         @Test
@@ -41,12 +42,12 @@ class FilterGeneratorTest {
             val gen = GenV1.int(1..4).filter { it > 2 }
             val tree = producerTree { left(4) }
 
-            val (value, shrunkTrees) = gen.generate(tree, GenMode.Initial)
+            val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
             expectThat(value).isEqualTo(4)
-            expectThat(shrunkTrees.toList())
-                .describedAs("shrunk trees")
+            expectThat(shrunkValues.toList())
+                .describedAs("shrunk values")
                 .isNotEmpty()
-                .all { leftProducer.isNotEqualTo(PredeterminedValue(1)).isNotEqualTo(PredeterminedValue(2)) }
+                .all { isGreaterThan(2) }
             gen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
         }
     }
@@ -85,12 +86,12 @@ class FilterGeneratorTest {
                 }
             }
 
-            val (value, shrunkTrees) = possiblyThrowingGen.generate(tree, GenMode.Initial)
+            val (value, shrunkValues) = possiblyThrowingGen.generateWithShrunkValues(tree)
             expectThat(value).isEqualTo(3)
-            expectThat(shrunkTrees.toList())
-                .describedAs("shrunk trees")
+            expectThat(shrunkValues.toList())
+                .describedAs("shrunk values")
                 .isNotEmpty()
-                .all { leftProducer.isNotEqualTo(PredeterminedValue(1)) }
+                .all { isNotEqualTo(1) }
             possiblyThrowingGen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
         }
 
@@ -137,6 +138,4 @@ class FilterGeneratorTest {
             expectThat(values).all { isEqualTo(3) }
         }
     }
-
-    private val Assertion.Builder<ProducerTree>.leftProducer get() = get { left.producer }
 }

@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.v1
 
+import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.core.ProducerTree
 
 internal class CombinerGenerator<T>(
@@ -21,8 +22,8 @@ class CombinerContext internal constructor(
 ) {
     internal val shrinksByIndex = mutableListOf<Sequence<ProducerTree>>()
 
-    fun <T> GenV1<T>.bind(): T {
-        val (value, shrinks) = generate(tree.left, mode)
+    fun <T> Gen<T>.bind(): T {
+        val (value, shrinks) = (this as GenV1).generate(tree.left, mode)
         tree = tree.right
         shrinksByIndex.add(shrinks)
         return value

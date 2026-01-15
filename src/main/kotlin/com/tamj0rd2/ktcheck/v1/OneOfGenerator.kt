@@ -21,8 +21,10 @@ internal class OneOfGenerator<T>(
         if (gens.isEmpty()) throw OneOfEmpty()
     }
 
+    val indexGen = GenV1.int(0..<gens.size) as GenV1
+
     override fun GenContext.generate(): GenResult<T> {
-        val (index, indexShrinks) = GenV1.int(0..<gens.size).generate(tree.left, mode)
+        val (index, indexShrinks) = indexGen.generate(tree.left, mode)
         val (value, valueShrinks) = gens[index].generate(tree.right, mode)
 
         val shrinks = sequence {

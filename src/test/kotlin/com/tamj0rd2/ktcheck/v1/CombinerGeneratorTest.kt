@@ -3,7 +3,6 @@ package com.tamj0rd2.ktcheck.v1
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.string
-import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
@@ -18,7 +17,7 @@ import strikt.assertions.isNotNull
 import strikt.assertions.message
 import strikt.assertions.startsWith
 
-class CombinerGeneratorTest {
+internal class CombinerGeneratorTest : BaseV1GeneratorTest() {
     @Test
     fun `generators using the builder shrink correctly`() {
         data class Person(val name: String, val age: Int)

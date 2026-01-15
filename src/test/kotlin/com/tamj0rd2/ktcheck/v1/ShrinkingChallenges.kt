@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.Counter
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
+import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestByBool
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test
 import strikt.api.expectThrows
 
 // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
-class ShrinkingChallenges {
+internal class ShrinkingChallenges : BaseV1GeneratorTest() {
     @Test
     fun reverse() = testShrinking(
         gen = GenV1.int().list(),
@@ -45,7 +46,7 @@ class ShrinkingChallenges {
 
     private fun <T> testShrinking(
         testConfig: TestConfig = TestConfig().withIterations(500),
-        gen: GenV1<T>,
+        gen: Gen<T>,
         test: TestByBool<T>,
         didShrinkCorrectly: (T) -> Boolean,
         minConfidence: Double = 100.0,
@@ -54,7 +55,7 @@ class ShrinkingChallenges {
         val exceptionsWithBadShrinks = mutableListOf<PropertyFalsifiedException>()
 
         val counter = withCounter {
-            checkAll(testConfig, GenV1.long()) { seed ->
+            checkAll(testConfig, Gen.long()) { seed ->
                 val exception = expectThrows<PropertyFalsifiedException> {
                     forAll(TestConfig().withSeed(seed).withReporter(NoOpTestReporter), gen, test)
                 }.subject

@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.v1
 
+import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
@@ -9,6 +10,7 @@ import com.tamj0rd2.ktcheck.forAll
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.combineWith
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.flatMap
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeoutPreemptively
@@ -18,8 +20,9 @@ import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import java.time.Duration
+import com.tamj0rd2.ktcheck.v1.BaseV1GeneratorTest as BaseV1GeneratorTest1
 
-class GenV1Tests {
+internal class GenV1Tests : BaseV1GeneratorTest1() {
     @Nested
     inner class MapTests {
         @Test
@@ -49,7 +52,7 @@ class GenV1Tests {
                 right(20)
             }
 
-            val value = gen.generate(tree, GenMode.Initial).value
+            val value = gen.generate(tree)
             expectThat(value).isEqualTo(25)
         }
 
@@ -88,7 +91,7 @@ class GenV1Tests {
                 right(20)
             }
 
-            val value = gen.generate(tree, GenMode.Initial).value
+            val value = gen.generate(tree)
             expectThat(value).isEqualTo(25)
         }
 
@@ -129,13 +132,7 @@ class GenV1Tests {
     }
 
     companion object {
-        /** For testing purposes only: generates a value along with all its shrunk values as a list. */
-        internal fun <T> GenV1<T>.generateWithShrunkValues(tree: ProducerTree): Pair<T, List<T>> {
-            val (value, shrinks) = generate(tree, GenMode.Initial)
-            return value to shrinks.map { generate(it, GenMode.Shrinking).value }.toList()
-        }
-
-        internal fun <T> GenV1<T>.expectGenerationAndShrinkingToEventuallyComplete(
+        internal fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(
             shrunkValueRequired: Boolean = true,
         ) {
             var shrinksBeforeTimeout = -1

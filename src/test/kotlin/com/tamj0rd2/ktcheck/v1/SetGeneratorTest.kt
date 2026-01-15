@@ -3,9 +3,9 @@ package com.tamj0rd2.ktcheck.v1
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.sample
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.set
 import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.expectGenerationAndShrinkingToEventuallyComplete
-import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import strikt.api.expectThat
@@ -13,7 +13,7 @@ import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
 import strikt.assertions.isLessThanOrEqualTo
 
-class SetGeneratorTest {
+internal class SetGeneratorTest : BaseV1GeneratorTest() {
     @Test
     fun `can generate a long set without stack overflow`() {
         GenV1.int().set(10_000).sample()

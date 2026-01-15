@@ -2,12 +2,12 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.list
-import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.sample
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 
-class ListGeneratorTest {
+internal class ListGeneratorTest : BaseV1GeneratorTest() {
     @Test
     fun `can generate a long list without stack overflow`() {
         GenV1.constant(1).list(10_000).sample()

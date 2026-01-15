@@ -5,12 +5,12 @@ import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
-import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 
-class OneOfGeneratorTest {
+internal class OneOfGeneratorTest : BaseV1GeneratorTest() {
     @Test
     fun `can choose between generators uniformly`() {
         val gen = GenV1.oneOf(

@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -12,7 +12,7 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isFalse
 import strikt.assertions.isTrue
 
-class BooleanGeneratorTest {
+internal class BooleanGeneratorTest : BaseV1GeneratorTest() {
     @Nested
     inner class Generation {
         @Test
@@ -29,7 +29,7 @@ class BooleanGeneratorTest {
         fun `using the same seed generates the same value`() {
             val gen = GenV1.bool()
             val tree = ProducerTree.new()
-            val values = List(1000) { gen.generate(tree, GenMode.Initial).value }
+            val values = List(1000) { gen.generate(tree) }
             val firstValue = values.first()
             expectThat(values.drop(1)).all { isEqualTo(firstValue) }
         }
