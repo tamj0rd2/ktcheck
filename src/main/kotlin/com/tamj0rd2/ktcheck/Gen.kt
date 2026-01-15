@@ -8,11 +8,12 @@ import java.util.*
 import kotlin.random.Random
 import kotlin.reflect.KClass
 
-interface Gen<T> {
-    companion object : GenFacade by GenV1
-}
+interface Gen<T>
 
-interface GenFacade {
+@Suppress("unused")
+object Gens : GenFacade by GenV1
+
+internal interface GenFacade {
     /**
      * Samples a value from the generator using the provided seed.
      *
