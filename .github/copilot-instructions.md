@@ -114,6 +114,10 @@ After running any test command, **ALWAYS** read `output.txt` to check the result
 
 ## Testing Conventions
 
+**Formatting for Readable Tests:**
+
+- Always add a blank line between arrangement, action, and assertion sections in all new or modified tests.
+
 **Test Utilities:**
 - `Gen.samples()`: Infinite sequence of generated values for distribution testing
 - `Counter.withCounter {}`: Collect and verify percentage distributions
