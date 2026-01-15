@@ -139,6 +139,9 @@ internal class ProducerTreeDsl(private var subject: ProducerTree) {
         fun producerTree(seed: Seed = Seed.random(), block: ProducerTreeDsl.() -> Unit): ProducerTree =
             ProducerTree.new(seed).copy(block)
 
+        fun producerTrees(seed: Seed = Seed.random()) =
+            generateSequence(seed) { it.next(0) }.map { ProducerTree.new(it) }
+
         fun ProducerTree.copy(block: ProducerTreeDsl.() -> Unit): ProducerTree =
             ProducerTreeDsl(this).apply(block).subject
     }

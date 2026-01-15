@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
+import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTrees
 import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Nested
@@ -107,7 +107,7 @@ class CharGeneratorTest {
             val chars = ('a'..'z').toList()
             val gen = GenV1.char(chars)
 
-            GenV1.tree().samples().map { gen.generateWithShrunkValues(it) }
+            producerTrees().map { gen.generateWithShrunkValues(it) }
                 .filter { (originalValue) -> originalValue != chars.first() }
                 .take(100)
                 .forEach { (_, shrunkValues) -> expectThat(shrunkValues).first().isEqualTo(chars.first()) }
@@ -118,7 +118,7 @@ class CharGeneratorTest {
             val chars = ('a'..'z').toList()
             val gen = GenV1.char(chars)
 
-            GenV1.tree().samples().map { gen.generateWithShrunkValues(it) }
+            producerTrees().map { gen.generateWithShrunkValues(it) }
                 .take(100)
                 .forEach { (originalValue, shrunkValues) ->
                     expectThat(shrunkValues).doesNotContain(originalValue)
@@ -131,7 +131,7 @@ class CharGeneratorTest {
             val gen = GenV1.char(chars)
             val lowestChar = chars.first()
 
-            GenV1.tree().samples().map { gen.generateWithShrunkValues(it) }
+            producerTrees().map { gen.generateWithShrunkValues(it) }
                 .filter { (originalValue) -> originalValue != lowestChar }
                 .take(100)
                 .forEach { (originalValue, shrunkValues) ->

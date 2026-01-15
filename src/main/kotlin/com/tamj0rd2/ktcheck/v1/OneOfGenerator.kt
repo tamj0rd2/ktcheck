@@ -14,7 +14,7 @@ package com.tamj0rd2.ktcheck.v1
  * The new generator starts with a fresh value, not a continuation of shrinks.
  * This is the trade-off: safety (no type mismatches) vs optimal shrinking.
  **/
-private class OneOfGenerator<T>(
+internal class OneOfGenerator<T>(
     private val gens: List<GenV1<T>>,
 ) : GenV1<T>() {
     init {
@@ -34,20 +34,6 @@ private class OneOfGenerator<T>(
 
         return GenResult(value = value, shrinks = shrinks)
     }
-}
-
-/** Shrinks towards the first generator */
-fun <T> GenV1.Companion.oneOf(vararg gens: GenV1<T>): GenV1<T> = oneOf(gens.toList())
-
-/** Shrinks toward the first generator */
-fun <T> GenV1.Companion.oneOf(gens: Collection<GenV1<T>>): GenV1<T> = OneOfGenerator(gens.toList())
-
-/** Shrinks toward the first value. Individual values will not be shrunk. */
-@JvmName("oneOfValues")
-fun <T> GenV1.Companion.oneOf(values: Iterable<T>): GenV1<T> {
-    val options = values.toList()
-    if (options.isEmpty()) throw OneOfEmpty()
-    return GenV1.int(0..<options.size).map { options[it] }
 }
 
 @Suppress("unused")

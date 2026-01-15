@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
+import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTrees
 import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Nested
@@ -111,7 +111,7 @@ class IntGeneratorTest {
         fun `shrinks for non-zero numbers always include 0`() {
             val gen = GenV1.int()
 
-            GenV1.tree().samples().map { gen.generateWithShrunkValues(it) }
+            producerTrees().map { gen.generateWithShrunkValues(it) }
                 .filter { (originalValue) -> originalValue != 0 }
                 .take(100)
                 .forEach { (_, shrunkValues) -> expectThat(shrunkValues).isNotEmpty().contains(0) }
@@ -121,7 +121,7 @@ class IntGeneratorTest {
         fun `the original generated number is not included in shrinks`() {
             val gen = GenV1.int()
 
-            GenV1.tree().samples().map { gen.generateWithShrunkValues(it) }
+            producerTrees().map { gen.generateWithShrunkValues(it) }
                 .take(100)
                 .forEach { (originalValue, shrunkValues) ->
                     expectThat(shrunkValues).isNotEmpty().doesNotContain(originalValue)
@@ -133,7 +133,7 @@ class IntGeneratorTest {
             val gen = GenV1.int(-50..50)
 
             withCounter {
-                GenV1.tree().samples().map { gen.generateWithShrunkValues(it) }
+                producerTrees().map { gen.generateWithShrunkValues(it) }
                     .filter { (originalValue) -> originalValue != 0 }
                     .take(100)
                     .forEach { (originalValue, shrunkValues) ->

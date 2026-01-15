@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.v1.GenMode
 import com.tamj0rd2.ktcheck.v1.GenV1
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
 import com.tamj0rd2.ktcheck.v1.GenerationException
 
 @Suppress("unused")

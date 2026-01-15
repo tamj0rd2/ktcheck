@@ -1,9 +1,6 @@
 package com.tamj0rd2.ktcheck.v1
 
-import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.core.Seed
-
-private data class IntGenerator(
+internal data class IntGenerator(
     private val range: IntRange,
 ) : GenV1<Int>() {
     override fun GenContext.generate(): GenResult<Int> {
@@ -47,12 +44,3 @@ internal fun shrink(value: Int, range: IntRange, origin: Int): Sequence<Int> = s
         divisor *= 2
     }
 }
-
-
-fun GenV1.Companion.int(range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE): GenV1<Int> = IntGenerator(range)
-
-// todo: implement this properly
-internal fun GenV1.Companion.long() = GenV1.int().map { it.toLong() }
-
-// todo: move this to a better location
-internal fun GenV1.Companion.tree() = GenV1.int().map { ProducerTree.new(Seed(it.toLong())) }

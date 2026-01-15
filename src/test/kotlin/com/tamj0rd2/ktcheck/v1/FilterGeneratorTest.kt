@@ -3,7 +3,9 @@ package com.tamj0rd2.ktcheck.v1
 import com.tamj0rd2.ktcheck.core.PredeterminedValue
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.filter
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.ignoreExceptions
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
 import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.expectGenerationAndShrinkingToEventuallyComplete
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

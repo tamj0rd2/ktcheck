@@ -6,7 +6,9 @@ import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.forAll
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.combineWith
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.flatMap
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeoutPreemptively

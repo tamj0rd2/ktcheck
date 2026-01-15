@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.core.Seed
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.string
 import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat

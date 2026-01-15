@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
 import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.generateWithShrunkValues
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

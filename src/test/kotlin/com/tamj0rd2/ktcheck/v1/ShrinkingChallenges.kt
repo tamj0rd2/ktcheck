@@ -8,6 +8,7 @@ import com.tamj0rd2.ktcheck.TestByBool
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.forAll
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.list
 import org.junit.jupiter.api.Test
 import strikt.api.expectThrows
 
