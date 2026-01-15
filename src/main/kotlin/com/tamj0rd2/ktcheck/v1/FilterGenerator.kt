@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.v1
 
+import com.tamj0rd2.ktcheck.GenerationException.FilterLimitReached
 import com.tamj0rd2.ktcheck.v1.PredicateResult.Failed
 import com.tamj0rd2.ktcheck.v1.PredicateResult.Succeeded
 
@@ -37,5 +38,3 @@ internal class FilterGenerator<T>(
     }
 }
 
-class FilterLimitReached internal constructor(threshold: Int, cause: Throwable?) :
-    GenerationException("Filter failed after $threshold misses", cause)

@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.v1
 
+import com.tamj0rd2.ktcheck.GenerationException.FilterLimitReached
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.filter
 import com.tamj0rd2.ktcheck.v1.GenV1.Companion.ignoreExceptions

@@ -1,5 +1,8 @@
 package com.tamj0rd2.ktcheck.v1
 
+import com.tamj0rd2.ktcheck.GenerationException.OneOfEmpty
+
+
 /**
  * A generator that chooses between multiple generators using an index. Shrinks towards
  * earlier specified generators.
@@ -21,7 +24,7 @@ internal class OneOfGenerator<T>(
         if (gens.isEmpty()) throw OneOfEmpty()
     }
 
-    val indexGen = GenV1.int(0..<gens.size) as GenV1
+    val indexGen = int(0..<gens.size) as GenV1
 
     override fun GenContext.generate(): GenResult<T> {
         val (index, indexShrinks) = indexGen.generate(tree.left, mode)
@@ -38,5 +41,3 @@ internal class OneOfGenerator<T>(
     }
 }
 
-@Suppress("unused")
-class OneOfEmpty internal constructor() : GenerationException("Gen.oneOf() called with no generators")

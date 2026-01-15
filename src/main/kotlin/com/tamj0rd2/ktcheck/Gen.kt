@@ -1,9 +1,9 @@
 package com.tamj0rd2.ktcheck
 
+import com.tamj0rd2.ktcheck.GenerationException.OneOfEmpty
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.v1.CombinerContext
 import com.tamj0rd2.ktcheck.v1.GenV1
-import com.tamj0rd2.ktcheck.v1.OneOfEmpty
 import java.util.*
 import kotlin.random.Random
 import kotlin.reflect.KClass

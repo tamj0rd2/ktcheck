@@ -110,5 +110,3 @@ internal data class GenResult<T>(val value: T, val shrinks: Sequence<ProducerTre
 private class CombinatorGenerator<T>(private val generator: GenContext.() -> GenResult<T>) : GenV1<T>() {
     override fun GenContext.generate(): GenResult<T> = generator()
 }
-
-sealed class GenerationException(message: String, cause: Throwable? = null) : IllegalStateException(message, cause)

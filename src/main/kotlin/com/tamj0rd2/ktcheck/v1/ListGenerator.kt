@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.v1
 
+import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.copy
 
@@ -117,8 +118,3 @@ internal class ListGenerator<T>(
         private const val MAX_DISTINCT_ATTEMPTS = 1000
     }
 }
-
-class DistinctCollectionSizeImpossible internal constructor(targetSize: Int, achievedSize: Int, attempts: Int) :
-    GenerationException(
-        "Failed to generate a list of size $targetSize with distinct elements after $attempts attempts. Only achieved size $achievedSize."
-    )
