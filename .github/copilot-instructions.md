@@ -13,7 +13,8 @@ ktcheck is a property-based testing library for Kotlin, inspired by QuickCheck/H
 - Generators in `gen/`: Int, Boolean, List, Set, OneOf, etc.
 
 **Key Design Patterns:**
-- **Left-Right Traversal**: Collections use left subtree for elements, right for continuation (see [ListGenerator.kt](src/main/kotlin/com/tamj0rd2/ktcheck/gen/ListGenerator.kt#L56-L79))
+
+- **Left-Right Traversal**: Collections use left subtree for elements, right for continuation (see ListGenerator.kt)
 - **Shrinking via Tree Replacement**: Shrinks are ProducerTrees that replace subtrees, not direct values
 - **Lazy Shrink Evaluation**: Shrinks are `Sequence<ProducerTree>` for memory efficiency
 - **GenMode**: Distinguishes `Initial` generation from `Shrinking` (affects distinct collection handling)
@@ -42,23 +43,62 @@ val gen = Gen.int().map { it * 2 }
 
 ### Command Pattern
 ```bash
-./gradlew :test --tests "<fully.qualified.ClassName.testMethodName>"
+./gradlew :test --tests "<fully.qualified.ClassName.testMethodName>" --console=plain
 ```
+
+**CRITICAL**: Always use `--console=plain` flag when running tests to see full output!
+
+### Viewing Test Output (REQUIRED WORKFLOW)
+
+**ALWAYS use this workflow when running tests:**
+
+1. Delete any existing output file before each test run
+2. Write test output to `output.txt` using `> output.txt 2>&1`
+3. Read the output file to check results
+
+```bash
+# Template for EVERY test run
+rm -f output.txt && ./gradlew :test --tests "<TestClass>" --console=plain > output.txt 2>&1
+
+# Then read the file ONCE to check results
+```
+
+**How to interpret the results:**
+
+- **If the file contains "BUILD SUCCESSFUL"** → All tests passed ✅
+- **If the file contains "FAILED"** → Tests failed ❌ (read the failure details)
+- **If the file contains "FAILURE: Build failed with an exception."** → Compilation failed ❌ (check for compilation
+  errors in the output)
+- **If none of these phrases are found** → Something is wrong and needs troubleshooting ⚠️
+- **No need to grep or search multiple times** - just read the file once
+
+**Important: Avoid Redundant Test Runs**
+
+- **If you've run tests for a whole file**, don't run subsets of tests from that file - you've already run them all
+- **If you've run the entire test suite**, don't run individual test files - you've already run everything
+- **If tests are succeeding (BUILD SUCCESSFUL)**, the code is compiling correctly - no need to check for compilation
+  errors separately
+- **Only run tests once per change** - trust the results and move forward
+
+**Why this is necessary**: Terminal output from Gradle may not be visible in the IDE's tool output. Writing to a file
+ensures you can always access the results.
 
 ### Examples
 ```bash
-# Run all tests
-./gradlew test
+# Run all tests - write output to file
+rm -f output.txt && ./gradlew test --console=plain > output.txt 2>&1
 
-# Specific test class
-./gradlew :test --tests "com.tamj0rd2.ktcheck.gen.SetGeneratorTest"
+# Specific test class - write output to file
+rm -f output.txt && ./gradlew :test --tests "com.tamj0rd2.ktcheck.gen.SetGeneratorTest" --console=plain > output.txt 2>&1
 
-# Specific test method (quote if spaces)
-./gradlew :test --tests "com.tamj0rd2.ktcheck.gen.SetGeneratorTest.shrinks a set of 3 elements"
+# Specific test method (quote if spaces) - write output to file
+rm -f output.txt && ./gradlew :test --tests "com.tamj0rd2.ktcheck.gen.SetGeneratorTest.shrinks a set of 3 elements" --console=plain > output.txt 2>&1
 
-# Pattern matching
-./gradlew :test --tests "*SetGenerator*"
+# Pattern matching - write output to file
+rm -f output.txt && ./gradlew :test --tests "*SetGenerator*" --console=plain > output.txt 2>&1
 ```
+
+After running any test command, **ALWAYS** read `output.txt` to check the results.
 
 ### Critical Testing Notes
 - Test names must be fully qualified: `package.ClassName.methodName`
@@ -77,7 +117,7 @@ val gen = Gen.int().map { it * 2 }
 **Test Utilities:**
 - `Gen.samples()`: Infinite sequence of generated values for distribution testing
 - `Counter.withCounter {}`: Collect and verify percentage distributions
-- `Gen.generateWithShrunkValues()`: Test helper exposing shrink tree (see [GenTests.kt](src/test/kotlin/com/tamj0rd2/ktcheck/gen/GenTests.kt#L102))
+- `Gen.generateWithShrunkValues()`: Test helper exposing shrink tree (see GenTests.kt)
 - `producerTree {}`: DSL for constructing predetermined test trees
 
 **Property Test Patterns:**
@@ -130,4 +170,60 @@ src/main/kotlin/com/tamj0rd2/ktcheck/
 - Fix: adjust tree setup with `producerTree { left(expectedValue) }`
 - Re-run → fails at line 15 (expected shrinks)
 - Now ready to implement production code changes
+
+### Plan Execution Rules
+
+**CRITICAL: Code must compile at the start AND end of each step in a plan.**
+
+When executing a plan with multiple steps:
+
+1. **Before starting a step**: Verify the code compiles
+2. **After completing a step**: Verify the code compiles
+3. **If a step would break compilation**: Add stub methods/data structures to maintain compilation
+
+**How to maintain compilation during incremental changes:**
+
+- **Add stub methods**: When adding interface methods, implement them immediately with
+  `throw NotImplementedError("TODO: implement in step X")` or `TODO("Not yet implemented")`
+- **Add stub data structures**: Create empty/minimal classes/interfaces even if they'll be filled in later steps
+- **Add stub imports**: Import types that will be needed, even if not fully implemented yet
+- **Never leave code in a non-compiling state** between steps
+
+**Example - Adding a new interface method:**
+
+```kotlin
+// Step 1: Add to interface
+interface MyContract {
+    fun newMethod(): String  // Added in this step
+}
+
+// Step 1: MUST also add stub implementations to all implementing classes
+class MyImpl : MyContract {
+    override fun newMethod(): String = TODO("Implement in step 3")
+}
+```
+
+**Example - Adding a new dependency:**
+
+```kotlin
+// Step 2: If we reference a new type that doesn't exist yet
+// We MUST create it as a stub in the same step:
+
+// Create the stub interface/class
+internal interface INewType {
+    // Minimal definition, will be filled in step 4
+}
+
+// Then we can reference it
+fun useNewType(param: INewType) {
+    TODO("Implement in step 4")
+}
+```
+
+**Why this matters:**
+
+- Each step should be a working checkpoint
+- Easier to identify which change broke compilation
+- Can verify tests at each step (even if they fail with NotImplementedError)
+- Maintains a working codebase throughout the implementation process
 
