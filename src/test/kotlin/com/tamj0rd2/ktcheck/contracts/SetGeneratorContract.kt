@@ -1,12 +1,9 @@
-package com.tamj0rd2.ktcheck.v1
+package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.sample
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.set
-import com.tamj0rd2.ktcheck.v1.GenV1Tests.Companion.expectGenerationAndShrinkingToEventuallyComplete
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import strikt.api.expectThat
@@ -14,16 +11,16 @@ import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
 import strikt.assertions.isLessThanOrEqualTo
 
-internal class SetGeneratorTest : BaseV1GeneratorTest() {
+internal interface SetGeneratorContract : BaseContract {
     @Test
     fun `can generate a long set without stack overflow`() {
-        GenV1.int().set(10_000).sample()
+        int().set(10_000).sample()
     }
 
     @Test
     fun `generates sets with distinct elements`() = checkAll(
         TestConfig().withIterations(100),
-        GenV1.int(0..100).set(5),
+        int(0..100).set(5),
     ) { set ->
         expectThat(set.size).isEqualTo(5)
         expectThat(set).hasSize(5) // confirms no duplicates
@@ -31,13 +28,13 @@ internal class SetGeneratorTest : BaseV1GeneratorTest() {
 
     @Test
     fun `throws when unable to generate enough distinct elements`() {
-        val gen = GenV1.int(0..10).set(100)
+        val gen = int(0..10).set(100)
         assertThrows<DistinctCollectionSizeImpossible> { gen.sample() }
     }
 
     @Test
     fun `shrinks a set of 1 element`() {
-        val gen = GenV1.int(0..4).set()
+        val gen = int(0..4).set()
 
         val tree = producerTree {
             left(1)
@@ -63,7 +60,7 @@ internal class SetGeneratorTest : BaseV1GeneratorTest() {
 
     @Test
     fun `shrinks a set of 2 elements`() {
-        val gen = GenV1.int(0..10).set()
+        val gen = int(0..10).set()
 
         val tree = producerTree {
             left(2)
@@ -97,7 +94,7 @@ internal class SetGeneratorTest : BaseV1GeneratorTest() {
 
     @Test
     fun `shrinks a set of 3 elements`() {
-        val gen = GenV1.int(0..10).set()
+        val gen = int(0..10).set()
 
         val tree = producerTree {
             left(3)
@@ -140,15 +137,15 @@ internal class SetGeneratorTest : BaseV1GeneratorTest() {
 
     @Test
     fun `can shrink sets with a minimum size greater than 0`() {
-        GenV1.int().set(1..2).expectGenerationAndShrinkingToEventuallyComplete()
-        GenV1.int().set(2..2).expectGenerationAndShrinkingToEventuallyComplete()
-        GenV1.int().set(2..5).expectGenerationAndShrinkingToEventuallyComplete()
+        int().set(1..2).expectGenerationAndShrinkingToEventuallyComplete()
+        int().set(2..2).expectGenerationAndShrinkingToEventuallyComplete()
+        int().set(2..5).expectGenerationAndShrinkingToEventuallyComplete()
     }
 
     @Test
     fun `all generated sets contain only distinct elements`() = checkAll(
         TestConfig().withIterations(100),
-        GenV1.int(0..100).set(0..10),
+        int(0..100).set(0..10),
     ) { set ->
         // If we convert to a set again, the size should remain the same (proving all elements were distinct)
         expectThat(set.toSet()).hasSize(set.size)
@@ -161,7 +158,7 @@ internal class SetGeneratorTest : BaseV1GeneratorTest() {
         // Since that's invalid, we need to generate a new value to maintain size 3
         // However, if the generator can't produce enough distinct values, it should throw
 
-        val gen = GenV1.int(0..2).set(3) // Only 3 possible distinct values
+        val gen = int(0..2).set(3) // Only 3 possible distinct values
 
         val tree = producerTree {
             left(3)
@@ -186,4 +183,3 @@ internal class SetGeneratorTest : BaseV1GeneratorTest() {
         }
     }
 }
-

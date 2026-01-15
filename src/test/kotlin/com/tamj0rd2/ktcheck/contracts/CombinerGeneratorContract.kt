@@ -1,8 +1,7 @@
-package com.tamj0rd2.ktcheck.v1
+package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.core.Seed
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.string
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
@@ -17,15 +16,15 @@ import strikt.assertions.isNotNull
 import strikt.assertions.message
 import strikt.assertions.startsWith
 
-internal class CombinerGeneratorTest : BaseV1GeneratorTest() {
+internal interface CombinerGeneratorContract : BaseContract {
     @Test
     fun `generators using the builder shrink correctly`() {
         data class Person(val name: String, val age: Int)
 
-        val gen = GenV1.combine {
+        val gen = combine {
             Person(
-                name = GenV1.char('a'..'d').string(1..5).bind(),
-                age = GenV1.int(0..150).bind()
+                name = char('a'..'d').string(1..5).bind(),
+                age = int(0..150).bind()
             )
         }
 
@@ -63,12 +62,12 @@ internal class CombinerGeneratorTest : BaseV1GeneratorTest() {
         // When a conditional affects only the final bind call(s), the combiner works correctly.
         // The unconsumed tree parts are simply ignored.
 
-        val gen = GenV1.combine {
-            val includeY = GenV1.bool().bind()
-            val x = GenV1.int(0..10).bind()
+        val gen = combine {
+            val includeY = bool().bind()
+            val x = int(0..10).bind()
 
             if (includeY) {
-                val y = GenV1.int(10..20).bind()
+                val y = int(10..20).bind()
                 XY(x, y)
             } else {
                 XY(x, null)
@@ -103,16 +102,16 @@ internal class CombinerGeneratorTest : BaseV1GeneratorTest() {
         // When a conditional affects a bind that is NOT the last one, subsequent binds
         // consume the wrong tree positions, leading to incorrect values.
 
-        val gen = GenV1.combine {
-            val includeX = GenV1.bool().bind()
+        val gen = combine {
+            val includeX = bool().bind()
 
             if (includeX) {
-                val x = GenV1.int(0..10).bind()
-                val y = GenV1.int(10..20).bind()
+                val x = int(0..10).bind()
+                val y = int(10..20).bind()
                 XY(x, y)
             } else {
                 // Problem: y will consume position 2 instead of position 3!
-                val y = GenV1.int(10..20).bind()
+                val y = int(10..20).bind()
                 XY(null, y)
             }
         }

@@ -1,6 +1,5 @@
 package com.tamj0rd2.ktcheck.v1
 
-import com.tamj0rd2.ktcheck.Gen.Companion.map
 import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.HardcodedTestConfig
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
@@ -8,6 +7,7 @@ import com.tamj0rd2.ktcheck.Test
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.TestResult
 import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
 
 @OptIn(HardcodedTestConfig::class)
 internal fun <T> test(config: TestConfig, gen: GenV1<T>, test: Test<T>) {

@@ -1,21 +1,19 @@
-package com.tamj0rd2.ktcheck.v1
+package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.core.Seed
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.samples
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 
-internal class OneOfGeneratorTest : BaseV1GeneratorTest() {
+internal interface OneOfGeneratorContract : BaseContract {
     @Test
     fun `can choose between generators uniformly`() {
-        val gen = GenV1.oneOf(
-            GenV1.bool().map { it as Any },
-            GenV1.int().map { it as Any },
+        val gen = oneOf(
+            bool().map { it as Any },
+            int().map { it as Any },
         )
 
         withCounter { gen.samples().take(100_000).forEach { collect(it::class.simpleName) } }
@@ -24,9 +22,9 @@ internal class OneOfGeneratorTest : BaseV1GeneratorTest() {
 
     @Test
     fun `shrinking a oneOf generator can shrink between types without failure`() {
-        val multiTypeGen = GenV1.oneOf(
-            GenV1.bool().map { it as Any },
-            GenV1.int(0..4).map { it as Any },
+        val multiTypeGen = oneOf(
+            bool().map { it as Any },
+            int(0..4).map { it as Any },
         )
 
         val tree = producerTree(Seed(1)) {
@@ -52,7 +50,7 @@ internal class OneOfGeneratorTest : BaseV1GeneratorTest() {
     @Test
     fun `oneOfValues shrinks toward first value in collection`() {
         val values = listOf("banana", "apple", "cherry")
-        val gen = GenV1.oneOf(values)
+        val gen = oneOf(values)
 
         withCounter {
             gen.samples().take(100_000).forEach { collect(it) }

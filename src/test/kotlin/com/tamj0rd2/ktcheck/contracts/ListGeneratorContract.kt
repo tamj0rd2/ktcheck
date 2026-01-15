@@ -1,21 +1,19 @@
-package com.tamj0rd2.ktcheck.v1
+package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.list
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.sample
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 
-internal class ListGeneratorTest : BaseV1GeneratorTest() {
+internal interface ListGeneratorContract : BaseContract {
     @Test
     fun `can generate a long list without stack overflow`() {
-        GenV1.constant(1).list(10_000).sample()
+        constant(1).list(10_000).sample()
     }
 
     @Test
     fun `shrinks a list of 1 element`() {
-        val gen = GenV1.int(0..4).list()
+        val gen = int(0..4).list()
 
         val tree = producerTree {
             left(1)
@@ -41,7 +39,7 @@ internal class ListGeneratorTest : BaseV1GeneratorTest() {
 
     @Test
     fun `shrinks a list of 2 elements`() {
-        val gen = GenV1.int(0..5).list()
+        val gen = int(0..5).list()
 
         val tree = producerTree {
             left(2)
@@ -80,7 +78,7 @@ internal class ListGeneratorTest : BaseV1GeneratorTest() {
 
     @Test
     fun `shrinks a list of 3 elements`() {
-        val gen = GenV1.int(0..4).list()
+        val gen = int(0..4).list()
 
         val tree = producerTree {
             left(3)
