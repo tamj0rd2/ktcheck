@@ -1,7 +1,6 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
-import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import com.tamj0rd2.ktcheck.core.Seed
 import org.junit.jupiter.api.Test
@@ -32,10 +31,10 @@ internal interface OneOfGeneratorContract : BaseContract {
             right(4)
         }
 
-        val (originalValue, shrinks) = multiTypeGen.generateWithShrunkValues(tree)
+        val result = multiTypeGen.generate(tree)
 
-        expectThat(originalValue).isEqualTo(4)
-        expectThat(shrinks.toList()).isEqualTo(
+        expectThat(result.value).isEqualTo(4)
+        expectThat(result.shrunkValues).isEqualTo(
             listOf(
                 // Choice shrunk from 1 to 0. So generating a Boolean value:
                 true,
@@ -56,10 +55,9 @@ internal interface OneOfGeneratorContract : BaseContract {
             gen.samples().take(100_000).forEach { collect(it) }
         }.checkPercentages(values.associateWith { 32.0 })
 
-        val tree = ProducerTree.new().withValue(2)
-        val (value, shrinks) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo("cherry")
+        val result = gen.generate(producerTree(2))
 
-        expectThat(shrinks.toList()).isEqualTo(listOf("banana", "apple"))
+        expectThat(result.value).isEqualTo("cherry")
+        expectThat(result.shrunkValues).isEqualTo(listOf("banana", "apple"))
     }
 }

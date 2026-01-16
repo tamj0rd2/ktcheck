@@ -80,9 +80,9 @@ internal interface CharGeneratorContract : BaseContract {
         val gen = char(chars)
         val tree = ProducerTree.new().withValue(chars.indexOf('d'))
 
-        val (originalValue, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(originalValue).isEqualTo('d')
-        expectThat(shrunkValues).isEqualTo(listOf('a', 'c'))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo('d')
+        expectThat(result.shrunkValues).isEqualTo(listOf('a', 'c'))
     }
 
     @Test
@@ -91,9 +91,9 @@ internal interface CharGeneratorContract : BaseContract {
         val gen = char(chars)
         val tree = ProducerTree.new().withValue(chars.indexOf('a'))
 
-        val (originalValue, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(originalValue).isEqualTo('a')
-        expectThat(shrunkValues).isEmpty()
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo('a')
+        expectThat(result.shrunkValues).isEmpty()
     }
 
     @Test
@@ -101,10 +101,10 @@ internal interface CharGeneratorContract : BaseContract {
         val chars = ('a'..'z').toList()
         val gen = char(chars)
 
-        producerTrees().map { gen.generateWithShrunkValues(it) }
-            .filter { (originalValue) -> originalValue != chars.first() }
+        producerTrees().map { gen.generate(it) }
+            .filter { it.value != chars.first() }
             .take(100)
-            .forEach { (_, shrunkValues) -> expectThat(shrunkValues).first().isEqualTo(chars.first()) }
+            .forEach { expectThat(it.shrunkValues).first().isEqualTo(chars.first()) }
     }
 
     @Test
@@ -112,11 +112,9 @@ internal interface CharGeneratorContract : BaseContract {
         val chars = ('a'..'z').toList()
         val gen = char(chars)
 
-        producerTrees().map { gen.generateWithShrunkValues(it) }
+        producerTrees().map { gen.generate(it) }
             .take(100)
-            .forEach { (originalValue, shrunkValues) ->
-                expectThat(shrunkValues).doesNotContain(originalValue)
-            }
+            .forEach { expectThat(it.shrunkValues).doesNotContain(it.value) }
     }
 
     @Test
@@ -125,13 +123,13 @@ internal interface CharGeneratorContract : BaseContract {
         val gen = char(chars)
         val lowestChar = chars.first()
 
-        producerTrees().map { gen.generateWithShrunkValues(it) }
-            .filter { (originalValue) -> originalValue != lowestChar }
+        producerTrees().map { gen.generate(it) }
+            .filter { it.value != lowestChar }
             .take(100)
-            .forEach { (originalValue, shrunkValues) ->
-                val originalIndex = chars.indexOf(originalValue)
+            .forEach {
+                val originalIndex = chars.indexOf(it.value)
 
-                expectThat(shrunkValues).isNotEmpty().all {
+                expectThat(it.shrunkValues).isNotEmpty().all {
                     get { chars.indexOf(this) }
                         .describedAs("shrunk index (closer to lowest)")
                         .isLessThan(originalIndex)

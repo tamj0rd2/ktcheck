@@ -34,9 +34,9 @@ internal interface FilterGeneratorContract : BaseContract {
         val gen = int(1..4).filter { it > 2 }
         val tree = producerTree { left(4) }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(4)
-        expectThat(shrunkValues.toList())
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(4)
+        expectThat(result.shrunkValues.toList())
             .describedAs("shrunk values")
             .isNotEmpty()
             .all { isGreaterThan(2) }
@@ -75,9 +75,9 @@ internal interface FilterGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = possiblyThrowingGen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(3)
-        expectThat(shrunkValues.toList())
+        val result = possiblyThrowingGen.generate(tree)
+        expectThat(result.value).isEqualTo(3)
+        expectThat(result.shrunkValues.toList())
             .describedAs("shrunk values")
             .isNotEmpty()
             .all { isNotEqualTo(1) }

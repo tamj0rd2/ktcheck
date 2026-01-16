@@ -25,7 +25,7 @@ internal interface BooleanGeneratorContract : BaseContract {
     fun `using the same seed generates the same value`() {
         val gen = bool()
         val tree = ProducerTree.new()
-        val values = List(1000) { gen.generate(tree) }
+        val values = List(1000) { gen.generate(tree).value }
         val firstValue = values.first()
         expectThat(values.drop(1)).all { isEqualTo(firstValue) }
     }
@@ -53,9 +53,9 @@ internal interface BooleanGeneratorContract : BaseContract {
         return testCases.map {
             DynamicTest.dynamicTest(it.toString()) {
                 val tree = ProducerTree.new().withValue(it.value)
-                val (value, shrinks) = bool(it.origin).generateWithShrunkValues(tree)
-                expectThat(value).isEqualTo(it.value)
-                expectThat(shrinks).isEqualTo(it.expectedShrinks)
+                val result = bool(it.origin).generate(tree)
+                expectThat(result.value).isEqualTo(it.value)
+                expectThat(result.shrunkValues).isEqualTo(it.expectedShrinks)
             }
         }
     }

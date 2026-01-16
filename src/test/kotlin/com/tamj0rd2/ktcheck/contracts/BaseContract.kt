@@ -12,12 +12,23 @@ import strikt.api.expectThrows
 import strikt.assertions.isNotNull
 import java.time.Duration
 
+internal class GenResults<T>(
+    val value: T,
+    val shrinks: Sequence<GenResults<T>>,
+) {
+    val shrunkValues get() = shrinks.map { it.value }.toList()
+
+    val deeplyShrunkValues: Sequence<T>
+        get() = sequence {
+            for (shrink in shrinks) {
+                yield(shrink.value)
+                yieldAll(shrink.deeplyShrunkValues)
+            }
+        }
+}
+
 internal interface BaseContract : GenFacade {
-    fun <T> Gen<T>.generate(tree: ProducerTree): T
-
-    fun <T> Gen<T>.generateWithShrunkValues(tree: ProducerTree): Pair<T, List<T>>
-
-    fun <T> Gen<T>.generateWithDeepShrinks(tree: ProducerTree): Pair<T, Sequence<T>>
+    fun <T> Gen<T>.generate(tree: ProducerTree): GenResults<T>
 
     fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
         var shrinksBeforeTimeout = -1

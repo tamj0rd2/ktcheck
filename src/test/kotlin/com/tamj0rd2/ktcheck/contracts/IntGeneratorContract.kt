@@ -66,10 +66,10 @@ internal interface IntGeneratorContract : BaseContract {
 
     @Test
     fun `recursively shrinks depth first`() {
-        val (original, shrinks) = int(0..4).generateWithDeepShrinks(producerTree(4))
-        expectThat(original).isEqualTo(4)
+        val result = int(0..4).generate(producerTree(4))
+        expectThat(result.value).isEqualTo(4)
 
-        val shrunkValues = shrinks.onEach { println(it) }.toList().distinct()
+        val shrunkValues = result.deeplyShrunkValues.toList().distinct()
         expectThat(shrunkValues).isEqualTo(listOf(0, 2, 1, 3))
     }
 }

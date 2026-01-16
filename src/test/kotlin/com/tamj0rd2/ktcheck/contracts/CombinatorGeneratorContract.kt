@@ -12,9 +12,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
     @Test
     fun `constant always produces the same value and doesn't shrink`() {
         // todo: move this test elsewhere.
-        val (value, shrinks) = constant(10).generateWithShrunkValues(ProducerTree.new())
-        expectThat(value).isEqualTo(10)
-        expectThat(shrinks).isEmpty()
+        val result = constant(10).generate(ProducerTree.new())
+        expectThat(result.value).isEqualTo(10)
+        expectThat(result.shrunkValues).isEmpty()
     }
 
     @Test
@@ -35,11 +35,11 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val doublingGen = originalGen.map { it * 2 }
 
         val tree = ProducerTree.new()
-        val (originalNumber, originalShrinks) = originalGen.generateWithShrunkValues(tree)
-        val (doubledValue, doubledShrinks) = doublingGen.generateWithShrunkValues(tree)
+        val originalResult = originalGen.generate(tree)
+        val doubledResult = doublingGen.generate(tree)
 
-        expectThat(doubledValue).isEqualTo(originalNumber * 2)
-        expectThat(doubledShrinks).isEqualTo(originalShrinks.map { it * 2 })
+        expectThat(doubledResult.value).isEqualTo(originalResult.value * 2)
+        expectThat(doubledResult.shrunkValues).isEqualTo(originalResult.shrunkValues.map { it * 2 })
     }
 
     @Test
@@ -53,7 +53,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
             right(20)
         }
 
-        val value = gen.generate(tree)
+        val value = gen.generate(tree).value
         expectThat(value).isEqualTo(25)
     }
 
@@ -70,9 +70,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
             right(6)
         }
 
-        val (value, shrinks) = gen.generateWithDeepShrinks(tree)
-        expectThat(value).isEqualTo(3 to 6)
-        expectThat(shrinks.toList().distinct()).contains(
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(3 to 6)
+        expectThat(result.deeplyShrunkValues.toList().distinct()).contains(
             // inner value shrunk
             3 to 4,
             // outer value shrunk
@@ -93,7 +93,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
             right(20)
         }
 
-        val value = gen.generate(tree)
+        val value = gen.generate(tree).value
         expectThat(value).isEqualTo(25)
     }
 
@@ -106,9 +106,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
             right(6)
         }
 
-        val (value, shrinks) = gen.generateWithDeepShrinks(tree)
-        expectThat(value).isEqualTo(3 to 6)
-        expectThat(shrinks.toList().distinct()).contains(
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(3 to 6)
+        expectThat(result.deeplyShrunkValues.toList().distinct()).contains(
             // inner value shrunk
             3 to 4,
             // outer value shrunk

@@ -42,14 +42,14 @@ internal interface CombinerGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
+        val result = gen.generate(tree)
 
-        expectThat(value) {
+        expectThat(result.value) {
             get { name }.hasLength(4).startsWith('d')
             get { age }.isEqualTo(28)
         }
 
-        expectThat(shrunkValues)
+        expectThat(result.shrunkValues)
             .isNotEmpty()
             .any { get { name }.isEqualTo("d") }
             .any { get { age }.isEqualTo(0) }
@@ -84,15 +84,15 @@ internal interface CombinerGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(XY(5, 15))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(XY(5, 15))
 
         // When includeY shrinks to false, we only bind 2 generators and get XY(5, null)
-        expectThat(shrunkValues).isNotEmpty().contains(XY(5, null))
+        expectThat(result.shrunkValues).isNotEmpty().contains(XY(5, null))
 
         // all shrinks meet their constraints
-        expectThat(shrunkValues.map { it.x }).all { isIn(0..<10) }
-        expectThat(shrunkValues.mapNotNull { it.y }).all { isIn(10..20) }
+        expectThat(result.shrunkValues.map { it.x }).all { isIn(0..<10) }
+        expectThat(result.shrunkValues.mapNotNull { it.y }).all { isIn(10..20) }
     }
 
     @Test
@@ -128,7 +128,7 @@ internal interface CombinerGeneratorContract : BaseContract {
 
         // When includeX shrinks to false, y incorrectly consumes position 2 (value 5) instead of position 3 (value 15).
         // This demonstrates the combiner doesn't handle non-tail conditional binds well.
-        expectThrows<IllegalStateException> { gen.generateWithShrunkValues(tree) }
+        expectThrows<IllegalStateException> { gen.generate(tree).deeplyShrunkValues.toList() }
             .message.isNotNull().startsWith("5 not in range 10..20")
     }
 }

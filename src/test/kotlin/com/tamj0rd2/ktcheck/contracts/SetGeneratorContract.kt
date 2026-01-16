@@ -43,10 +43,10 @@ internal interface SetGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(setOf(4))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(setOf(4))
 
-        expectThat(shrunkValues).isEqualTo(
+        expectThat(result.shrunkValues).isEqualTo(
             listOf(
                 // shrinks the size
                 emptySet(),
@@ -72,10 +72,10 @@ internal interface SetGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(setOf(1, 4))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(setOf(1, 4))
 
-        expectThat(shrunkValues).isEqualTo(
+        expectThat(result.shrunkValues).isEqualTo(
             listOf(
                 // tries reducing set size (now 0)
                 emptySet(),
@@ -112,10 +112,10 @@ internal interface SetGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(setOf(1, 2, 3))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(setOf(1, 2, 3))
 
-        expectThat(shrunkValues).isEqualTo(
+        expectThat(result.shrunkValues).isEqualTo(
             listOf(
                 // reduce set size (0)
                 emptySet(),
@@ -151,6 +151,7 @@ internal interface SetGeneratorContract : BaseContract {
         expectThat(set.toSet()).hasSize(set.size)
     }
 
+    // todo: review this test. it's weird.
     @Test
     fun `shrinks that would produce duplicates do not appear in shrink tree`() {
         // This test verifies that we follow Approach B: skip invalid shrinks
@@ -173,11 +174,11 @@ internal interface SetGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(setOf(0, 1, 2))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(setOf(0, 1, 2))
 
         // All shrunk values must have size 3 (except explicit size shrinks)
-        shrunkValues.forEach { shrunkSet ->
+        result.shrunkValues.forEach { shrunkSet ->
             // Element shrinks maintain size 3, size shrinks reduce to smaller sizes
             expectThat(shrunkSet.size).isLessThanOrEqualTo(3)
         }

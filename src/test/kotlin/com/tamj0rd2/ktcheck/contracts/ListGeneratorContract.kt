@@ -22,10 +22,10 @@ internal interface ListGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(listOf(4))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(listOf(4))
 
-        expectThat(shrunkValues).isEqualTo(
+        expectThat(result.shrunkValues).isEqualTo(
             listOf(
                 // shrinks the size
                 emptyList(),
@@ -51,15 +51,14 @@ internal interface ListGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(listOf(1, 4))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(listOf(1, 4))
 
         // 4 shrinks to 0, 2, 3
         // 3 shrinks to 0, 2
         // 2 shrinks to 0, 1
         // 1 shrinks to 0
-
-        expectThat(shrunkValues).isEqualTo(
+        expectThat(result.shrunkValues).isEqualTo(
             listOf(
                 // tries reducing list size (now 0)
                 emptyList(),
@@ -93,14 +92,13 @@ internal interface ListGeneratorContract : BaseContract {
             }
         }
 
-        val (value, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(listOf(1, 2, 3))
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(listOf(1, 2, 3))
 
         // 3 shrinks to 0 and 2
         // 2 shrinks to 0 and 1
         // 1 shrinks to 0
-
-        expectThat(shrunkValues).isEqualTo(
+        expectThat(result.shrunkValues).isEqualTo(
             listOf(
                 // reduce list size (0)
                 listOf(),
