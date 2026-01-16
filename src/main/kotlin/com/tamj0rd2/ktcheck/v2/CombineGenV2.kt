@@ -8,13 +8,22 @@ internal class CombineGenV2<T1, T2, R>(
     private val combine: (T1, T2) -> R,
 ) : GenV2<R> {
     override fun generate(tree: ProducerTree): GenResultV2<R> {
-        // todo: left shrinks are unused.
-        val (leftValue, _) = gen1.generate(tree.left)
-        val rightResult = gen2.generate(tree.right)
+        return combine(gen1.generate(tree.left), gen2.generate(tree.right))
+    }
+
+    private fun combine(
+        leftResult: GenResultV2<T1>,
+        rightResult: GenResultV2<T2>,
+    ): GenResultV2<R> {
+        val (leftValue, leftShrinks) = leftResult
+        val (rightValue, rightShrinks) = rightResult
+
+        val leftBasedShrinks = leftShrinks.map { combine(it, rightResult) }
+        val rightBasedShrinks = rightShrinks.map { combine(leftResult, it) }
 
         return GenResultV2(
-            value = combine(leftValue, rightResult.value),
-            shrinks = rightResult.map { rightValue -> combine(leftValue, rightValue) }.shrinks,
+            value = combine(leftValue, rightValue),
+            shrinks = leftBasedShrinks + rightBasedShrinks,
         )
     }
 }

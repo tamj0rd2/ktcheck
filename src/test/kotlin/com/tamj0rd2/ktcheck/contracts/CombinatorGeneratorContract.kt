@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
-import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.contains
@@ -88,23 +87,23 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
     @Test
     fun `combineWith combines shrinks from both generators`() {
-        val smallGen = int(1..3)
-        val bigGen = int(4..6)
-        val gen = smallGen.combineWith(bigGen) { a, b -> a + b }
+        val gen = int(1..3).combineWith(int(4..6), ::Pair)
 
         val tree = producerTree {
             left(3)
             right(6)
         }
 
-        val (value, shrinks) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(9)
-
-        val threeShrunk = IntShrinker.shrink(3, 1..3)
-        val sixShrunk = IntShrinker.shrink(6, 4..6)
-
-        expectThat(shrinks).contains(threeShrunk.map { it + 6 }.toList())
-        expectThat(shrinks).contains(sixShrunk.map { it + 3 }.toList())
+        val (value, shrinks) = gen.generateWithDeepShrinks(tree)
+        expectThat(value).isEqualTo(3 to 6)
+        expectThat(shrinks.toList().distinct()).contains(
+            // inner value shrunk
+            3 to 4,
+            // outer value shrunk
+            1 to 6,
+            // both shrunk via recursion
+            1 to 4,
+        )
     }
 
     @Test
