@@ -67,7 +67,7 @@ private object GenV2Facade : GenFacade {
     }
 
     override fun bool(origin: Boolean): Gen<Boolean> {
-        TODO("Not yet implemented")
+        return BoolGenV2(origin)
     }
 
     override fun int(range: IntRange): Gen<Int> {
