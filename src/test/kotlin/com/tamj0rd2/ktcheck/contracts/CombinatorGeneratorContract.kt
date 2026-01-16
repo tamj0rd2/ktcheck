@@ -48,24 +48,22 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
     @Test
     fun `flatMap combines shrinks from both generators`() {
-        // todo: return a pair rather than doing addition
-        val smallGen = int(1..3)
-        val biggerGen = int(4..6)
-        val gen = smallGen.flatMap { a -> biggerGen.map { b -> a + b } }
+        val gen = int(1..3).flatMap { outer ->
+            int(4..6).map { inner ->
+                Pair(outer, inner)
+            }
+        }
 
         val tree = producerTree {
             left(3)
             right(6)
         }
 
-        val (value, shrinks) = gen.generateWithShrunkValues(tree)
-        expectThat(value).isEqualTo(9)
-
-        val threeShrunk = IntShrinker.shrink(3, 1..3)
-        val sixShrunk = IntShrinker.shrink(6, 4..6)
-
-        expectThat(shrinks).contains(threeShrunk.map { it + 6 }.toList())
-        expectThat(shrinks).contains(sixShrunk.map { it + 3 }.toList())
+        val (value, shrinks) = gen.generateWithDeepShrinks(tree)
+        expectThat(value).isEqualTo(3 to 6)
+        expectThat(shrinks.toList().distinct()).contains(
+            3 to 4,
+        )
     }
 
     @Test
