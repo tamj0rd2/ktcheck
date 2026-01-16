@@ -6,9 +6,18 @@ import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.contains
+import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
 
 internal interface CombinatorGeneratorContract : BaseContract {
+    @Test
+    fun `constant always produces the same value and doesn't shrink`() {
+        // todo: move this test elsewhere.
+        val (value, shrinks) = constant(10).generateWithShrunkValues(ProducerTree.new())
+        expectThat(value).isEqualTo(10)
+        expectThat(shrinks).isEmpty()
+    }
+
     @Test
     fun `map maps the original value and shrinks`() {
         val originalGen = int(0..10)

@@ -70,7 +70,7 @@ private object GenV2Facade : GenFacade {
     }
 
     override fun <T> constant(value: T): Gen<T> {
-        TODO("Not yet implemented")
+        return ConstantGenV2(value)
     }
 
     override fun bool(origin: Boolean): Gen<Boolean> {
