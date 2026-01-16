@@ -18,6 +18,18 @@ internal interface CombinatorGeneratorContract : BaseContract {
     }
 
     @Test
+    fun `same seed produces same sample`() {
+        // todo: move this test elsewhere.
+        val seed = 12345L
+        val gen = int(-1000..1000)
+
+        val firstRun = gen.samples(seed).take(100).toList()
+        val secondRun = gen.samples(seed).take(100).toList()
+
+        expectThat(secondRun).isEqualTo(firstRun)
+    }
+
+    @Test
     fun `map maps the original value and shrinks`() {
         val originalGen = int(0..10)
         val doublingGen = originalGen.map { it * 2 }
@@ -104,16 +116,5 @@ internal interface CombinatorGeneratorContract : BaseContract {
             // both shrunk via recursion
             1 to 4,
         )
-    }
-
-    @Test
-    fun `same seed produces same sample`() {
-        val seed = 12345L
-        val gen = int(-1000..1000)
-
-        val firstRun = gen.samples(seed).take(100).toList()
-        val secondRun = gen.samples(seed).take(100).toList()
-
-        expectThat(secondRun).isEqualTo(firstRun)
     }
 }
