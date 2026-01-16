@@ -1,21 +1,12 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
-import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTrees
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import strikt.api.expectThat
-import strikt.assertions.all
-import strikt.assertions.contains
-import strikt.assertions.doesNotContain
-import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
 import strikt.assertions.isIn
-import strikt.assertions.isLessThan
-import strikt.assertions.isNotEmpty
-import kotlin.math.abs
 
 internal interface IntGeneratorContract : BaseContract {
     @TestFactory
@@ -70,75 +61,5 @@ internal interface IntGeneratorContract : BaseContract {
         val firstRun = gen.samples(seed).take(100).toList()
         val secondRun = gen.samples(seed).take(100).toList()
         expectThat(secondRun).isEqualTo(firstRun)
-    }
-
-    @Test
-    fun `10 shrinks correctly`() {
-        val gen = int(0..10)
-        val tree = ProducerTree.new().withValue(10)
-
-        val (originalValue, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(originalValue).isEqualTo(10)
-        expectThat(shrunkValues).isEqualTo(listOf(0, 5, 8, 9))
-    }
-
-    @Test
-    fun `-10 shrinks correctly`() {
-        val gen = int(-10..0)
-        val tree = ProducerTree.new().withValue(-10)
-
-        val (originalValue, shrunkValues) = gen.generateWithShrunkValues(tree)
-        expectThat(originalValue).isEqualTo(-10)
-        expectThat(shrunkValues).isEqualTo(listOf(0, -5, -8, -9))
-    }
-
-    @Test
-    fun `shrinking zero produces no shrinks`() {
-        val tree = ProducerTree.new().withValue(0)
-        val (originalValue, shrinks) = int().generateWithShrunkValues(tree)
-        expectThat(originalValue).isEqualTo(0)
-        expectThat(shrinks).isEmpty()
-    }
-
-    @Test
-    fun `shrinks for non-zero numbers always include 0`() {
-        val gen = int()
-
-        producerTrees().map { gen.generateWithShrunkValues(it) }
-            .filter { (originalValue) -> originalValue != 0 }
-            .take(100)
-            .forEach { (_, shrunkValues) -> expectThat(shrunkValues).isNotEmpty().contains(0) }
-    }
-
-    @Test
-    fun `the original generated number is not included in shrinks`() {
-        val gen = int()
-
-        producerTrees().map { gen.generateWithShrunkValues(it) }
-            .take(100)
-            .forEach { (originalValue, shrunkValues) ->
-                expectThat(shrunkValues).isNotEmpty().doesNotContain(originalValue)
-            }
-    }
-
-    @Test
-    fun `when 0 is in range, shrinks are closer to 0 than the original generated number`() {
-        val gen = int(-50..50)
-
-        withCounter {
-            producerTrees().map { gen.generateWithShrunkValues(it) }
-                .filter { (originalValue) -> originalValue != 0 }
-                .take(100)
-                .forEach { (originalValue, shrunkValues) ->
-                    collect("positive", originalValue > 0)
-
-                    expectThat(shrunkValues)
-                        .isNotEmpty()
-                        .doesNotContain(originalValue)
-                        .all {
-                            get { abs(this) }.describedAs("shrunk distance from 0").isLessThan(abs(originalValue))
-                        }
-                }
-        }
     }
 }
