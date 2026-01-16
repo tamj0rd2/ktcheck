@@ -1,0 +1,84 @@
+package com.tamj0rd2.ktcheck.v2
+
+import com.tamj0rd2.ktcheck.Gen
+import com.tamj0rd2.ktcheck.GenFacade
+import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.v1.CombinerContext
+import kotlin.reflect.KClass
+
+internal interface GenV2<T> : Gen<T> {
+    fun generate(tree: ProducerTree): GenResultV2<T>
+
+    companion object : GenFacade by GenV2Facade
+}
+
+internal data class GenResultV2<T>(
+    val value: T,
+    val shrinks: Sequence<GenResultV2<T>>,
+)
+
+private object GenV2Facade : GenFacade {
+    override fun <T> Gen<T>.sample(seed: Long): T {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T, R> Gen<T>.map(fn: (T) -> R): Gen<R> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T, R> Gen<T>.flatMap(fn: (T) -> Gen<R>): Gen<R> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T1, T2, R> Gen<T1>.combineWith(
+        nextGen: Gen<T2>,
+        combine: (T1, T2) -> R,
+    ): Gen<R> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> combine(block: CombinerContext.() -> T): Gen<T> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> Gen<T>.filter(
+        threshold: Int,
+        predicate: (T) -> Boolean,
+    ): Gen<T> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> Gen<T>.ignoreExceptions(
+        klass: KClass<out Exception>,
+        threshold: Int,
+    ): Gen<T> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> constant(value: T): Gen<T> {
+        TODO("Not yet implemented")
+    }
+
+    override fun bool(): Gen<Boolean> {
+        TODO("Not yet implemented")
+    }
+
+    override fun int(range: IntRange): Gen<Int> {
+        TODO("Not yet implemented")
+    }
+
+    override fun long(): Gen<Long> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> Gen<T>.list(
+        size: IntRange,
+        distinct: Boolean,
+    ): Gen<List<T>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {
+        TODO("Not yet implemented")
+    }
+}
