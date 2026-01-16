@@ -62,7 +62,12 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val (value, shrinks) = gen.generateWithDeepShrinks(tree)
         expectThat(value).isEqualTo(3 to 6)
         expectThat(shrinks.toList().distinct()).contains(
+            // inner value shrunk
             3 to 4,
+            // outer value shrunk
+            1 to 6,
+            // both shrunk via recursion
+            1 to 4,
         )
     }
 

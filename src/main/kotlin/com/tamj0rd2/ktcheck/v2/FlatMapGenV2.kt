@@ -7,13 +7,24 @@ internal class FlatMapGenV2<T, R>(
     private val fn: (T) -> GenV2<R>,
 ) : GenV2<R> {
     override fun generate(tree: ProducerTree): GenResultV2<R> {
-        // todo: outer shrinks are unused.
-        val (outerValue, _) = gen.generate(tree.left)
+        val (outerValue, outerShrinks) = gen.generate(tree.left)
         val (innerValue, innerShrinks) = fn(outerValue).generate(tree.right)
 
         return GenResultV2(
             value = innerValue,
-            shrinks = innerShrinks
+            shrinks = shrink(tree, outerShrinks) + innerShrinks
+        )
+    }
+
+    private fun shrink(
+        tree: ProducerTree,
+        outerShrinks: Sequence<GenResultV2<T>>,
+    ): Sequence<GenResultV2<R>> = outerShrinks.map { outer ->
+        val (outerValue, outerShrinks) = outer
+        val (innerValue, innerShrinks) = fn(outerValue).generate(tree.right)
+        GenResultV2(
+            value = innerValue,
+            shrinks = shrink(tree, outerShrinks) + innerShrinks
         )
     }
 }
