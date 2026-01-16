@@ -82,7 +82,8 @@ private object GenV2Facade : GenFacade {
     }
 
     override fun long(): Gen<Long> {
-        TODO("Not yet implemented")
+        // todo: implement this properly
+        return int().map { it.toLong() }
     }
 
     override fun <T> Gen<T>.list(

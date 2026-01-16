@@ -1,21 +1,21 @@
-package com.tamj0rd2.ktcheck.v1
+package com.tamj0rd2.ktcheck.v2
 
-import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.HardcodedTestConfig
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.Test
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.TestResult
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.v1.GenV1.Companion.map
+import com.tamj0rd2.ktcheck.v2.GenV2.Companion.map
 
 @OptIn(HardcodedTestConfig::class)
-internal fun <T> test(config: TestConfig, gen: GenV1<T>, test: Test<T>) {
+internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
+    // todo: intellisense is very bad when working on the project. 3 separate imports for map...
     val testResultsGen = gen.map { test.getResultFor(it) }
 
     fun runIteration(iteration: Int) {
         val sampleTree = ProducerTree.new(config.seed.next(iteration))
-        val (testResult, shrinks) = (testResultsGen as GenV1).generate(sampleTree, GenMode.Initial)
+        val (testResult, shrinks) = (testResultsGen as GenV2).generate(sampleTree)
 
         when (testResult) {
             is TestResult.Success -> return
@@ -50,29 +50,18 @@ private fun <T> Test<T>.getResultFor(t: T): TestResult<T> {
     return TestResult.Failure(t, failure)
 }
 
-private tailrec fun <T> GenV1<TestResult<T>>.getSmallestCounterExample(
+private tailrec fun <T> GenV2<TestResult<T>>.getSmallestCounterExample(
     testResult: TestResult.Failure<T>,
-    iterator: Iterator<ProducerTree>,
+    iterator: Iterator<GenResultV2<TestResult<T>>>,
     steps: Int = 0,
 ): Pair<TestResult.Failure<T>, Int> {
     if (!iterator.hasNext()) return testResult to steps
 
-    val genResult = try {
-        generate(iterator.next(), GenMode.Shrinking)
-    } catch (_: GenerationException) {
-        null
-    }
+    val (shrunkTestResult, newShrinks) = iterator.next()
 
-    return when (genResult) {
-        null -> getSmallestCounterExample(testResult, iterator, steps + 1)
-        else -> {
-            val (shrunkTestResult, newShrinks) = genResult
-
-            if (shrunkTestResult is TestResult.Failure) {
-                getSmallestCounterExample(shrunkTestResult, newShrinks.iterator(), steps + 1)
-            } else {
-                getSmallestCounterExample(testResult, iterator, steps + 1)
-            }
-        }
+    return if (shrunkTestResult is TestResult.Failure) {
+        getSmallestCounterExample(shrunkTestResult, newShrinks.iterator(), steps + 1)
+    } else {
+        getSmallestCounterExample(testResult, iterator, steps + 1)
     }
 }

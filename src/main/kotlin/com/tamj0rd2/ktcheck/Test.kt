@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.v1.GenV1
-import com.tamj0rd2.ktcheck.v1.test
+import com.tamj0rd2.ktcheck.v2.GenV2
 
 @Suppress("unused")
 fun <T> forAll(gen: Gen<T>, test: TestByBool<T>) = forAll(TestConfig(), gen, test)
@@ -13,7 +13,8 @@ fun <T> checkAll(config: TestConfig, gen: Gen<T>, test: TestByThrowing<T>) = tes
 
 private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     when (gen) {
-        is GenV1 -> test(config, gen, test)
+        is GenV1 -> com.tamj0rd2.ktcheck.v1.test(config, gen, test)
+        is GenV2 -> com.tamj0rd2.ktcheck.v2.test(config, gen, test)
         else -> throw IllegalArgumentException("Unsupported Gen implementation: ${gen::class}")
     }
 }

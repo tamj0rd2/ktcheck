@@ -62,7 +62,6 @@ internal interface TestFrameworkContract : BaseContract {
         val spyTestReporter = SpyTestReporter()
         val testConfig = TestConfig().withReporter(reporter = spyTestReporter)
 
-
         val theError = AssertionError("boom!")
         expectThrows<PropertyFalsifiedException> {
             checkAll(
