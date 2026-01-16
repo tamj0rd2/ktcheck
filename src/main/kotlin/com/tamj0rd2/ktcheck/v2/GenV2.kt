@@ -19,7 +19,14 @@ internal data class GenResultV2<T>(
 
 private object GenV2Facade : GenFacade {
     override fun <T> Gen<T>.sample(seed: Long): T {
-        TODO("Not yet implemented")
+        return (this as? GenV2<T>)?.generate(
+            ProducerTree.new(
+                com.tamj0rd2.ktcheck.core.Seed(
+                    seed
+                )
+            )
+        )?.value
+            ?: error("sample(seed) only supported for GenV2")
     }
 
     override fun <T, R> Gen<T>.map(fn: (T) -> R): Gen<R> {
@@ -64,7 +71,7 @@ private object GenV2Facade : GenFacade {
     }
 
     override fun int(range: IntRange): Gen<Int> {
-        TODO("Not yet implemented")
+        return IntGenV2(range)
     }
 
     override fun long(): Gen<Long> {
