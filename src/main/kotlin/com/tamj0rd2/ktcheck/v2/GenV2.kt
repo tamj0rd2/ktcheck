@@ -15,7 +15,13 @@ internal interface GenV2<T> : Gen<T> {
 internal data class GenResultV2<T>(
     val value: T,
     val shrinks: Sequence<GenResultV2<T>>,
-)
+) {
+    fun <R> map(fn: (T) -> R): GenResultV2<R> =
+        GenResultV2(
+            value = fn(value),
+            shrinks = shrinks.map { it.map(fn) }
+        )
+}
 
 private object GenV2Facade : GenFacade {
     override fun <T> Gen<T>.sample(seed: Long): T {
@@ -30,18 +36,19 @@ private object GenV2Facade : GenFacade {
     }
 
     override fun <T, R> Gen<T>.map(fn: (T) -> R): Gen<R> {
-        TODO("Not yet implemented")
+        return MapGenV2(this as GenV2, fn)
     }
 
     override fun <T, R> Gen<T>.flatMap(fn: (T) -> Gen<R>): Gen<R> {
-        TODO("Not yet implemented")
+        @Suppress("UNCHECKED_CAST")
+        return FlatMapGenV2(this as GenV2, fn as (T) -> GenV2<R>)
     }
 
     override fun <T1, T2, R> Gen<T1>.combineWith(
         nextGen: Gen<T2>,
         combine: (T1, T2) -> R,
     ): Gen<R> {
-        TODO("Not yet implemented")
+        return CombineGenV2(this as GenV2, nextGen as GenV2, combine)
     }
 
     override fun <T> combine(block: CombinerContext.() -> T): Gen<T> {

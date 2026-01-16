@@ -22,7 +22,6 @@ internal interface CombinatorGeneratorContract : BaseContract {
         expectThat(doubledShrinks).isEqualTo(originalShrinks.map { it * 2 })
     }
 
-
     @Test
     fun `flatMap generates the second value based on the first`() {
         val smallGen = int(0..5)
@@ -40,6 +39,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
     @Test
     fun `flatMap combines shrinks from both generators`() {
+        // todo: return a pair rather than doing addition
         val smallGen = int(1..3)
         val biggerGen = int(4..6)
         val gen = smallGen.flatMap { a -> biggerGen.map { b -> a + b } }
