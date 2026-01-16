@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.GenerationException.OneOfEmpty
 import com.tamj0rd2.ktcheck.core.Seed
+import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker
 import com.tamj0rd2.ktcheck.v1.CombinerContext
 import com.tamj0rd2.ktcheck.v1.GenV1
 import java.util.*
@@ -114,7 +115,7 @@ internal interface GenFacade {
     fun <T> Gen<T>.ignoreExceptions(klass: KClass<out Exception>, threshold: Int = 100): Gen<T>
 
     fun <T> constant(value: T): Gen<T>
-    fun bool(): Gen<Boolean>
+    fun bool(origin: Boolean = BoolShrinker.defaultOrigin()): Gen<Boolean>
     fun int(range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE): Gen<Int>
     fun long(): Gen<Long>
 

@@ -1,11 +1,15 @@
 package com.tamj0rd2.ktcheck.v1
 
-internal class BooleanGenerator : GenV1<Boolean>() {
+import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker
+
+internal class BooleanGenerator(
+    private val origin: Boolean,
+) : GenV1<Boolean>() {
     override fun GenContext.generate(): GenResult<Boolean> {
         val value = tree.producer.bool()
         return GenResult(
             value = value,
-            shrinks = if (value) sequenceOf(tree.withValue(false)) else emptySequence()
+            shrinks = BoolShrinker.shrink(value = value, origin = origin).map(tree::withValue)
         )
     }
 }

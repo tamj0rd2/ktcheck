@@ -2,13 +2,13 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker.defaultOrigin
+import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import strikt.api.expectThat
 import strikt.assertions.all
-import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
-import strikt.assertions.isFalse
-import strikt.assertions.isTrue
 
 internal interface BooleanGeneratorContract : BaseContract {
     @Test
@@ -30,20 +30,33 @@ internal interface BooleanGeneratorContract : BaseContract {
         expectThat(values.drop(1)).all { isEqualTo(firstValue) }
     }
 
-    // todo: in the future I want to allow the user to specify the shrink direction
-    @Test
-    fun `true shrinks to false`() {
-        val tree = ProducerTree.new().withValue(true)
-        val (value, shrinks) = bool().generateWithShrunkValues(tree)
-        expectThat(value).isTrue()
-        expectThat(shrinks).isEqualTo(listOf(false))
-    }
+    @TestFactory
+    fun `shrinks correctly`(): List<DynamicTest> {
+        data class TestCase(
+            val value: Boolean,
+            val origin: Boolean,
+            val expectedShrinks: List<Boolean>,
+        )
 
-    @Test
-    fun `false does not shrink`() {
-        val tree = ProducerTree.new().withValue(false)
-        val (value, shrinks) = bool().generateWithShrunkValues(tree)
-        expectThat(value).isFalse()
-        expectThat(shrinks).isEmpty()
+        val testCases = listOf(
+            // when value is true
+            TestCase(value = true, origin = defaultOrigin(), expectedShrinks = listOf(false)),
+            TestCase(value = true, origin = false, expectedShrinks = listOf(false)),
+            TestCase(value = true, origin = true, expectedShrinks = emptyList()),
+
+            // when value is false
+            TestCase(value = false, origin = defaultOrigin(), expectedShrinks = emptyList()),
+            TestCase(value = false, origin = false, expectedShrinks = emptyList()),
+            TestCase(value = false, origin = true, expectedShrinks = listOf(true))
+        )
+
+        return testCases.map {
+            DynamicTest.dynamicTest(it.toString()) {
+                val tree = ProducerTree.new().withValue(it.value)
+                val (value, shrinks) = bool(it.origin).generateWithShrunkValues(tree)
+                expectThat(value).isEqualTo(it.value)
+                expectThat(shrinks).isEqualTo(it.expectedShrinks)
+            }
+        }
     }
 }

@@ -86,7 +86,7 @@ private object GenV1Facade : GenFacade {
 
     override fun <T> constant(value: T): GenV1<T> = ConstantGenerator(value)
 
-    override fun bool(): GenV1<Boolean> = BooleanGenerator()
+    override fun bool(origin: Boolean): Gen<Boolean> = BooleanGenerator(origin)
 
     override fun int(range: IntRange): GenV1<Int> = IntGenerator(range)
 

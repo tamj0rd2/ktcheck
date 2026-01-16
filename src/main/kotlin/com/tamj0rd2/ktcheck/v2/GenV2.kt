@@ -66,7 +66,7 @@ private object GenV2Facade : GenFacade {
         TODO("Not yet implemented")
     }
 
-    override fun bool(): Gen<Boolean> {
+    override fun bool(origin: Boolean): Gen<Boolean> {
         TODO("Not yet implemented")
     }
 
