@@ -4,7 +4,7 @@ sealed class GenerationException(message: String, cause: Throwable? = null) : Il
     @Suppress("unused")
     class OneOfEmpty internal constructor() : GenerationException("Gen.oneOf() called with no generators")
 
-    class FilterLimitReached internal constructor(threshold: Int, cause: Throwable?) :
+    class FilterLimitReached internal constructor(threshold: Int, cause: Throwable? = null) :
         GenerationException("Filter failed after $threshold misses", cause)
 
     class DistinctCollectionSizeImpossible internal constructor(targetSize: Int, achievedSize: Int, attempts: Int) :

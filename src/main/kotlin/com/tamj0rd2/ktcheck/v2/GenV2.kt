@@ -59,14 +59,14 @@ private object GenV2Facade : GenFacade {
         threshold: Int,
         predicate: (T) -> Boolean,
     ): Gen<T> {
-        TODO("Not yet implemented")
+        return PredicateFilterGenV2(this as GenV2, threshold, predicate)
     }
 
     override fun <T> Gen<T>.ignoreExceptions(
         klass: KClass<out Exception>,
         threshold: Int,
     ): Gen<T> {
-        TODO("Not yet implemented")
+        return ExceptionIgnoringGenV2(this as GenV2, threshold, klass)
     }
 
     override fun <T> constant(value: T): Gen<T> {
