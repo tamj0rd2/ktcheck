@@ -14,4 +14,17 @@ internal abstract class V1BaseContract : BaseContract, GenFacade by GenV1.Compan
         val (value, shrinks) = (this as GenV1).generate(tree, GenMode.Initial)
         return value to shrinks.map { generate(it, GenMode.Shrinking).value }.toList()
     }
+
+    override fun <T> Gen<T>.generateWithDeepShrinks(tree: ProducerTree): Pair<T, Sequence<T>> {
+        val (value, shrinks) = (this as GenV1).generate(tree, GenMode.Initial)
+        return value to collectShrinksRecursively(shrinks)
+    }
+
+    private fun <T> GenV1<T>.collectShrinksRecursively(shrinks: Sequence<ProducerTree>): Sequence<T> = sequence {
+        for (tree in shrinks) {
+            val result = generate(tree, GenMode.Shrinking)
+            yield(result.value)
+            yieldAll(collectShrinksRecursively(result.shrinks))
+        }
+    }
 }

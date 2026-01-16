@@ -17,6 +17,8 @@ internal interface BaseContract : GenFacade {
 
     fun <T> Gen<T>.generateWithShrunkValues(tree: ProducerTree): Pair<T, List<T>>
 
+    fun <T> Gen<T>.generateWithDeepShrinks(tree: ProducerTree): Pair<T, Sequence<T>>
+
     fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
         var shrinksBeforeTimeout = -1
         try {

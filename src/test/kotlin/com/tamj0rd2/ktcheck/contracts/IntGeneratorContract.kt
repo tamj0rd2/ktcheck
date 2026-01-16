@@ -1,6 +1,7 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
+import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -61,5 +62,14 @@ internal interface IntGeneratorContract : BaseContract {
         val firstRun = gen.samples(seed).take(100).toList()
         val secondRun = gen.samples(seed).take(100).toList()
         expectThat(secondRun).isEqualTo(firstRun)
+    }
+
+    @Test
+    fun `recursively shrinks depth first`() {
+        val (original, shrinks) = int(0..4).generateWithDeepShrinks(producerTree(4))
+        expectThat(original).isEqualTo(4)
+
+        val shrunkValues = shrinks.onEach { println(it) }.toList().distinct()
+        expectThat(shrunkValues).isEqualTo(listOf(0, 2, 1, 3))
     }
 }

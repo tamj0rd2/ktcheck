@@ -50,6 +50,16 @@ private fun <T> Test<T>.getResultFor(t: T): TestResult<T> {
     return TestResult.Failure(t, failure)
 }
 
+internal fun <T> GenV1<T>.recurseShrinks(
+    shrinks: Sequence<ProducerTree>,
+): Sequence<T> = sequence {
+    for (tree in shrinks) {
+        val (value, newShrinks) = generate(tree, GenMode.Shrinking)
+        yield(value)
+        yieldAll(recurseShrinks(newShrinks))
+    }
+}
+
 private tailrec fun <T> GenV1<TestResult<T>>.getSmallestCounterExample(
     testResult: TestResult.Failure<T>,
     iterator: Iterator<ProducerTree>,
