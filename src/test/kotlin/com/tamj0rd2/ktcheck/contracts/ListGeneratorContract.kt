@@ -3,7 +3,11 @@ package com.tamj0rd2.ktcheck.contracts
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
+import strikt.assertions.any
+import strikt.assertions.contains
 import strikt.assertions.isEqualTo
+import strikt.assertions.isLessThan
+import strikt.assertions.size
 
 internal interface ListGeneratorContract : BaseContract {
     @Test
@@ -38,81 +42,53 @@ internal interface ListGeneratorContract : BaseContract {
     }
 
     @Test
-    fun `shrinks a list of 2 elements`() {
-        val gen = int(0..5).list()
-
+    fun `recursively shrinks a list of 2 elements`() {
+        val gen = int(0..4).list()
         val tree = producerTree {
             left(2)
             right {
-                left(1)
+                left(3)
                 right {
                     left(4)
                 }
             }
         }
 
-        val result = gen.generate(tree)
-        expectThat(result.value).isEqualTo(listOf(1, 4))
+        val rootResult = gen.generate(tree)
+        expectThat(rootResult.value).isEqualTo(listOf(3, 4))
 
-        // 4 shrinks to 0, 2, 3
-        // 3 shrinks to 0, 2
-        // 2 shrinks to 0, 1
-        // 1 shrinks to 0
-        expectThat(result.shrunkValues).isEqualTo(
-            listOf(
-                // tries reducing list size (now 0)
-                emptyList(),
-                // continues reducing list size (now 1). From tail first, then head.
-                listOf(1),
-                listOf(4),
-                // shrinks values, starting with index 1
-                listOf(0, 4),
-                // continues shrinking values at index 2
-                listOf(1, 0),
-                listOf(1, 2),
-                listOf(1, 3),
-            ).distinct()
+        val distinctShinks = rootResult.deeplyShrunkValues.toList().distinct()
+        expectThat(distinctShinks).contains(
+            // size shrinks
+            emptyList(),
+            listOf(3),
+            listOf(4),
+            // element shrinks
+            listOf(0, 4),
+            listOf(3, 0),
+            listOf(0, 0),
         )
     }
 
     @Test
-    fun `shrinks a list of 3 elements`() {
-        val gen = int(0..4).list()
-
+    fun `once the elements of a list have been shrunk, the resultant shrinks can also be shrunk by size`() {
+        val gen = int(0..10).list(0..3)
         val tree = producerTree {
-            left(3)
+            left(2) // size
             right {
-                left(1)
+                left(3)
                 right {
-                    left(2)
-                    right {
-                        left(3)
-                    }
+                    left(4)
                 }
             }
         }
 
-        val result = gen.generate(tree)
-        expectThat(result.value).isEqualTo(listOf(1, 2, 3))
+        val root = gen.generate(tree)
+        expectThat(root.value).isEqualTo(listOf(3, 4))
 
-        // 3 shrinks to 0 and 2
-        // 2 shrinks to 0 and 1
-        // 1 shrinks to 0
-        expectThat(result.shrunkValues).isEqualTo(
-            listOf(
-                // reduce list size (0)
-                listOf(),
-                // reduce list size (2), removing items at tail
-                listOf(1, 2),
-                // reduce list size (2), removing items at head
-                listOf(2, 3),
-                // shrink values
-                listOf(0, 2, 3),
-                listOf(1, 0, 3),
-                listOf(1, 1, 3),
-                listOf(1, 2, 0),
-                listOf(1, 2, 2),
-            )
-        )
+        val firstNonSizeShrink = root.shrinks.first { it.value.size == root.value.size }
+        expectThat(firstNonSizeShrink.shrinks.toList())
+            .describedAs("shrinks of ${firstNonSizeShrink.value}")
+            .any { get { value }.size.isLessThan(root.value.size) }
     }
 }

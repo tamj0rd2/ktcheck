@@ -16,6 +16,10 @@ internal class GenResults<T>(
     val value: T,
     val shrinks: Sequence<GenResults<T>>,
 ) {
+    override fun toString(): String {
+        return "GenResults(value=$value)"
+    }
+    
     val shrunkValues get() = shrinks.map { it.value }.toList()
 
     val deeplyShrunkValues: Sequence<T>

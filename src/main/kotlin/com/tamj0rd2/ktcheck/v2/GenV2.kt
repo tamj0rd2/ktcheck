@@ -89,7 +89,7 @@ private object GenV2Facade : GenFacade {
         size: IntRange,
         distinct: Boolean,
     ): Gen<List<T>> {
-        TODO("Not yet implemented")
+        return ListGenV2(this as GenV2, IntGenV2(size))
     }
 
     override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {
