@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
-import com.tamj0rd2.ktcheck.v1.shrink
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.contains
@@ -52,8 +52,8 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val (value, shrinks) = gen.generateWithShrunkValues(tree)
         expectThat(value).isEqualTo(9)
 
-        val threeShrunk = shrink(3, range = 1..3)
-        val sixShrunk = shrink(6, range = 4..6)
+        val threeShrunk = IntShrinker.shrink(3, 1..3)
+        val sixShrunk = IntShrinker.shrink(6, 4..6)
 
         expectThat(shrinks).contains(threeShrunk.map { it + 6 }.toList())
         expectThat(shrinks).contains(sixShrunk.map { it + 3 }.toList())
@@ -88,8 +88,8 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val (value, shrinks) = gen.generateWithShrunkValues(tree)
         expectThat(value).isEqualTo(9)
 
-        val threeShrunk = shrink(3, range = 1..3)
-        val sixShrunk = shrink(6, range = 4..6)
+        val threeShrunk = IntShrinker.shrink(3, 1..3)
+        val sixShrunk = IntShrinker.shrink(6, 4..6)
 
         expectThat(shrinks).contains(threeShrunk.map { it + 6 }.toList())
         expectThat(shrinks).contains(sixShrunk.map { it + 3 }.toList())

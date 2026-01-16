@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.v1
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.copy
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 
 internal class ListGenerator<T>(
     private val sizeRange: IntRange,
@@ -16,7 +17,7 @@ internal class ListGenerator<T>(
         return GenResult(
             value = list,
             shrinks = sequence {
-                val sizeShrinks = shrink(size, sizeRange).filter { it in sizeRange && it != 0 }
+                val sizeShrinks = IntShrinker.shrink(size, sizeRange).filter { it in sizeRange && it != 0 }
 
                 // this and the condition above prevents yielding duplicate empty list shrinks
                 if (size != 0 && 0 in sizeRange) yield(tree.copy { left(value = 0) })
