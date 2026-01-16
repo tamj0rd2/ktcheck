@@ -17,7 +17,8 @@ internal data class ProducerTree private constructor(
         )
     }
 
-    internal fun withValue(value: Any) = copy(producer = PredeterminedValue(value))
+    internal fun withProducer(producer: ValueProducer) = copy(producer = producer)
+    internal fun withValue(value: Any) = withProducer(PredeterminedValue(value))
     internal fun withLeft(left: ProducerTree) = copy(lazyLeft = lazyOf(left))
     internal fun withRight(right: ProducerTree) = copy(lazyRight = lazyOf(right))
 
@@ -103,36 +104,26 @@ internal class ProducerTreeDsl(private var subject: ProducerTree) {
         subject = subject.withLeft(tree)
     }
 
-    fun left(value: Any) {
-        left(subject.left.withValue(value))
-    }
+    fun left(value: Any? = null, block: ProducerTreeDsl.() -> Unit = {}) {
+        if (value != null) left(subject.left.withValue(value))
 
-    fun left(block: ProducerTreeDsl.() -> Unit) {
         val newLeftTree = ProducerTreeDsl(subject.left).apply(block).subject
         subject = subject.withLeft(newLeftTree)
-    }
-
-    fun left(value: Any, block: ProducerTreeDsl.() -> Unit) {
-        left(value)
-        left(block)
     }
 
     fun right(tree: ProducerTree) {
         subject = subject.withRight(tree)
     }
 
-    fun right(value: Any) {
-        right(subject.right.withValue(value))
+    fun right(producer: ValueProducer) {
+        subject = subject.withRight(subject.right.withProducer(producer))
     }
 
-    fun right(block: ProducerTreeDsl.() -> Unit) {
+    fun right(value: Any? = null, block: ProducerTreeDsl.() -> Unit = {}) {
+        if (value != null) right(subject.right.withValue(value))
+
         val newRightTree = ProducerTreeDsl(subject.right).apply(block).subject
         subject = subject.withRight(newRightTree)
-    }
-
-    fun right(value: Any, block: ProducerTreeDsl.() -> Unit) {
-        right(value)
-        right(block)
     }
 
     companion object {

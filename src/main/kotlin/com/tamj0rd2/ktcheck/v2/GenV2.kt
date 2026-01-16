@@ -94,6 +94,7 @@ private object GenV2Facade : GenFacade {
     }
 
     override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {
-        TODO("Not yet implemented")
+        val gensList = gens.map { it as GenV2<T> }
+        return int(gensList.indices).flatMap { gensList[it] }
     }
 }

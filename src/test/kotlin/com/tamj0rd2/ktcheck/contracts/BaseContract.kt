@@ -6,6 +6,7 @@ import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.ValueProducer
 import com.tamj0rd2.ktcheck.forAll
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import strikt.api.expectThrows
@@ -19,7 +20,7 @@ internal class GenResults<T>(
     override fun toString(): String {
         return "GenResults(value=$value)"
     }
-    
+
     val shrunkValues get() = shrinks.map { it.value }.toList()
 
     val deeplyShrunkValues: Sequence<T>
@@ -53,5 +54,15 @@ internal interface BaseContract : GenFacade {
             println("managed $shrinksBeforeTimeout shrinks before exploding")
             throw e
         }
+    }
+}
+
+internal class StubValueProducer(private vararg val values: Any) : ValueProducer {
+    override fun int(range: IntRange): Int {
+        return values.filterIsInstance<Int>().single()
+    }
+
+    override fun bool(): Boolean {
+        return values.filterIsInstance<Boolean>().single()
     }
 }

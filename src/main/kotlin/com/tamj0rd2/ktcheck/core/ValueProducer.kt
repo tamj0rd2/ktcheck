@@ -3,7 +3,7 @@ package com.tamj0rd2.ktcheck.core
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-internal sealed interface ValueProducer {
+internal interface ValueProducer {
     fun int(range: IntRange): Int
     fun bool(): Boolean
 }

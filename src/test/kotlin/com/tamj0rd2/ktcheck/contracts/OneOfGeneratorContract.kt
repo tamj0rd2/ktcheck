@@ -28,7 +28,8 @@ internal interface OneOfGeneratorContract : BaseContract {
 
         val tree = producerTree(Seed(1)) {
             left(1)
-            right(4)
+            // todo: too many ways to set tree values ;-;
+            right(StubValueProducer(4, true))
         }
 
         val result = multiTypeGen.generate(tree)
