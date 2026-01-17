@@ -10,8 +10,6 @@ import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.trees
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.forAll
-import com.tamj0rd2.ktcheck.v1.GenMode
-import com.tamj0rd2.ktcheck.v1.GenV1
 import com.tamj0rd2.ktcheck.v2.GenResultV2
 import com.tamj0rd2.ktcheck.v2.GenV2
 import org.junit.jupiter.api.assertTimeoutPreemptively
@@ -42,14 +40,6 @@ internal class GenResults<T>(
 }
 
 internal fun <T> Gen<T>.generate(tree: ProducerTree = ProducerTree.new()): GenResults<T> = when (this) {
-    is GenV1 -> {
-        val (value, shrinks) = generate(tree, GenMode.Initial)
-        GenResults(
-            value = value,
-            shrinks = collectShrinksRecursively(shrinks)
-        )
-    }
-
     is GenV2 -> {
         val (value, shrinks) = generate(tree)
         GenResults(value, collectShrinksRecursively(shrinks))
@@ -57,19 +47,6 @@ internal fun <T> Gen<T>.generate(tree: ProducerTree = ProducerTree.new()): GenRe
 
     else -> error("Unsupported Gen type: ${this::class}")
 }
-
-private fun <T> GenV1<T>.collectShrinksRecursively(shrinks: Sequence<ProducerTree>): Sequence<GenResults<T>> =
-    sequence {
-        for (tree in shrinks) {
-            val result = generate(tree, GenMode.Shrinking)
-            yield(
-                GenResults(
-                    value = result.value,
-                    shrinks = collectShrinksRecursively(result.shrinks)
-                )
-            )
-        }
-    }
 
 private fun <T> GenV2<T>.collectShrinksRecursively(shrinks: Sequence<GenResultV2<T>>): Sequence<GenResults<T>> =
     sequence {

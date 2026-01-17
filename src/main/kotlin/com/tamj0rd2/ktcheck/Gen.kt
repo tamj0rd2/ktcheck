@@ -3,7 +3,7 @@ package com.tamj0rd2.ktcheck
 import com.tamj0rd2.ktcheck.GenerationException.OneOfEmpty
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker
-import com.tamj0rd2.ktcheck.v1.GenV1
+import com.tamj0rd2.ktcheck.v2.GenV2
 import java.util.*
 import kotlin.random.Random
 import kotlin.reflect.KClass
@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 interface Gen<T>
 
 @Suppress("unused")
-object Gens : GenFacade by GenV1
+object Gens : GenFacade by GenV2
 
 internal interface GenFacade {
     /**

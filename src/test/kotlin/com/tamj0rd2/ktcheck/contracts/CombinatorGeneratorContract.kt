@@ -3,8 +3,6 @@ package com.tamj0rd2.ktcheck.contracts
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.tree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
-import com.tamj0rd2.ktcheck.v1.V1BaseContract
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
@@ -90,9 +88,6 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
     @Test
     fun `flatMap allows changing the constraints of the inner generator`() {
-        // todo: remove assumption
-        Assumptions.assumeFalse(this is V1BaseContract)
-
         val gen = int(0..2).flatMap { int(10..10 + it) }
 
         val tree = tree {

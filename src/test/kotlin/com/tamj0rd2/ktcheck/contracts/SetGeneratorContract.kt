@@ -5,17 +5,13 @@ import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.tree
-import com.tamj0rd2.ktcheck.v1.V1BaseContract
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import strikt.api.expectThat
-import strikt.assertions.all
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.hasSize
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
-import strikt.assertions.isLessThanOrEqualTo
 import strikt.assertions.size
 
 internal interface SetGeneratorContract : BaseContract {
@@ -40,28 +36,9 @@ internal interface SetGeneratorContract : BaseContract {
     }
 
     @Test
-    fun `shrinks a set of 1 element when the size is not constrained`() {
-        // todo: remove assumption
-        Assumptions.assumeTrue(this !is V1BaseContract)
-
-        val gen = int(0..4).set()
-
-        val result = gen.generating(setOf(4))
-
-        expectThat(result.shrunkValues).all { size.isLessThanOrEqualTo(1) }
-    }
-
-    @Test
     fun `shrinks a set of 1 element`() {
         val intGen = int(0..10)
-        val gen = intGen.let {
-            if (this is V1BaseContract) {
-                // todo: once the test above is fixed, remove this conditional. size should be unconstrained.
-                it.set(0..1)
-            } else {
-                it.set()
-            }
-        }
+        val gen = intGen.set()
 
         val tree = tree {
             left(ProducerTree.new().withValue(1))
@@ -87,14 +64,7 @@ internal interface SetGeneratorContract : BaseContract {
 
     @Test
     fun `shrinks a set of 2 elements`() {
-        val gen = int(0..10).let {
-            if (this is V1BaseContract) {
-                // todo: once the test above is fixed, remove this conditional. size should be unconstrained.
-                it.set(0..2)
-            } else {
-                it.set()
-            }
-        }
+        val gen = int(0..10).set()
 
         val result = gen.generating(setOf(1, 4))
         expectThat(result.value).isEqualTo(setOf(1, 4))
@@ -117,17 +87,10 @@ internal interface SetGeneratorContract : BaseContract {
     @Test
     fun `shrinks a set of 3 elements`() {
         val intGen = int(0..10)
-        val gen = intGen.let {
-            if (this is V1BaseContract) {
-                // todo: once the test above is fixed, remove this conditional. size should be unconstrained.
-                it.set(0..3)
-            } else {
-                it.set()
-            }
-        }
+        val gen = intGen.set()
 
         val tree = tree {
-            // todo: this is wrong. puts me back in the same annoying situation as before.
+            // todo: fix this next!!! this is wrong. puts me back in the same annoying situation as before.
             left(ProducerTree.new().withValue(3))
 
             right {
@@ -155,7 +118,7 @@ internal interface SetGeneratorContract : BaseContract {
             setOf(0, 2, 3),
             setOf(1, 0, 3),
             // next would try (1,1,3) but encounters duplicate 1, stops rather than generating further values
-            if (this is V1BaseContract) setOf(1) else setOf(1, 3),
+            setOf(1, 3),
             setOf(1, 2, 0),
             // next would try (1,2,2) but encounters duplicate 2, stops rather than generating further values
             setOf(1, 2),
@@ -178,12 +141,8 @@ internal interface SetGeneratorContract : BaseContract {
         expectThat(set.toSet()).hasSize(set.size)
     }
 
-    // todo: review this test. it's weird.
     @Test
     fun `does not produce any shrinks when the set size is equal to the number of distinct values`() {
-        // todo: remove assumption. set generation appears broken for v1.
-        Assumptions.assumeTrue(this !is V1BaseContract)
-
         // note: there are only 3 possible distinct values. So a set of size 3 can only ever be achieved once: (0, 1, 2)
         val intGen = int(0..2)
         val gen = intGen.set(3)
