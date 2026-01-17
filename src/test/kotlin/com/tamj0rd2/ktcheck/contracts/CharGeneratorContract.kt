@@ -1,8 +1,6 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
-import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTrees
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -73,15 +71,12 @@ internal interface CharGeneratorContract : BaseContract {
         expectThat(secondRun).isEqualTo(firstRun)
     }
 
-
     @Test
     fun `shrinks toward the smallest character, smallest first`() {
         val chars = 'a'..'d'
         val gen = char(chars)
-        val tree = ProducerTree.new().withValue(chars.indexOf('d'))
 
-        val result = gen.generate(tree)
-        expectThat(result.value).isEqualTo('d')
+        val result = gen.generating('d')
         expectThat(result.shrunkValues).isEqualTo(listOf('a', 'c'))
     }
 
@@ -89,10 +84,8 @@ internal interface CharGeneratorContract : BaseContract {
     fun `if the smallest character was generated, it won't yield any shrinks`() {
         val chars = 'a'..'d'
         val gen = char(chars)
-        val tree = ProducerTree.new().withValue(chars.indexOf('a'))
 
-        val result = gen.generate(tree)
-        expectThat(result.value).isEqualTo('a')
+        val result = gen.generating('a')
         expectThat(result.shrunkValues).isEmpty()
     }
 
@@ -101,7 +94,7 @@ internal interface CharGeneratorContract : BaseContract {
         val chars = ('a'..'z').toList()
         val gen = char(chars)
 
-        producerTrees().map { gen.generate(it) }
+        gen.sequence()
             .filter { it.value != chars.first() }
             .take(100)
             .forEach { expectThat(it.shrunkValues).first().isEqualTo(chars.first()) }
@@ -112,7 +105,7 @@ internal interface CharGeneratorContract : BaseContract {
         val chars = ('a'..'z').toList()
         val gen = char(chars)
 
-        producerTrees().map { gen.generate(it) }
+        gen.sequence()
             .take(100)
             .forEach { expectThat(it.shrunkValues).doesNotContain(it.value) }
     }
@@ -123,7 +116,7 @@ internal interface CharGeneratorContract : BaseContract {
         val gen = char(chars)
         val lowestChar = chars.first()
 
-        producerTrees().map { gen.generate(it) }
+        gen.sequence()
             .filter { it.value != lowestChar }
             .take(100)
             .forEach {

@@ -1,7 +1,8 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
+import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.tree
+import com.tamj0rd2.ktcheck.core.findTreeProducing
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.contains
@@ -48,9 +49,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val bigGen = int(10..20)
         val gen = smallGen.flatMap { a -> bigGen.map { b -> a + b } }
 
-        val tree = producerTree {
-            left(5)
-            right(20)
+        val tree = tree {
+            left(smallGen.findTreeProducing(5))
+            right(bigGen.findTreeProducing(20))
         }
 
         val value = gen.generate(tree).value
@@ -59,15 +60,17 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
     @Test
     fun `flatMap combines shrinks from both generators`() {
-        val gen = int(1..3).flatMap { outer ->
-            int(4..6).map { inner ->
+        val oneToThree = int(1..3)
+        val fourToSix = int(4..6)
+        val gen = oneToThree.flatMap { outer ->
+            fourToSix.map { inner ->
                 Pair(outer, inner)
             }
         }
 
-        val tree = producerTree {
-            left(3)
-            right(6)
+        val tree = tree {
+            left(oneToThree.findTreeProducing(3))
+            right(fourToSix.findTreeProducing(6))
         }
 
         val result = gen.generate(tree)
@@ -88,9 +91,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val bigGen = int(10..20)
         val gen = smallGen.combineWith(bigGen) { a, b -> a + b }
 
-        val tree = producerTree {
-            left(5)
-            right(20)
+        val tree = tree {
+            left(smallGen.findTreeProducing(5))
+            right(bigGen.findTreeProducing(20))
         }
 
         val value = gen.generate(tree).value
@@ -99,11 +102,13 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
     @Test
     fun `combineWith combines shrinks from both generators`() {
-        val gen = int(1..3).combineWith(int(4..6), ::Pair)
+        val oneToThree = int(1..3)
+        val fourToSix = int(4..6)
+        val gen = oneToThree.combineWith(fourToSix, ::Pair)
 
-        val tree = producerTree {
-            left(3)
-            right(6)
+        val tree = tree {
+            left(oneToThree.findTreeProducing(3))
+            right(fourToSix.findTreeProducing(6))
         }
 
         val result = gen.generate(tree)

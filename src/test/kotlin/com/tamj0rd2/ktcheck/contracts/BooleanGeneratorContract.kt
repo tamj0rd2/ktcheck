@@ -52,9 +52,7 @@ internal interface BooleanGeneratorContract : BaseContract {
 
         return testCases.map {
             DynamicTest.dynamicTest(it.toString()) {
-                val tree = ProducerTree.new().withValue(it.value)
-                val result = bool(it.origin).generate(tree)
-                expectThat(result.value).isEqualTo(it.value)
+                val result = bool(it.origin).generating(it.value)
                 expectThat(result.shrunkValues).isEqualTo(it.expectedShrinks)
             }
         }

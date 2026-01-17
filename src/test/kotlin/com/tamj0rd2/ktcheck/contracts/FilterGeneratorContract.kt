@@ -1,7 +1,6 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.GenerationException.FilterLimitReached
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
@@ -32,10 +31,8 @@ internal interface FilterGeneratorContract : BaseContract {
     @Test
     fun `doesn't produce shrinks that would fail the predicate, which would otherwise lead to infinite shrinking`() {
         val gen = int(1..4).filter { it > 2 }
-        val tree = producerTree { left(4) }
 
-        val result = gen.generate(tree)
-        expectThat(result.value).isEqualTo(4)
+        val result = gen.generating(4)
         expectThat(result.shrunkValues.toList())
             .describedAs("shrunk values")
             .isNotEmpty()
@@ -68,15 +65,7 @@ internal interface FilterGeneratorContract : BaseContract {
             }
             .ignoreExceptions(TestException::class)
 
-        val tree = producerTree {
-            left(3)
-            right {
-                left(2)
-            }
-        }
-
-        val result = possiblyThrowingGen.generate(tree)
-        expectThat(result.value).isEqualTo(3)
+        val result = possiblyThrowingGen.generating(3)
         expectThat(result.shrunkValues.toList())
             .describedAs("shrunk values")
             .isNotEmpty()

@@ -1,10 +1,9 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.producerTree
-import com.tamj0rd2.ktcheck.core.Seed
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
+import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 
 internal interface OneOfGeneratorContract : BaseContract {
@@ -23,42 +22,34 @@ internal interface OneOfGeneratorContract : BaseContract {
     fun `shrinking a oneOf generator can shrink between types without failure`() {
         val multiTypeGen = oneOf(
             bool().map { it as Any },
-            int(0..4).map { it as Any },
+            int(0..4).map { it as Any }
         )
 
-        val tree = producerTree(Seed(1)) {
-            left(1)
-            // todo: too many ways to set tree values ;-;
-            right(StubValueProducer(4, true))
-        }
+        val result = multiTypeGen.generating(4)
 
-        val result = multiTypeGen.generate(tree)
+        // Choice shrunk from 1 to 0. So the first shrink should be a Boolean value:
+        expectThat(result.shrunkValues.first()).isA<Boolean>()
 
-        expectThat(result.value).isEqualTo(4)
-        expectThat(result.shrunkValues).isEqualTo(
-            listOf(
-                // Choice shrunk from 1 to 0. So generating a Boolean value:
-                true,
-                // Left shrinks complete. So Choice = 1. Now shrinking Int value (4):
-                0,
-                2,
-                3,
-            )
-        )
+        // Left shrinks complete. So Choice = 1. Now shrinking Int value (4):
+        expectThat(result.shrunkValues.drop(1)).isEqualTo(listOf(0, 2, 3))
     }
 
     @Test
-    fun `oneOfValues shrinks toward first value in collection`() {
+    fun `oneOfValues generates a reasonable distribution of values`() {
         val values = listOf("banana", "apple", "cherry")
         val gen = oneOf(values)
 
         withCounter {
             gen.samples().take(100_000).forEach { collect(it) }
         }.checkPercentages(values.associateWith { 32.0 })
+    }
 
-        val result = gen.generate(producerTree(2))
+    @Test
+    fun `oneOfValues shrink toward first value in the collection`() {
+        val values = listOf("banana", "apple", "cherry")
+        val gen = oneOf(values)
 
-        expectThat(result.value).isEqualTo("cherry")
+        val result = gen.generating("cherry")
         expectThat(result.shrunkValues).isEqualTo(listOf("banana", "apple"))
     }
 }

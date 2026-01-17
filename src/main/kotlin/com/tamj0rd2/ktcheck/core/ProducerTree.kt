@@ -17,8 +17,7 @@ internal data class ProducerTree private constructor(
         )
     }
 
-    internal fun withProducer(producer: ValueProducer) = copy(producer = producer)
-    internal fun withValue(value: Any) = withProducer(PredeterminedValue(value))
+    internal fun withValue(value: Any) = copy(producer = PredeterminedValue(value))
     internal fun withLeft(left: ProducerTree) = copy(lazyLeft = lazyOf(left))
     internal fun withRight(right: ProducerTree) = copy(lazyRight = lazyOf(right))
 
@@ -96,46 +95,5 @@ internal data class ProducerTree private constructor(
         }
 
         return visualise(tree = this, indent = "", prefix = "", isLast = null, currentDepth = 0)
-    }
-}
-
-internal class ProducerTreeDsl(private var subject: ProducerTree) {
-    fun left(tree: ProducerTree) {
-        subject = subject.withLeft(tree)
-    }
-
-    fun left(value: Any? = null, block: ProducerTreeDsl.() -> Unit = {}) {
-        if (value != null) left(subject.left.withValue(value))
-
-        val newLeftTree = ProducerTreeDsl(subject.left).apply(block).subject
-        subject = subject.withLeft(newLeftTree)
-    }
-
-    fun right(tree: ProducerTree) {
-        subject = subject.withRight(tree)
-    }
-
-    fun right(producer: ValueProducer) {
-        subject = subject.withRight(subject.right.withProducer(producer))
-    }
-
-    fun right(value: Any? = null, block: ProducerTreeDsl.() -> Unit = {}) {
-        if (value != null) right(subject.right.withValue(value))
-
-        val newRightTree = ProducerTreeDsl(subject.right).apply(block).subject
-        subject = subject.withRight(newRightTree)
-    }
-
-    companion object {
-        fun producerTree(seed: Seed = Seed.random(), block: ProducerTreeDsl.() -> Unit): ProducerTree =
-            ProducerTree.new(seed).copy(block)
-
-        fun producerTree(value: Any) = ProducerTree.new().withValue(value)
-
-        fun producerTrees(seed: Seed = Seed.random()) =
-            Seed.sequence(seed).map { ProducerTree.new(it) }
-
-        fun ProducerTree.copy(block: ProducerTreeDsl.() -> Unit): ProducerTree =
-            ProducerTreeDsl(this).apply(block).subject
     }
 }

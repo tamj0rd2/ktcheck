@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.v1
 
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.copy
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 
 internal class ListGenerator<T>(
@@ -20,19 +19,21 @@ internal class ListGenerator<T>(
                 val sizeShrinks = IntShrinker.shrink(size, sizeRange).filter { it in sizeRange && it != 0 }
 
                 // this and the condition above prevents yielding duplicate empty list shrinks
-                if (size != 0 && 0 in sizeRange) yield(tree.copy { left(value = 0) })
+                if (size != 0 && 0 in sizeRange) yield(tree.withLeft(tree.left.withValue(0)))
 
                 // reduce size - elements are "removed" from the end of the list
-                yieldAll(sizeShrinks.map { tree.copy { left(value = it) } })
+                yieldAll(sizeShrinks.map { shrunkSize -> tree.withLeft(tree.left.withValue(shrunkSize)) })
+
+                // reduces size by "removing" elements from the start of the list
                 yieldAll(
-                    sizeShrinks.map {
-                        // reduces size by "removing" elements from the start of the list
-                        tree.copy {
-                            left(value = it)
-                            right(tree = tree.traverseRight(1 + size - it))
-                        }
+                    sizeShrinks.map { shrunkSize ->
+                        tree
+                            .withLeft(tree.left.withValue(shrunkSize))
+                            .withRight(tree.traverseRight(1 + size - shrunkSize))
                     }
                 )
+
+                // shrink individual elements
                 yieldAll(listValueShrinks.map { tree.withRight(it) })
             }
         )

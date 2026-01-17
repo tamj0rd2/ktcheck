@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.core
 import kotlin.random.Random
 
 @JvmInline
+// todo: make constructor private and see what breaks/flakes
 internal value class Seed internal constructor(val value: Long) {
     fun next(offset: Int): Seed = Seed(value * SPLIT_MIX_64_MULTIPLIER + offset)
 
@@ -11,6 +12,6 @@ internal value class Seed internal constructor(val value: Long) {
 
         internal fun random(): Seed = Seed(Random.nextLong())
 
-        internal fun sequence(seed: Seed) = generateSequence(seed) { it.next(0) }
+        internal fun sequence(seed: Seed = random()) = generateSequence(seed) { it.next(0) }
     }
 }
