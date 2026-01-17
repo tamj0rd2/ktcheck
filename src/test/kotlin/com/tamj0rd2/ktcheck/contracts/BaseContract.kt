@@ -6,13 +6,20 @@ import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.trees
 import com.tamj0rd2.ktcheck.forAll
+import com.tamj0rd2.ktcheck.v1.GenMode
+import com.tamj0rd2.ktcheck.v1.GenV1
+import com.tamj0rd2.ktcheck.v2.GenResultV2
+import com.tamj0rd2.ktcheck.v2.GenV2
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
 import strikt.api.expectThat
 import strikt.assertions.isNotNull
 import java.time.Duration
+
+internal interface BaseContract : GenFacade
 
 internal class GenResults<T>(
     val value: T,
@@ -33,45 +40,85 @@ internal class GenResults<T>(
         }
 }
 
-internal interface BaseContract : GenFacade {
-    fun <T> Gen<T>.generate(tree: ProducerTree = ProducerTree.new()): GenResults<T>
+internal fun <T> Gen<T>.generate(tree: ProducerTree = ProducerTree.new()): GenResults<T> = when (this) {
+    is GenV1 -> {
+        val (value, shrinks) = generate(tree, GenMode.Initial)
+        GenResults(
+            value = value,
+            shrinks = collectShrinksRecursively(shrinks)
+        )
+    }
 
-    fun <T> Gen<T>.sequence(): Sequence<GenResults<T>> =
-        generateSequence { generate(ProducerTree.new()) }
+    is GenV2 -> {
+        val (value, shrinks) = generate(tree)
+        GenResults(value, collectShrinksRecursively(shrinks))
+    }
 
-    /** Retries generations until the exact [value] is produced. */
-    fun <T> Gen<T>.generating(value: T): GenResults<T> =
-        generating { it == value }
+    else -> error("Unsupported Gen type: ${this::class}")
+}
 
-    /** Retries generations until some value satisfying [predicate] is produced. */
-    fun <T> Gen<T>.generating(predicate: (T) -> Boolean): GenResults<T> =
-        generate(trees().first { produces(it, predicate) })
-
-    /** Checks whether the given [tree] produces a value satisfying the [predicate]. */
-    fun <T> Gen<T>.produces(tree: ProducerTree, predicate: (T) -> Boolean): Boolean =
-        predicate(generate(tree).value)
-
-    fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
-        var shrinksBeforeTimeout = -1
-        try {
-            assertTimeoutPreemptively(Duration.ofSeconds(1), "Shrinking took too long") {
-                val ex = try {
-                    forAll(TestConfig().withReporter(NoOpTestReporter), this) {
-                        shrinksBeforeTimeout += 1
-                        false
-                    }
-                    fail("Expected property to be falsified")
-                } catch (e: PropertyFalsifiedException) {
-                    e
-                }
-
-                if (shrunkValueRequired) {
-                    expectThat(ex).get { shrunkResult }.isNotNull()
-                }
-            }
-        } catch (e: Throwable) {
-            println("managed $shrinksBeforeTimeout shrinks before exploding")
-            throw e
+private fun <T> GenV1<T>.collectShrinksRecursively(shrinks: Sequence<ProducerTree>): Sequence<GenResults<T>> =
+    sequence {
+        for (tree in shrinks) {
+            val result = generate(tree, GenMode.Shrinking)
+            yield(
+                GenResults(
+                    value = result.value,
+                    shrinks = collectShrinksRecursively(result.shrinks)
+                )
+            )
         }
+    }
+
+private fun <T> GenV2<T>.collectShrinksRecursively(shrinks: Sequence<GenResultV2<T>>): Sequence<GenResults<T>> =
+    sequence {
+        for (shrink in shrinks) {
+            yield(
+                GenResults(
+                    value = shrink.value,
+                    shrinks = collectShrinksRecursively(shrink.shrinks)
+                )
+            )
+        }
+    }
+
+internal fun <T> Gen<T>.sequence(): Sequence<GenResults<T>> =
+    trees().map { generate(it) }
+
+/** Retries generations until the exact [value] is produced. */
+internal fun <T> Gen<T>.generating(value: T): GenResults<T> =
+    generating { it == value }
+
+/** Retries generations until some value satisfying [predicate] is produced. */
+internal fun <T> Gen<T>.generating(predicate: (T) -> Boolean): GenResults<T> =
+    generate(findTreeProducing(predicate))
+
+internal fun <T> Gen<T>.findTreeProducing(value: T): ProducerTree =
+    findTreeProducing { it == value }
+
+internal fun <T> Gen<T>.findTreeProducing(predicate: (T) -> Boolean): ProducerTree =
+    treeWhere { predicate(generate(it).value) }
+
+fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
+    var shrinksBeforeTimeout = -1
+    try {
+        assertTimeoutPreemptively(Duration.ofSeconds(1), "Shrinking took too long") {
+            val ex = try {
+                forAll(TestConfig().withReporter(NoOpTestReporter), this) {
+                    shrinksBeforeTimeout += 1
+                    false
+                }
+                fail("Expected property to be falsified")
+            } catch (e: PropertyFalsifiedException) {
+                e
+            }
+
+            if (shrunkValueRequired) {
+                expectThat(ex).get { shrunkResult }.isNotNull()
+            }
+        }
+    } catch (e: Throwable) {
+        println("managed $shrinksBeforeTimeout shrinks before exploding")
+        throw e
     }
 }

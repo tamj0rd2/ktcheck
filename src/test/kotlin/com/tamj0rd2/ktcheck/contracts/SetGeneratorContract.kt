@@ -5,8 +5,7 @@ import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.tree
-import com.tamj0rd2.ktcheck.core.findTreeProducing
-import com.tamj0rd2.ktcheck.core.treeWhere
+import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
 import com.tamj0rd2.ktcheck.v1.V1SetGeneratorTest
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
@@ -121,7 +120,7 @@ internal interface SetGeneratorContract : BaseContract {
         }
 
         val tree = tree {
-            left(treeWhere { it: ProducerTree -> it.producer.int(0..3) == 3 })
+            left(treeWhere { it.producer.int(0..3) == 3 })
             right {
                 left(intGen.findTreeProducing(1))
                 right {
