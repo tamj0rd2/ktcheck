@@ -2,7 +2,11 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.tree
+import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
+import com.tamj0rd2.ktcheck.v1.V1BaseContract
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
+import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
 import strikt.assertions.contains
 import strikt.assertions.isEmpty
@@ -82,6 +86,26 @@ internal interface CombinatorGeneratorContract : BaseContract {
             // both shrunk via recursion
             1 to 4,
         )
+    }
+
+    @Test
+    fun `flatMap allows changing the constraints of the inner generator`() {
+        // todo: remove assumption
+        Assumptions.assumeFalse(this is V1BaseContract)
+
+        val gen = int(0..2).flatMap { int(10..10 + it) }
+
+        val tree = tree {
+            // initial int
+            left(treeWhere { it.producer.int(0..2) == 2 })
+
+            // index of char to select. upper bound depends on first int
+            right(treeWhere { it.producer.int(10..12) == 12 })
+        }
+
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(12)
+        expectDoesNotThrow { result.deeplyShrunkValues.toSet() }
     }
 
     @Test
