@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.v2
 
 import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
+import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.core.ProducerTree
 
 internal class CombinerGenV2<T>(
@@ -24,6 +25,15 @@ internal class CombinerGenV2<T>(
                     }
                     val replayContext = CombinerContextV2Replay(updatedResults)
                     val newValue = block(replayContext)
+
+                    // Validate that the same number of binds were called
+                    if (replayContext.bindCount != updatedResults.size) {
+                        throw GenerationException.ConditionalLogicDetectedDuringCombine(
+                            originalBindCount = updatedResults.size,
+                            bindCountOnRerun = replayContext.bindCount
+                        )
+                    }
+
                     // Enable recursive shrinking by calling buildResult again
                     buildResult(newValue, updatedResults)
                 })
@@ -50,9 +60,12 @@ internal class CombinerGenV2<T>(
         private val results: List<GenResultV2<*>>,
     ) : CombinerContext {
         private var index = 0
+        var bindCount = 0
+            private set
 
         @Suppress("UNCHECKED_CAST")
         override fun <T> Gen<T>.bind(): T {
+            bindCount++
             val result = results[index] as GenResultV2<T>
             index++
             return result.value

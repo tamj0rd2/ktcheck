@@ -89,9 +89,32 @@ internal interface GenFacade {
      * val gen = (Gen.int() + Gen.bool()).map { (x, y) -> x + y }
      * ```
      *
-     * **Warning about conditionals:** The combiner requires that bind functions will be called in the same order each time.
-     * Conditionals that affect whether trailing [CombinerContext.bind] calls are called will shrink correctly.
-     * However, conditionals that skip non-trailing [CombinerContext.bind] calls will cause invalid shrinks.
+     * **Warning about conditionals:** The combiner requires that calls to [CombinerContext.bind] always happen in the
+     * same order, and the same number of times. If conditional logic is present that alters how `bind` is called, it
+     * will lead to invalid or non-deterministic generation and shrinking.
+     *
+     * If a conditional is required, **do this**:
+     * ```
+     * Gen.combine {
+     *   val changeBehaviour = Gen.bool().bind()
+     *   val lowValue = Gen.int(0..10).bind()
+     *   val highValue = Gen.int(100..200).bind()
+     *   if (changeBehaviour) lowValue else highValue // Conditional only affects result
+     * }
+     * ```
+     *
+     * **Not this**:
+     * ```
+     * Gen.combine {
+     *    val changeBehaviour = Gen.bool().bind()
+     *    val gen = if (changeBehaviour) Gen.int(0..10) else Gen.int(100..200)
+     *    gen.bind() // Conditional affects which generator is bound
+     * }
+     * ```
+     *
+     *
+     * @throws GenerationException.ConditionalLogicDetectedDuringCombine if conditional logic is present which affects
+     * the order or presence of bind calls.
      */
     fun <T> combine(block: CombinerContext.() -> T): Gen<T>
 

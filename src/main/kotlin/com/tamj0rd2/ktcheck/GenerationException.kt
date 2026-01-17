@@ -11,4 +11,17 @@ sealed class GenerationException(message: String, cause: Throwable? = null) : Il
         GenerationException(
             "Failed to generate a list of size $targetSize with distinct elements after $attempts attempts. Only achieved size $achievedSize."
         )
+
+    class ConditionalLogicDetectedDuringCombine internal constructor(
+        originalBindCount: Int,
+        bindCountOnRerun: Int,
+    ) : GenerationException(
+        """
+        |Conditional logic detected inside combine().
+        |Original generation called bind $originalBindCount times, but shrinking called bind $bindCountOnRerun times.
+        |The use of conditionals that affect the order or presence of bind() calls within combine() is prohibited
+        |because it can lead to invalid and non-deterministic generation/shrinking.
+        |Check the docs for combine() for more details.
+        """.trimMargin()
+    )
 }
