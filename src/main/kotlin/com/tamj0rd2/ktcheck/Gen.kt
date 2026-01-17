@@ -3,7 +3,6 @@ package com.tamj0rd2.ktcheck
 import com.tamj0rd2.ktcheck.GenerationException.OneOfEmpty
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker
-import com.tamj0rd2.ktcheck.v1.CombinerContext
 import com.tamj0rd2.ktcheck.v1.GenV1
 import java.util.*
 import kotlin.random.Random
@@ -165,4 +164,8 @@ internal interface GenFacade {
      * use [flatMap] or [combine] instead.
      */
     infix operator fun <T1, T2> Gen<T1>.plus(nextGen: Gen<T2>) = combineWith(nextGen, ::Pair)
+}
+
+interface CombinerContext {
+    fun <T> Gen<T>.bind(): T
 }

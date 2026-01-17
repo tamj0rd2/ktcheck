@@ -1,9 +1,9 @@
 package com.tamj0rd2.ktcheck.v2
 
+import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenFacade
 import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.v1.CombinerContext
 import kotlin.reflect.KClass
 
 internal interface GenV2<T> : Gen<T> {
@@ -52,7 +52,7 @@ private object GenV2Facade : GenFacade {
     }
 
     override fun <T> combine(block: CombinerContext.() -> T): Gen<T> {
-        TODO("Not yet implemented")
+        return CombinerGenV2(block)
     }
 
     override fun <T> Gen<T>.filter(
