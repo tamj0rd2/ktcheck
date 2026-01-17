@@ -7,9 +7,9 @@ sealed class GenerationException(message: String, cause: Throwable? = null) : Il
     class FilterLimitReached internal constructor(threshold: Int, cause: Throwable? = null) :
         GenerationException("Filter failed after $threshold misses", cause)
 
-    class DistinctCollectionSizeImpossible internal constructor(targetSize: Int, achievedSize: Int, attempts: Int) :
+    class DistinctCollectionSizeImpossible internal constructor(minSize: Int, achievedSize: Int, attempts: Int) :
         GenerationException(
-            "Failed to generate a list of size $targetSize with distinct elements after $attempts attempts. Only achieved size $achievedSize."
+            "Failed to generate a list of size $minSize with distinct elements after $attempts attempts. Only achieved size $achievedSize."
         )
 
     class ConditionalLogicDetectedDuringCombine internal constructor(

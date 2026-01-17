@@ -5,8 +5,7 @@ import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.tree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
-import com.tamj0rd2.ktcheck.v1.V1SetGeneratorTest
+import com.tamj0rd2.ktcheck.v1.V1BaseContract
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -43,10 +42,8 @@ internal interface SetGeneratorContract : BaseContract {
     @Test
     fun `shrinks a set of 1 element when the size is not constrained`() {
         // todo: remove assumption
-        Assumptions.assumeTrue(this !is V1SetGeneratorTest)
+        Assumptions.assumeTrue(this !is V1BaseContract)
 
-        // todo: fix this next! it fails for v1
-        //  the difference between this test and the other is that the size here is not constrained.
         val gen = int(0..4).set()
 
         val result = gen.generating(setOf(4))
@@ -56,8 +53,9 @@ internal interface SetGeneratorContract : BaseContract {
 
     @Test
     fun `shrinks a set of 1 element`() {
-        val gen = int(0..10).let {
-            if (this is V1SetGeneratorTest) {
+        val intGen = int(0..10)
+        val gen = intGen.let {
+            if (this is V1BaseContract) {
                 // todo: once the test above is fixed, remove this conditional. size should be unconstrained.
                 it.set(0..1)
             } else {
@@ -65,7 +63,15 @@ internal interface SetGeneratorContract : BaseContract {
             }
         }
 
-        val result = gen.generating(setOf(4))
+        val tree = tree {
+            left(ProducerTree.new().withValue(1))
+            right {
+                left(intGen.findTreeProducing(4))
+            }
+        }
+
+        val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(setOf(4))
 
         expectThat(result.shrunkValues).isEqualTo(
             listOf(
@@ -82,7 +88,7 @@ internal interface SetGeneratorContract : BaseContract {
     @Test
     fun `shrinks a set of 2 elements`() {
         val gen = int(0..10).let {
-            if (this is V1SetGeneratorTest) {
+            if (this is V1BaseContract) {
                 // todo: once the test above is fixed, remove this conditional. size should be unconstrained.
                 it.set(0..2)
             } else {
@@ -91,6 +97,7 @@ internal interface SetGeneratorContract : BaseContract {
         }
 
         val result = gen.generating(setOf(1, 4))
+        expectThat(result.value).isEqualTo(setOf(1, 4))
 
         expectThat(result.shrunkValues).containsExactlyInAnyOrder(
             // tries reducing set size (now 0)
@@ -111,7 +118,7 @@ internal interface SetGeneratorContract : BaseContract {
     fun `shrinks a set of 3 elements`() {
         val intGen = int(0..10)
         val gen = intGen.let {
-            if (this is V1SetGeneratorTest) {
+            if (this is V1BaseContract) {
                 // todo: once the test above is fixed, remove this conditional. size should be unconstrained.
                 it.set(0..3)
             } else {
@@ -120,7 +127,9 @@ internal interface SetGeneratorContract : BaseContract {
         }
 
         val tree = tree {
-            left(treeWhere { it.producer.int(0..3) == 3 })
+            // todo: this is wrong. puts me back in the same annoying situation as before.
+            left(ProducerTree.new().withValue(3))
+
             right {
                 left(intGen.findTreeProducing(1))
                 right {
@@ -133,6 +142,7 @@ internal interface SetGeneratorContract : BaseContract {
         }
 
         val result = gen.generate(tree)
+        expectThat(result.value).isEqualTo(setOf(1, 2, 3))
 
         expectThat(result.shrunkValues).containsExactlyInAnyOrder(
             // reduce set size (0)
@@ -145,7 +155,7 @@ internal interface SetGeneratorContract : BaseContract {
             setOf(0, 2, 3),
             setOf(1, 0, 3),
             // next would try (1,1,3) but encounters duplicate 1, stops rather than generating further values
-            setOf(1),
+            if (this is V1BaseContract) setOf(1) else setOf(1, 3),
             setOf(1, 2, 0),
             // next would try (1,2,2) but encounters duplicate 2, stops rather than generating further values
             setOf(1, 2),
@@ -172,7 +182,7 @@ internal interface SetGeneratorContract : BaseContract {
     @Test
     fun `does not produce any shrinks when the set size is equal to the number of distinct values`() {
         // todo: remove assumption. set generation appears broken for v1.
-        Assumptions.assumeTrue(this !is V1SetGeneratorTest)
+        Assumptions.assumeTrue(this !is V1BaseContract)
 
         // note: there are only 3 possible distinct values. So a set of size 3 can only ever be achieved once: (0, 1, 2)
         val intGen = int(0..2)

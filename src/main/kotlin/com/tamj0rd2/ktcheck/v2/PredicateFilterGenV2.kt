@@ -9,16 +9,10 @@ internal class PredicateFilterGenV2<T>(
     private val predicate: (T) -> Boolean,
 ) : GenV2<T> {
     override fun generate(tree: ProducerTree): GenResultV2<T> {
-        return generateSequence(tree) { it.right }.take(threshold).map { gen.generate(it.left) }
-            .firstOrNull { predicate(it.value) }?.filterShrinks(predicate)
+        return generateSequence(tree) { it.right }
+            .take(threshold)
+            .map { gen.generate(it.left) }
+            .firstNotNullOfOrNull { it.filter(predicate) }
             ?: throw GenerationException.FilterLimitReached(threshold)
     }
-
-    private fun GenResultV2<T>.filterShrinks(predicate: (T) -> Boolean): GenResultV2<T> =
-        GenResultV2(
-            value = value,
-            shrinks = shrinks
-                .filter { predicate(it.value) }
-                .map { it.filterShrinks(predicate) }
-        )
 }

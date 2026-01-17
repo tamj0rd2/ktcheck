@@ -31,12 +31,12 @@ internal class ListGenV2<T>(
             }
 
             elementResults.forEachIndexed { index, elementResult ->
-                yieldAll(elementResult.shrinks.map { shrunkElementResult ->
+                elementResult.shrinks.forEach { shrunkElementResult ->
                     val updatedElementResults = elementResults.mapIndexed { i, result ->
                         if (i == index) shrunkElementResult else result
                     }
-                    buildResult(sizeShrinks, updatedElementResults)
-                })
+                    yield(buildResult(sizeShrinks, updatedElementResults))
+                }
             }
         }
     )

@@ -85,7 +85,7 @@ internal class ListGenerator<T>(
 
             if (retriesRemaining <= 0) {
                 throw DistinctCollectionSizeImpossible(
-                    targetSize = targetSize,
+                    minSize = targetSize,
                     achievedSize = values.size,
                     attempts = MAX_DISTINCT_ATTEMPTS,
                 )

@@ -8,6 +8,7 @@ import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.ProducerTree
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
 import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.trees
+import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.forAll
 import com.tamj0rd2.ktcheck.v1.GenMode
 import com.tamj0rd2.ktcheck.v1.GenV1
@@ -91,13 +92,13 @@ internal fun <T> Gen<T>.generating(value: T): GenResults<T> =
 
 /** Retries generations until some value satisfying [predicate] is produced. */
 internal fun <T> Gen<T>.generating(predicate: (T) -> Boolean): GenResults<T> =
-    generate(findTreeProducing(predicate))
+    generate(findTreeProducing(Seed.random(), predicate))
 
-internal fun <T> Gen<T>.findTreeProducing(value: T): ProducerTree =
-    findTreeProducing { it == value }
+internal fun <T> Gen<T>.findTreeProducing(value: T, seed: Seed = Seed.random()): ProducerTree =
+    findTreeProducing(seed) { it == value }
 
-internal fun <T> Gen<T>.findTreeProducing(predicate: (T) -> Boolean): ProducerTree =
-    treeWhere { predicate(generate(it).value) }
+internal fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): ProducerTree =
+    treeWhere(seed) { predicate(generate(it).value) }
 
 fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
     var shrinksBeforeTimeout = -1

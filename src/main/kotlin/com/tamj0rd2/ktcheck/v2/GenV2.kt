@@ -21,6 +21,15 @@ internal data class GenResultV2<T>(
             value = fn(value),
             shrinks = shrinks.map { it.map(fn) }
         )
+
+    fun filter(predicate: (T) -> Boolean): GenResultV2<T>? {
+        if (!predicate(value)) return null
+
+        return GenResultV2(
+            value = value,
+            shrinks = shrinks.mapNotNull { it.filter(predicate) }
+        )
+    }
 }
 
 private object GenV2Facade : GenFacade {
@@ -89,8 +98,10 @@ private object GenV2Facade : GenFacade {
     override fun <T> Gen<T>.list(
         size: IntRange,
         distinct: Boolean,
-    ): Gen<List<T>> {
-        return ListGenV2(this as GenV2, IntGenV2(size))
+    ): Gen<List<T>> = if (distinct) {
+        DistinctListGenV2(this as GenV2, size)
+    } else {
+        ListGenV2(this as GenV2, IntGenV2(size))
     }
 
     override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {

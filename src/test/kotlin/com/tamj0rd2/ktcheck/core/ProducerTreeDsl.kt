@@ -18,8 +18,8 @@ internal class ProducerTreeDsl(private var subject: ProducerTree) {
         fun tree(seed: Seed = Seed.random(), block: ProducerTreeDsl.() -> Unit): ProducerTree =
             ProducerTreeDsl(ProducerTree.new(seed)).apply(block).subject
 
-        fun treeWhere(predicate: (ProducerTree) -> Boolean): ProducerTree =
-            trees().take(1_000_000).first(predicate)
+        fun treeWhere(seed: Seed = Seed.random(), predicate: (ProducerTree) -> Boolean): ProducerTree =
+            trees(seed).take(1_000_000).first(predicate)
 
         fun trees(seed: Seed = Seed.random()) =
             Seed.sequence(seed).map { ProducerTree.new(it) }
