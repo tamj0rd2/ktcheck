@@ -28,13 +28,13 @@ internal interface CombinerGeneratorContract : BaseContract {
             // limiting values to something that can definitely shrink
             it.age > 0 && !it.name.startsWith("a")
         }
+
         expectThat(result.value) {
             get { age } isGreaterThan (0)
             get { name }.not().startsWith('a')
         }
 
-        // todo: can remove .take(1000) once V1 is gone.
-        expectThat(result.deeplyShrunkValues.take(1000).toSet())
+        expectThat(result.getDeeplyShrunkValues().take(1000).toSet())
             .isNotEmpty()
             .any { get { name }.isEqualTo(result.value.name.take(1)) }
             .any { get { age }.isEqualTo(0) }
@@ -88,7 +88,7 @@ internal interface CombinerGeneratorContract : BaseContract {
         val result = gen.generating(XY(3, 6))
 
         try {
-            result.deeplyShrunkValues.toList()
+            result.getDeeplyShrunkValues().toList()
             fail("Expected generation/shrinking to fail due to incorrect tree position consumption, but it succeeded")
         } catch (_: ConditionalLogicDetectedDuringCombine) {
             // expected
@@ -108,6 +108,6 @@ internal interface CombinerGeneratorContract : BaseContract {
         }
 
         val result = gen.generating(XY(3, 6))
-        expectDoesNotThrow { result.deeplyShrunkValues.toList() }
+        expectDoesNotThrow { result.getDeeplyShrunkValues().toList() }
     }
 }
