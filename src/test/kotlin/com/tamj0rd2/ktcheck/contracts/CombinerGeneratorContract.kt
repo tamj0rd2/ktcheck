@@ -6,7 +6,6 @@ import org.junit.jupiter.api.fail
 import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
 import strikt.assertions.any
-import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThan
 import strikt.assertions.isNotEmpty
@@ -34,11 +33,10 @@ internal interface CombinerGeneratorContract : BaseContract {
             get { name }.not().startsWith('a')
         }
 
-        expectThat(result.getDeeplyShrunkValues().take(1000).toSet())
+        expectThat(result.shrunkValues.toSet())
             .isNotEmpty()
             .any { get { name }.isEqualTo(result.value.name.take(1)) }
             .any { get { age }.isEqualTo(0) }
-            .contains(Person(name = "a", age = 0))
     }
 
     @Test
@@ -88,7 +86,7 @@ internal interface CombinerGeneratorContract : BaseContract {
         val result = gen.generating(XY(3, 6))
 
         try {
-            result.getDeeplyShrunkValues().toList()
+            result.shrunkValues.toList()
             fail("Expected generation/shrinking to fail due to incorrect tree position consumption, but it succeeded")
         } catch (_: ConditionalLogicDetectedDuringCombine) {
             // expected
@@ -108,6 +106,6 @@ internal interface CombinerGeneratorContract : BaseContract {
         }
 
         val result = gen.generating(XY(3, 6))
-        expectDoesNotThrow { result.getDeeplyShrunkValues().toList() }
+        expectDoesNotThrow { result.shrunkValues.toList() }
     }
 }

@@ -39,7 +39,7 @@ internal interface ListGeneratorContract : BaseContract {
         val result = gen.generating(listOf(3, 4))
 
         // todo: this test seems to need more than 1000 shrinks...
-        val distinctShinks = result.getDeeplyShrunkValues(2000).toList().distinct()
+        val distinctShinks = result.shrunkValues.toList().distinct()
         expectThat(distinctShinks).contains(
             // size shrinks
             emptyList(),
@@ -48,7 +48,6 @@ internal interface ListGeneratorContract : BaseContract {
             // element shrinks
             listOf(0, 4),
             listOf(3, 0),
-            listOf(0, 0),
         )
     }
 

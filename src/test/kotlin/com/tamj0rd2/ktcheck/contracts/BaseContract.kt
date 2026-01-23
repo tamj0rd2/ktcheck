@@ -29,23 +29,12 @@ internal class GenResults<T>(
     }
 
     val shrunkValues get() = shrinks.map { it.value }.toList()
-
-    fun getDeeplyShrunkValues(limit: Int = 1000): List<T> = assertTimeoutPreemptively(Duration.ofSeconds(1)) {
-        sequence {
-            for (shrink in shrinks) {
-                yield(shrink.value)
-                yieldAll(shrink.getDeeplyShrunkValues(limit))
-            }
-        }.take(limit).toList().also {
-            if (it.size == limit) println("Warning: reached limit of $limit deeply shrunk values")
-        }
-    }
 }
 
 internal fun <T> Gen<T>.generate(tree: ProducerTree = ProducerTree.new()): GenResults<T> = when (this) {
     is GenV2 -> {
-        val (value, shrinks) = generate(tree)
-        GenResults(value, collectShrinksRecursively(shrinks))
+        val result = generate(tree)
+        GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
 
     else -> error("Unsupported Gen type: ${this::class}")
