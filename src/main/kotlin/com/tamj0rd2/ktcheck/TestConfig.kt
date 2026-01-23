@@ -23,17 +23,21 @@ data class TestConfig private constructor(
     internal val seed: Seed,
     internal val replayIteration: Int?,
     internal val reporter: TestReporter,
+    internal val maxShrinkSteps: Int,
 ) {
     constructor() : this(
         iterations = System.getProperty(SYSTEM_PROPERTY_TEST_ITERATIONS)?.toIntOrNull() ?: 1000,
         seed = Seed(Random.nextLong()),
         replayIteration = null,
         reporter = PrintingTestReporter(),
+        maxShrinkSteps = System.getProperty(SYSTEM_PROPERTY_MAX_SHRINK_STEPS)?.toIntOrNull() ?: 1000,
     )
 
     fun withIterations(iterations: Int) = copy(iterations = iterations)
 
     fun withSeed(seed: Long) = copy(seed = Seed(seed))
+
+    fun withMaxShrinkSteps(steps: Int) = copy(maxShrinkSteps = steps)
 
     @HardcodedTestConfig
     fun replay(seed: Long, iteration: Int) = copy(
@@ -46,6 +50,7 @@ data class TestConfig private constructor(
 
     companion object {
         internal const val SYSTEM_PROPERTY_TEST_ITERATIONS = "ktcheck.test.iterations"
+        internal const val SYSTEM_PROPERTY_MAX_SHRINK_STEPS = "ktcheck.test.shrinking.maxSteps"
     }
 }
 

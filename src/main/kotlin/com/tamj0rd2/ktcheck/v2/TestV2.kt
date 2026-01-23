@@ -22,8 +22,9 @@ internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
 
             is TestResult.Failure -> {
                 val (shrunkResult, shrinkSteps) = testResultsGen.getSmallestCounterExample(
-                    testResult,
-                    shrinks.iterator()
+                    testResult = testResult,
+                    iterator = shrinks.iterator(),
+                    maxSteps = config.maxShrinkSteps,
                 )
 
                 PropertyFalsifiedException(
@@ -54,14 +55,15 @@ private tailrec fun <T> GenV2<TestResult<T>>.getSmallestCounterExample(
     testResult: TestResult.Failure<T>,
     iterator: Iterator<GenResultV2<TestResult<T>>>,
     steps: Int = 0,
+    maxSteps: Int,
 ): Pair<TestResult.Failure<T>, Int> {
-    if (!iterator.hasNext()) return testResult to steps
+    if (!iterator.hasNext() || steps >= maxSteps) return testResult to steps
 
     val (shrunkTestResult, newShrinks) = iterator.next()
 
     return if (shrunkTestResult is TestResult.Failure) {
-        getSmallestCounterExample(shrunkTestResult, newShrinks.iterator(), steps + 1)
+        getSmallestCounterExample(shrunkTestResult, newShrinks.iterator(), steps + 1, maxSteps)
     } else {
-        getSmallestCounterExample(testResult, iterator, steps + 1)
+        getSmallestCounterExample(testResult, iterator, steps + 1, maxSteps)
     }
 }
