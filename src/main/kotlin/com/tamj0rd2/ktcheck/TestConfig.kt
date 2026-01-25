@@ -1,7 +1,11 @@
 package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.core.Seed
+import java.time.Instant
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 sealed class TestResult<T> {
     abstract val input: T
@@ -23,21 +27,27 @@ data class TestConfig private constructor(
     internal val seed: Seed,
     internal val replayIteration: Int?,
     internal val reporter: TestReporter,
-    internal val maxShrinkSteps: Int,
+    internal val shrinkingConstraint: ShrinkingConstraint,
+    internal val printShrinkSteps: Boolean,
 ) {
     constructor() : this(
         iterations = System.getProperty(SYSTEM_PROPERTY_TEST_ITERATIONS)?.toIntOrNull() ?: 1000,
         seed = Seed(Random.nextLong()),
         replayIteration = null,
         reporter = PrintingTestReporter(),
-        maxShrinkSteps = System.getProperty(SYSTEM_PROPERTY_MAX_SHRINK_STEPS)?.toIntOrNull() ?: 1000,
+        shrinkingConstraint = ShrinkingConstraint.byDuration(1.seconds),
+        printShrinkSteps = false,
     )
 
     fun withIterations(iterations: Int) = copy(iterations = iterations)
 
     fun withSeed(seed: Long) = copy(seed = Seed(seed))
 
-    fun withMaxShrinkSteps(steps: Int) = copy(maxShrinkSteps = steps)
+    fun withShrinkingConstraint(constraint: ShrinkingConstraint) = copy(shrinkingConstraint = constraint)
+
+    @Suppress("unused")
+    @Deprecated("I might move this functionality to the Reporter")
+    fun printShrinkSteps() = copy(printShrinkSteps = true)
 
     @HardcodedTestConfig
     fun replay(seed: Long, iteration: Int) = copy(
@@ -50,30 +60,46 @@ data class TestConfig private constructor(
 
     companion object {
         internal const val SYSTEM_PROPERTY_TEST_ITERATIONS = "ktcheck.test.iterations"
-        internal const val SYSTEM_PROPERTY_MAX_SHRINK_STEPS = "ktcheck.test.shrinking.maxSteps"
     }
 }
 
-sealed interface Test<T> {
-    fun test(input: T): AssertionError?
-}
+interface ShrinkingConstraint {
+    fun onStart() {}
+    fun onStep() {}
+    fun shouldStopShrinking(): Boolean
 
-fun interface TestByThrowing<T> : Test<T> {
-    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
-    operator fun invoke(input: T)
-
-    override fun test(input: T): AssertionError? = try {
-        invoke(input)
-        null
-    } catch (e: AssertionError) {
-        e
+    companion object {
+        fun infinite(): ShrinkingConstraint = Unconstrained
+        fun bySteps(maxSteps: Int): ShrinkingConstraint = ConstrainedBySteps(maxSteps)
+        fun byDuration(duration: Duration): ShrinkingConstraint = ConstrainedByDuration(duration)
     }
 }
 
-fun interface TestByBool<T> : Test<T> {
-    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
-    operator fun invoke(input: T): Boolean
+private object Unconstrained : ShrinkingConstraint {
+    override fun shouldStopShrinking(): Boolean = false
+}
 
-    override fun test(input: T): AssertionError? =
-        if (invoke(input)) null else AssertionError("Test falsified")
+private class ConstrainedByDuration(private val duration: Duration) : ShrinkingConstraint {
+    private var mustEndAfter: Instant? = null
+
+    override fun onStart() {
+        mustEndAfter = Instant.now().plus(duration.toJavaDuration())
+    }
+
+    override fun shouldStopShrinking(): Boolean {
+        checkNotNull(mustEndAfter) { "Shrink session not started" }
+        return Instant.now().isAfter(mustEndAfter)
+    }
+}
+
+private class ConstrainedBySteps(private val maxSteps: Int) : ShrinkingConstraint {
+    private var stepsTaken = 0
+
+    override fun onStep() {
+        stepsTaken += 1
+    }
+
+    override fun shouldStopShrinking(): Boolean {
+        return stepsTaken >= maxSteps
+    }
 }

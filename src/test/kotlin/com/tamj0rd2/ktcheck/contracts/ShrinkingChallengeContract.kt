@@ -15,7 +15,19 @@ import strikt.api.expectThrows
 // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
 internal interface ShrinkingChallengeContract : BaseContract {
     @Test
-    fun lengthList() {
+    fun `large union list`() {
+        testShrinking(
+            gen = int().list(0..4).list(0..4),
+            test = { it.flatten().toSet().size <= 4 },
+            didShrinkCorrectly = { list ->
+                val flattened = list.flatten()
+                flattened.size == 5 && flattened.all { it in -4..4 }
+            },
+        )
+    }
+
+    @Test
+    fun `length list`() {
         testShrinking(
             gen = int(0..1000).list(1..100),
             test = { it.max() < 900 },
@@ -24,7 +36,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
     }
 
     @Test
-    fun nestedLists() {
+    fun `nested lists`() {
         testShrinking(
             gen = int(Int.MIN_VALUE..Int.MAX_VALUE).list().list(),
             test = { listOfLists -> listOfLists.sumOf { it.size } <= 10 },
@@ -108,6 +120,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
             |Iteration: $iteration
             |Original args: $shortenedOriginalInput
             |Shrunk args: ${smallestResult.input}
+            |Shrink steps: $shrinkSteps
             """.trimMargin()
     }
 }

@@ -2,6 +2,30 @@ package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.v2.GenV2
 
+sealed interface Test<T> {
+    fun test(input: T): AssertionError?
+}
+
+fun interface TestByThrowing<T> : Test<T> {
+    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
+    operator fun invoke(input: T)
+
+    override fun test(input: T): AssertionError? = try {
+        invoke(input)
+        null
+    } catch (e: AssertionError) {
+        e
+    }
+}
+
+fun interface TestByBool<T> : Test<T> {
+    /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
+    operator fun invoke(input: T): Boolean
+
+    override fun test(input: T): AssertionError? =
+        if (invoke(input)) null else AssertionError("Test falsified")
+}
+
 @Suppress("unused")
 fun <T> forAll(gen: Gen<T>, test: TestByBool<T>) = forAll(TestConfig(), gen, test)
 fun <T> forAll(config: TestConfig, gen: Gen<T>, test: TestByBool<T>) = test(config, gen, test as Test<T>)

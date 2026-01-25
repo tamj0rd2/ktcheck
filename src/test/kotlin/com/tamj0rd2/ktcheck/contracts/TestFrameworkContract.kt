@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.HardcodedTestConfig
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
+import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.TestReporter
 import com.tamj0rd2.ktcheck.checkAll
@@ -12,7 +13,9 @@ import strikt.api.expectThrows
 import strikt.assertions.cause
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
 import strikt.assertions.isNotNull
+import kotlin.time.Duration.Companion.nanoseconds
 
 internal interface TestFrameworkContract : BaseContract {
 
@@ -84,6 +87,39 @@ internal interface TestFrameworkContract : BaseContract {
         val exception = MyThrowable()
         expectThrows<MyThrowable> { checkAll(testConfig, constant(exception)) { throw it } }.isEqualTo(exception)
         expectThat(spyTestReporter.reporting).isA<SpyTestReporter.Reporting.None>()
+    }
+
+    @Test
+    fun `can constrain the shrinking process with a step limit`() {
+        val testConfig = TestConfig().withShrinkingConstraint(ShrinkingConstraint.bySteps(1))
+
+        val exception = expectThrows<PropertyFalsifiedException> {
+            forAll(testConfig, int()) { it == 0 }
+        }.subject
+
+        expectThat(exception.shrinkSteps).isEqualTo(1)
+    }
+
+    @Test
+    fun `can constrain the shrinking process with a time limit`() {
+        val testConfig = TestConfig().withShrinkingConstraint(ShrinkingConstraint.byDuration(1.nanoseconds))
+
+        val exception = expectThrows<PropertyFalsifiedException> {
+            forAll(testConfig, int()) { it == 0 }
+        }.subject
+
+        expectThat(exception.shrinkSteps).isEqualTo(0)
+    }
+
+    @Test
+    fun `can unconstrain the shrinking process with an infinite constraint`() {
+        val testConfig = TestConfig().withShrinkingConstraint(ShrinkingConstraint.infinite())
+
+        val exception = expectThrows<PropertyFalsifiedException> {
+            forAll(testConfig, int()) { it == 0 }
+        }.subject
+
+        expectThat(exception.shrinkSteps).isGreaterThan(0)
     }
 
     @Test
