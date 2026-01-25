@@ -15,11 +15,13 @@ import strikt.api.expectThrows
 // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
 internal interface ShrinkingChallengeContract : BaseContract {
     @Test
-    fun reverse() = testShrinking(
-        gen = int().list(),
-        test = { it.reversed() == it },
-        didShrinkCorrectly = { it in setOf(listOf(0, 1), listOf(0, -1)) },
-    )
+    fun lengthList() {
+        testShrinking(
+            gen = int(0..1000).list(1..100),
+            test = { it.max() < 900 },
+            didShrinkCorrectly = { it == listOf(900) },
+        )
+    }
 
     @Test
     fun nestedLists() {
@@ -35,13 +37,11 @@ internal interface ShrinkingChallengeContract : BaseContract {
     }
 
     @Test
-    fun lengthList() {
-        testShrinking(
-            gen = int(0..1000).list(1..100),
-            test = { it.max() < 900 },
-            didShrinkCorrectly = { it == listOf(900) },
-        )
-    }
+    fun reverse() = testShrinking(
+        gen = int().list(),
+        test = { it.reversed() == it },
+        didShrinkCorrectly = { it in setOf(listOf(0, 1), listOf(0, -1)) },
+    )
 
     private fun <T> testShrinking(
         testConfig: TestConfig = TestConfig().withIterations(500),
