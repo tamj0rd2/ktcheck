@@ -8,6 +8,7 @@ import kotlin.reflect.KClass
 
 internal interface GenV2<T> : Gen<T> {
     fun generate(tree: RandomTree): GenResultV2<T>
+    fun edgeCases(): List<GenResultV2<T>> = emptyList()
 
     companion object : GenFacade by GenV2Facade
 }

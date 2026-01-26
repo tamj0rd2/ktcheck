@@ -11,12 +11,18 @@ import com.tamj0rd2.ktcheck.v2.GenV2.Companion.map
 
 @OptIn(HardcodedTestConfig::class)
 internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
-    // todo: intellisense is very bad when working on the project. 3 separate imports for map...
+    val edgeCases = gen.edgeCases()
     val testResultsGen = gen.map { test.getResultFor(it) }
 
     fun runIteration(iteration: Int) {
-        val sampleTree = RandomTree.new(config.seed.next(iteration))
-        val (testResult, shrinks) = (testResultsGen as GenV2).generate(sampleTree)
+        val (testResult, shrinks) = if (iteration <= edgeCases.size) {
+            val edgeCase = edgeCases.elementAt(iteration - 1)
+            edgeCase.map { test.getResultFor(it) }
+        } else {
+            val sampleTree = RandomTree.new(config.seed.next(iteration))
+            val generate = (testResultsGen as GenV2).generate(sampleTree)
+            generate
+        }
 
         when (testResult) {
             is TestResult.Success -> return
@@ -27,7 +33,7 @@ internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
                     shrinkingConstraint = config.shrinkingConstraint.apply { onStart() }
                 )
 
-                val shrunkResult = testResultsGen.getSmallestCounterExample(
+                val shrunkResult = getSmallestCounterExample(
                     testResult = testResult,
                     iterator = shrinks.iterator(),
                     tracker = tracker,
@@ -86,7 +92,7 @@ private class ShrinkTracker<T>(
     }
 }
 
-private tailrec fun <T> GenV2<TestResult<T>>.getSmallestCounterExample(
+private tailrec fun <T> getSmallestCounterExample(
     testResult: TestResult.Failure<T>,
     iterator: Iterator<GenResultV2<TestResult<T>>>,
     tracker: ShrinkTracker<T>,

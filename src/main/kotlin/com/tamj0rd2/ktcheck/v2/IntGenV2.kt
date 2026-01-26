@@ -14,6 +14,12 @@ internal class IntGenV2(
         return buildResult(value)
     }
 
+    override fun edgeCases(): List<GenResultV2<Int>> {
+        return setOf(0, 1, -1, range.first, range.first + 1, range.last, range.last - 1)
+            .filter { it in range }
+            .map { buildResult(it) }
+    }
+
     private fun buildResult(value: Int): GenResultV2<Int> = GenResultV2(
         value = value,
         shrinks = shrink(value, range, origin).map { buildResult(it) }

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.cause
+import strikt.assertions.contains
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThan
@@ -123,28 +124,41 @@ internal interface TestFrameworkContract : BaseContract {
     }
 
     @Test
+    fun `includes edge cases during test iterations`() {
+        val seenValues = mutableSetOf<Int>()
+
+        forAll(int()) {
+            seenValues.add(it)
+            true
+        }
+
+        expectThat(seenValues).contains(0, 1, -1, Int.MIN_VALUE, Int.MIN_VALUE + 1, Int.MAX_VALUE, Int.MAX_VALUE - 1)
+    }
+
+    @Test
     @OptIn(HardcodedTestConfig::class)
     fun `can hardcode a specific test iteration to run`() {
         val spyTestReporter = SpyTestReporter()
-        val initialConfig = TestConfig().withReporter(reporter = spyTestReporter)
-
+        val initialConfig = TestConfig().withIterations(100).withReporter(reporter = spyTestReporter)
+        val iterationToCheck = (1..100).random()
         val gen = int()
 
+
         var iterationCount = 0
-        var valueOn5thIteration: Int? = null
+        var valueOnSpecifiedIteration: Int? = null
 
         forAll(initialConfig, gen) {
             iterationCount++
-            if (iterationCount == 5) valueOn5thIteration = it
+            if (iterationCount == iterationToCheck) valueOnSpecifiedIteration = it
             true
         }
 
         expectThat(iterationCount).isEqualTo(initialConfig.iterations)
-        expectThat(valueOn5thIteration).isNotNull()
+        expectThat(valueOnSpecifiedIteration).isNotNull()
 
         var replayedIterations = 0
         var valueOnRetry: Int? = null
-        val replayConfig = initialConfig.replay(initialConfig.seed.value, 5)
+        val replayConfig = initialConfig.replay(initialConfig.seed.value, iterationToCheck)
 
         forAll(replayConfig, gen) {
             replayedIterations++
@@ -153,7 +167,7 @@ internal interface TestFrameworkContract : BaseContract {
         }
 
         expectThat(replayedIterations).isEqualTo(1)
-        expectThat(valueOnRetry).isEqualTo(valueOn5thIteration)
+        expectThat(valueOnRetry).isEqualTo(valueOnSpecifiedIteration)
     }
 
     private class SpyTestReporter : TestReporter {
