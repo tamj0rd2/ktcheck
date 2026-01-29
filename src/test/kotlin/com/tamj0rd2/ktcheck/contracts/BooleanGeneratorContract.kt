@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.core.RandomTree
-import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker.defaultOrigin
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
@@ -40,12 +39,10 @@ internal interface BooleanGeneratorContract : BaseContract {
 
         val testCases = listOf(
             // when value is true
-            TestCase(value = true, origin = defaultOrigin(), expectedShrinks = listOf(false)),
             TestCase(value = true, origin = false, expectedShrinks = listOf(false)),
             TestCase(value = true, origin = true, expectedShrinks = emptyList()),
 
             // when value is false
-            TestCase(value = false, origin = defaultOrigin(), expectedShrinks = emptyList()),
             TestCase(value = false, origin = false, expectedShrinks = emptyList()),
             TestCase(value = false, origin = true, expectedShrinks = listOf(true))
         )

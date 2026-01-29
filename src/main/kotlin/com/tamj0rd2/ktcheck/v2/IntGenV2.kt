@@ -1,10 +1,14 @@
 package com.tamj0rd2.ktcheck.v2
 
 import com.tamj0rd2.ktcheck.core.RandomTree
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker.shrink
 import kotlin.random.nextInt
 
-internal class IntGenV2(private val range: IntRange) : GenV2<Int> {
+internal class IntGenV2(
+    private val range: IntRange,
+    private val origin: Int = IntShrinker.defaultOrigin(range),
+) : GenV2<Int> {
     override fun generate(tree: RandomTree): GenResultV2<Int> {
         val value = tree.random.nextInt(range)
         return buildResult(value)
@@ -12,6 +16,6 @@ internal class IntGenV2(private val range: IntRange) : GenV2<Int> {
 
     private fun buildResult(value: Int): GenResultV2<Int> = GenResultV2(
         value = value,
-        shrinks = shrink(value, range).map { buildResult(it) }
+        shrinks = shrink(value, range, origin).map { buildResult(it) }
     )
 }

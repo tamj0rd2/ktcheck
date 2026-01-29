@@ -2,7 +2,7 @@ package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.GenerationException.OneOfEmpty
 import com.tamj0rd2.ktcheck.core.Seed
-import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import com.tamj0rd2.ktcheck.v2.GenV2
 import java.util.*
 import kotlin.random.Random
@@ -137,8 +137,14 @@ internal interface GenFacade {
     fun <T> Gen<T>.ignoreExceptions(klass: KClass<out Exception>, threshold: Int = 100): Gen<T>
 
     fun <T> constant(value: T): Gen<T>
-    fun bool(origin: Boolean = BoolShrinker.defaultOrigin()): Gen<Boolean>
-    fun int(range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE): Gen<Int>
+
+    fun bool(origin: Boolean = false): Gen<Boolean>
+
+    fun int(
+        range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE,
+        origin: Int = IntShrinker.defaultOrigin(range),
+    ): Gen<Int>
+
     fun long(): Gen<Long>
 
     fun uuid(): Gen<UUID> = (long() + long()).map { UUID(it.first, it.second) }

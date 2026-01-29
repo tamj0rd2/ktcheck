@@ -82,12 +82,13 @@ private object GenV2Facade : GenFacade {
         return ConstantGenV2(value)
     }
 
-    override fun bool(origin: Boolean): Gen<Boolean> {
-        return BoolGenV2(origin)
-    }
+    override fun bool(origin: Boolean): Gen<Boolean> = int(
+        range = 0..1,
+        origin = if (origin) 1 else 0
+    ).map { it == 1 }
 
-    override fun int(range: IntRange): Gen<Int> {
-        return IntGenV2(range)
+    override fun int(range: IntRange, origin: Int): Gen<Int> {
+        return IntGenV2(range, origin)
     }
 
     override fun long(): Gen<Long> {
