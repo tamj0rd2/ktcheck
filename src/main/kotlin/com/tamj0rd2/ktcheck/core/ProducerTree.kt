@@ -1,23 +1,25 @@
 package com.tamj0rd2.ktcheck.core
 
+import kotlin.random.Random
+
 @ConsistentCopyVisibility
 internal data class ProducerTree private constructor(
-    internal val producer: ValueProducer,
+    private val seed: Seed,
     private val lazyLeft: Lazy<ProducerTree>,
     private val lazyRight: Lazy<ProducerTree>,
 ) {
+    val random get() = Random(seed.value)
     val left: ProducerTree by lazyLeft
     val right: ProducerTree by lazyRight
 
     companion object {
         internal fun new(seed: Seed = Seed.random()): ProducerTree = ProducerTree(
-            producer = RandomValueProducer(seed),
+            seed = seed,
             lazyLeft = lazy { new(seed.next(1)) },
             lazyRight = lazy { new(seed.next(2)) },
         )
     }
 
-    internal fun withValue(value: Any) = copy(producer = PredeterminedValue(value))
     internal fun withLeft(left: ProducerTree) = copy(lazyLeft = lazyOf(left))
     internal fun withRight(right: ProducerTree) = copy(lazyRight = lazyOf(right))
 
@@ -53,7 +55,7 @@ internal data class ProducerTree private constructor(
             }
 
             return buildString {
-                appendLine("${indent}${prefix}${tree.producer}")
+                appendLine("${indent}${prefix}${tree.seed}")
                 visualiseBranch(tree.lazyLeft, "L")?.let(::append)
                 visualiseBranch(tree.lazyRight, "R")?.let(::append)
             }

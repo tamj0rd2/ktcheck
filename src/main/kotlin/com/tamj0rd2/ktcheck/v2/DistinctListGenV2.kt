@@ -18,7 +18,7 @@ internal class DistinctListGenV2<T>(
         val actualSize = elementResults.size
 
         val sizeResultToUse = sizeResult.takeIf { it.value == actualSize }
-            ?: IntGenV2(sizeRange).generate(tree.left.withValue(actualSize))
+            ?: IntGenV2(sizeRange).generate(tree.left)
 
         return buildResult(sizeResultToUse.shrinks, elementResults)
     }

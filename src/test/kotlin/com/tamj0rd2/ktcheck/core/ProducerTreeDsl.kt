@@ -9,11 +9,6 @@ internal class ProducerTreeDsl(private var subject: ProducerTree) {
         subject = subject.withRight(tree)
     }
 
-    fun right(block: ProducerTreeDsl.() -> Unit = {}) {
-        val newRightTree = ProducerTreeDsl(subject.right).apply(block).subject
-        subject = subject.withRight(newRightTree)
-    }
-
     companion object {
         fun tree(seed: Seed = Seed.random(), block: ProducerTreeDsl.() -> Unit): ProducerTree =
             ProducerTreeDsl(ProducerTree.new(seed)).apply(block).subject

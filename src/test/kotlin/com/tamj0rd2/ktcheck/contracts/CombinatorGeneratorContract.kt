@@ -9,6 +9,7 @@ import strikt.api.expectThat
 import strikt.assertions.contains
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
+import kotlin.random.nextInt
 
 internal interface CombinatorGeneratorContract : BaseContract {
     @Test
@@ -90,10 +91,10 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
         val tree = tree {
             // initial int
-            left(treeWhere { it.producer.int(0..2) == 2 })
+            left(treeWhere { it.random.nextInt(0..2) == 2 })
 
             // index of char to select. upper bound depends on first int
-            right(treeWhere { it.producer.int(10..12) == 12 })
+            right(treeWhere { it.random.nextInt(10..12) == 12 })
         }
 
         val result = gen.generate(tree)
