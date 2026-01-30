@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.contracts
 import com.tamj0rd2.ktcheck.core.RandomTree
 import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.tree
 import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.treeWhere
+import com.tamj0rd2.ktcheck.v2.GenV2
 import org.junit.jupiter.api.Test
 import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
@@ -135,6 +136,22 @@ internal interface CombinatorGeneratorContract : BaseContract {
             3 to 4,
             // outer value shrunk
             1 to 6,
+        )
+    }
+
+    @Test
+    fun `combineWith produces edge case permutations from both generators`() {
+        val gen1 = int(0..100)
+        val gen2 = int(0..100)
+        val combined = gen1.combineWith(gen2, ::Pair) as GenV2<Pair<Int, Int>>
+
+        val edgeCases = combined.edgeCases().map { it.value }.toSet()
+
+        expectThat(edgeCases).contains(
+            0 to 0,
+            0 to 100,
+            100 to 0,
+            100 to 100,
         )
     }
 }

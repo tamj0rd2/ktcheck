@@ -9,11 +9,51 @@ import com.tamj0rd2.ktcheck.TestByBool
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.forAll
+import com.tamj0rd2.ktcheck.positive
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertTimeoutPreemptively
 import strikt.api.expectThrows
+import java.time.Duration
+import kotlin.math.abs
 
 // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
 internal interface ShrinkingChallengeContract : BaseContract {
+    @Test
+    fun `difference must not be zero`() {
+        testShrinking(
+            gen = int(IntRange.positive) + int(IntRange.positive),
+            test = { it.first < 10 || abs(it.first - it.second) != 0 },
+            didShrinkCorrectly = { it == Pair(10, 10) },
+        )
+    }
+
+    @Test
+    fun `difference must not be small`() {
+        testShrinking(
+            gen = int(IntRange.positive) + int(IntRange.positive),
+            test = { it.first < 10 || abs(it.first - it.second) !in 1..4 },
+            didShrinkCorrectly = { it == Pair(10, 6) },
+        )
+    }
+
+    @Test
+    fun `difference must not be one`() {
+        testShrinking(
+            gen = int(IntRange.positive) + int(IntRange.positive),
+            test = { it.first < 10 || abs(it.first - it.second) != 1 },
+            didShrinkCorrectly = { it == Pair(10, 9) },
+        )
+    }
+
+    @Test
+    fun distinct() {
+        testShrinking(
+            gen = int().list(),
+            test = TestByBool { it.distinct().size < 3 },
+            didShrinkCorrectly = { it.toSet() in setOf(setOf(0, 1, 2), setOf(0, -1, -2), setOf(0, 1, -1)) },
+        )
+    }
+
     @Test
     fun `large union list`() {
         testShrinking(
@@ -62,7 +102,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
         didShrinkCorrectly: (T) -> Boolean,
         minConfidence: Double = 100.0,
         categoriseShrinks: Counter.(Boolean, T, T) -> Unit = { _, _, _ -> },
-    ) {
+    ): Unit = assertTimeoutPreemptively(Duration.ofSeconds(5)) {
         val exceptionsWithBadShrinks = mutableListOf<PropertyFalsifiedException>()
 
         val counter = withCounter {
