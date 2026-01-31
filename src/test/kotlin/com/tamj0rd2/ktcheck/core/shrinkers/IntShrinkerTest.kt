@@ -26,12 +26,12 @@ class IntShrinkerTest {
     }
 
     @Test
-    fun `shrinking produces no shrinks when the original value is the origin`() {
+    fun `shrinking produces no shrinks when the original value is the shrink target`() {
         val range = Int.MIN_VALUE..Int.MAX_VALUE
         generateSequence { range.random() }
             .take(100)
-            .forEach { origin ->
-                val shrinks = IntShrinker.shrink(origin, range, origin).toList()
+            .forEach { shrinkTarget ->
+                val shrinks = IntShrinker.shrink(shrinkTarget, range, shrinkTarget).toList()
                 expectThat(shrinks).isEmpty()
             }
     }
@@ -69,25 +69,25 @@ class IntShrinkerTest {
     }
 
     @Test
-    fun `shrinks with custom origin in positive range`() {
+    fun `shrinks with custom shrink target in positive range`() {
         val shrinks = IntShrinker.shrink(10, 0..10, 5).toList()
         expectThat(shrinks).isEqualTo(listOf(5, 8, 9))
     }
 
     @Test
-    fun `shrinks with custom origin in negative range`() {
+    fun `shrinks with custom shrink target in negative range`() {
         val shrinks = IntShrinker.shrink(-10, -20..-10, -15).toList()
         expectThat(shrinks).isEqualTo(listOf(-15, -12, -11))
     }
 
     @Test
-    fun `shrinks with custom origin in mixed range`() {
+    fun `shrinks with custom shrink target in mixed range`() {
         val shrinks = IntShrinker.shrink(7, -5..10, 3).toList()
         expectThat(shrinks).isEqualTo(listOf(3, 5, 6))
     }
 
     @Test
-    fun `shrink throws if origin not in range`() {
+    fun `shrink throws if shrink target not in range`() {
         expectThrows<IllegalArgumentException> {
             IntShrinker.shrink(10, 0..10, 20).toList()
         }

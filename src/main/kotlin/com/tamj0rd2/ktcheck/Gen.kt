@@ -138,11 +138,11 @@ internal interface GenFacade {
 
     fun <T> constant(value: T): Gen<T>
 
-    fun bool(origin: Boolean = false): Gen<Boolean>
+    fun bool(shrinkTarget: Boolean = false): Gen<Boolean>
 
     fun int(
         range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE,
-        origin: Int = IntShrinker.defaultOrigin(range),
+        shrinkTarget: Int = IntShrinker.defaultShrinkTarget(range),
     ): Gen<Int>
 
     fun long(): Gen<Long>

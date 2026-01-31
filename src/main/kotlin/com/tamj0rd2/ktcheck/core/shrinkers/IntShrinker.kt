@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck.core.shrinkers
 
 internal object IntShrinker : Shrinker<Int, IntRange> {
-    override fun defaultOrigin(range: IntRange): Int = when {
+    override fun defaultShrinkTarget(range: IntRange): Int = when {
         range.last < 0 -> range.last
         range.first > 0 -> range.first
         else -> 0
@@ -10,24 +10,22 @@ internal object IntShrinker : Shrinker<Int, IntRange> {
     override fun shrink(
         value: Int,
         range: IntRange,
-        origin: Int,
+        target: Int,
     ): Sequence<Int> = sequence {
-        require(origin in range) { "Origin $origin must be within range $range" }
+        require(target in range) { "Origin $target must be within range $range" }
 
-        if (value == origin) return@sequence
+        if (value == target) return@sequence
+        yield(target)
 
-        // Always yield the origin first
-        yield(origin)
-
-        // Then yield progressively closer values by repeatedly halving the original distance
-        val originalDistance = value - origin
+        // yield progressively closer values by repeatedly halving the original distance
+        val originalDistance = value - target
         var divisor = 2
         while (true) {
             val shrinkAmount = originalDistance / divisor
             if (shrinkAmount == 0) break
 
             val candidate = value - shrinkAmount
-            if (candidate in range && candidate != origin) {
+            if (candidate in range && candidate != target) {
                 yield(candidate)
             }
             divisor *= 2

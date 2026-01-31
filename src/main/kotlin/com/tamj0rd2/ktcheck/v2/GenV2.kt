@@ -83,13 +83,13 @@ private object GenV2Facade : GenFacade {
         return ConstantGenV2(value)
     }
 
-    override fun bool(origin: Boolean): Gen<Boolean> = int(
+    override fun bool(shrinkTarget: Boolean): Gen<Boolean> = int(
         range = 0..1,
-        origin = if (origin) 1 else 0
+        shrinkTarget = if (shrinkTarget) 1 else 0
     ).map { it == 1 }
 
-    override fun int(range: IntRange, origin: Int): Gen<Int> {
-        return IntGenV2(range, origin)
+    override fun int(range: IntRange, shrinkTarget: Int): Gen<Int> {
+        return IntGenV2(range, shrinkTarget)
     }
 
     override fun long(): Gen<Long> {

@@ -33,23 +33,23 @@ internal interface BooleanGeneratorContract : BaseContract {
     fun `shrinks correctly`(): List<DynamicTest> {
         data class TestCase(
             val value: Boolean,
-            val origin: Boolean,
+            val shrinkTarget: Boolean,
             val expectedShrinks: List<Boolean>,
         )
 
         val testCases = listOf(
             // when value is true
-            TestCase(value = true, origin = false, expectedShrinks = listOf(false)),
-            TestCase(value = true, origin = true, expectedShrinks = emptyList()),
+            TestCase(value = true, shrinkTarget = false, expectedShrinks = listOf(false)),
+            TestCase(value = true, shrinkTarget = true, expectedShrinks = emptyList()),
 
             // when value is false
-            TestCase(value = false, origin = false, expectedShrinks = emptyList()),
-            TestCase(value = false, origin = true, expectedShrinks = listOf(true))
+            TestCase(value = false, shrinkTarget = false, expectedShrinks = emptyList()),
+            TestCase(value = false, shrinkTarget = true, expectedShrinks = listOf(true))
         )
 
         return testCases.map {
             DynamicTest.dynamicTest(it.toString()) {
-                val result = bool(it.origin).generating(it.value)
+                val result = bool(it.shrinkTarget).generating(it.value)
                 expectThat(result.shrunkValues).isEqualTo(it.expectedShrinks)
             }
         }
