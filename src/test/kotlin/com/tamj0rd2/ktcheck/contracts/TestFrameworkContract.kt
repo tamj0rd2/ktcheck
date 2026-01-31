@@ -35,10 +35,8 @@ internal interface TestFrameworkContract : BaseContract {
         val spyTestReporter = SpyTestReporter()
         val testConfig = TestConfig().withReporter(reporter = spyTestReporter)
 
-
         expectThrows<AssertionError> { forAll(testConfig, constant(false)) { it } }
-        expectThat(spyTestReporter.reporting).isA<SpyTestReporter.Reporting.ReportedFailure>().get { error }
-            .isA<AssertionError>()
+        expectThat(spyTestReporter.reporting).isA<SpyTestReporter.Reporting.ReportedFailure>()
     }
 
     @Test
@@ -178,13 +176,13 @@ internal interface TestFrameworkContract : BaseContract {
         }
 
         override fun reportFailure(exception: PropertyFalsifiedException) {
-            reporting = Reporting.ReportedFailure(exception.originalResult.failure)
+            reporting = Reporting.ReportedFailure(exception.original.error)
         }
 
         sealed interface Reporting {
             data object None : Reporting
             data class ReportedSuccess(val iterations: Int) : Reporting
-            data class ReportedFailure(val error: AssertionError) : Reporting
+            data class ReportedFailure(val error: AssertionError?) : Reporting
         }
     }
 }

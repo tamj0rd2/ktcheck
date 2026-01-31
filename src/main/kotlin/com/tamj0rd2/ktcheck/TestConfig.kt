@@ -7,14 +7,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-sealed class TestResult<T> {
-    abstract val input: T
-
-    data class Success<T>(override val input: T) : TestResult<T>()
-
-    data class Failure<T>(override val input: T, val failure: AssertionError) : TestResult<T>()
-}
-
 @RequiresOptIn(
     message = "Indicates that test configuration has been hardcoded for this test, which should only be done for local debugging purposes.",
     level = RequiresOptIn.Level.WARNING

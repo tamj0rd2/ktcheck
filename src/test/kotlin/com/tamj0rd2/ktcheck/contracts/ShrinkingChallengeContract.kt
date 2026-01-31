@@ -112,10 +112,10 @@ internal interface ShrinkingChallengeContract : BaseContract {
                 }.subject
 
                 @Suppress("UNCHECKED_CAST")
-                val originalArgs = exception.originalResult.input as T
+                val originalArgs = exception.original.input as T
 
                 @Suppress("UNCHECKED_CAST")
-                val shrunkArgs = exception.smallestResult.input as T
+                val shrunkArgs = exception.smallest.input as T
 
                 val fullyShrunk = didShrinkCorrectly(shrunkArgs)
                 collect("fully shrunk", fullyShrunk)
@@ -135,7 +135,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
             println("\nSome bad shrinks encountered:")
 
             exceptionsWithBadShrinks
-                .sortedBy { it.smallestResult.input.toString().length }
+                .sortedBy { it.smallest.input.toString().length }
                 .take(5)
                 .forEach { println(it.asBadShrinkExample()) }
         }
@@ -150,7 +150,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
     }
 
     private fun PropertyFalsifiedException.asBadShrinkExample(): String {
-        val shortenedOriginalInput = originalResult.input.toString().let {
+        val shortenedOriginalInput = original.input.toString().let {
             if (it.length > 100) it.take(100) + " (remaining args truncated)" else it
         }
 
@@ -159,7 +159,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
             |Seed: $seed
             |Iteration: $iteration
             |Original args: $shortenedOriginalInput
-            |Shrunk args: ${smallestResult.input}
+            |Shrunk args: ${smallest.input}
             |Shrink steps: $shrinkSteps
             """.trimMargin()
     }

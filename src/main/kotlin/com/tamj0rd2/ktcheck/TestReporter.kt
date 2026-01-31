@@ -22,7 +22,7 @@ class PrintingTestReporter(
     }
 
     override fun reportFailure(exception: PropertyFalsifiedException) {
-        val shrunkFailure = exception.shrunkResult
+        val shrunkFailure = exception.shrunk
 
         val output = buildString {
             appendLine("Seed: ${exception.seed} - failed on iteration ${exception.iteration}\n")
@@ -35,7 +35,7 @@ class PrintingTestReporter(
 
             if (showAllDiagnostics || shrunkFailure == null) {
                 appendLine()
-                appendLine(formatFailure(prefix = "Original ", result = exception.originalResult))
+                appendLine(formatFailure(prefix = "Original ", result = exception.original))
                 appendLine("-----------------")
             }
         }
@@ -43,7 +43,7 @@ class PrintingTestReporter(
         printStream.println(output)
     }
 
-    private fun formatFailure(prefix: String, result: TestResult.Failure<*>): String = buildString {
+    private fun formatFailure(prefix: String, result: TestFailure<*>): String = buildString {
         appendLine("${prefix}Arguments:")
         appendLine("-----------------")
         when (result.input) {
@@ -64,6 +64,6 @@ class PrintingTestReporter(
         appendLine()
         appendLine("${prefix}Failure:")
         appendLine("-----------------")
-        appendLine(result.failure)
+        appendLine(result.error)
     }
 }

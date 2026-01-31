@@ -84,7 +84,7 @@ fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequi
             }
 
             if (shrunkValueRequired) {
-                expectThat(ex).get { shrunkResult }.isNotNull()
+                expectThat(ex).get { shrunk }.isNotNull()
             }
         }
     } catch (e: Throwable) {

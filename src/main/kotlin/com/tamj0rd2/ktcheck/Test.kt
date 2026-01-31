@@ -2,19 +2,21 @@ package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.v2.GenV2
 
+data class TestFailure<T>(val input: T, val error: AssertionError?)
+
 sealed interface Test<T> {
-    fun test(input: T): AssertionError?
+    fun test(input: T): TestFailure<T>?
 }
 
 fun interface TestByThrowing<T> : Test<T> {
     /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
     operator fun invoke(input: T)
 
-    override fun test(input: T): AssertionError? = try {
+    override fun test(input: T): TestFailure<T>? = try {
         invoke(input)
         null
     } catch (e: AssertionError) {
-        e
+        TestFailure(input, e)
     }
 }
 
@@ -22,8 +24,8 @@ fun interface TestByBool<T> : Test<T> {
     /** Runs the test on the given input. Should throw an AssertionError if the test fails. */
     operator fun invoke(input: T): Boolean
 
-    override fun test(input: T): AssertionError? =
-        if (invoke(input)) null else AssertionError("Test falsified")
+    override fun test(input: T): TestFailure<T>? =
+        if (invoke(input)) null else TestFailure(input, null)
 }
 
 @Suppress("unused")
@@ -41,14 +43,13 @@ private fun <T> test(config: TestConfig, gen: Gen<T>, test: Test<T>) {
     }
 }
 
-// todo: I wish this all lived inside of TestResult. having an extra things seems... extra
-class PropertyFalsifiedException(
+class PropertyFalsifiedException internal constructor(
     val seed: Long,
     val iteration: Int,
-    val originalResult: TestResult.Failure<*>,
-    val shrunkResult: TestResult.Failure<*>?,
+    val original: TestFailure<*>,
+    val shrunk: TestFailure<*>?,
     val shrinkSteps: Int,
 ) : AssertionError("Property falsified") {
-    internal val smallestResult = shrunkResult ?: originalResult
-    override val cause: Throwable = smallestResult.failure
+    internal val smallest = shrunk ?: original
+    override val cause = smallest.error
 }

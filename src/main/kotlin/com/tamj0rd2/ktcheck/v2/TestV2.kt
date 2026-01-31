@@ -5,62 +5,48 @@ import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.Test
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.TestResult
+import com.tamj0rd2.ktcheck.TestFailure
 import com.tamj0rd2.ktcheck.core.RandomTree
-import com.tamj0rd2.ktcheck.v2.GenV2.Companion.map
 
 @OptIn(HardcodedTestConfig::class)
 internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
     val edgeCases = gen.edgeCases()
-    val testResultsGen = gen.map { test.getResultFor(it) }
 
     fun runIteration(iteration: Int) {
-        val (testResult, shrinks) = if (iteration <= edgeCases.size) {
-            val edgeCase = edgeCases.elementAt(iteration - 1)
-            edgeCase.map { test.getResultFor(it) }
+        val input = if (iteration <= edgeCases.size) {
+            edgeCases.elementAt(iteration - 1)
         } else {
-            val sampleTree = RandomTree.new(config.seed.next(iteration))
-            val generate = (testResultsGen as GenV2).generate(sampleTree)
-            generate
+            gen.generate(RandomTree.new(config.seed.next(iteration)))
         }
 
-        when (testResult) {
-            is TestResult.Success -> return
+        val testFailure = test.test(input.value) ?: return
 
-            is TestResult.Failure -> {
-                val tracker = ShrinkTracker<T>(
-                    printSteps = config.printShrinkSteps,
-                    shrinkingConstraint = config.shrinkingConstraint.apply { onStart() }
-                )
+        val shrinkTracker = ShrinkTracker<T>(
+            printSteps = config.printShrinkSteps,
+            shrinkingConstraint = config.shrinkingConstraint.apply { onStart() }
+        )
 
-                val shrunkResult = getSmallestCounterExample(
-                    testResult = testResult,
-                    iterator = shrinks.iterator(),
-                    tracker = tracker,
-                )
+        val shrunkResult = test.getSmallestCounterExample(
+            smallestSoFar = testFailure,
+            candidates = input.shrinks.iterator(),
+            tracker = shrinkTracker,
+        )
 
-                PropertyFalsifiedException(
-                    seed = config.seed.value,
-                    iteration = iteration,
-                    originalResult = testResult,
-                    shrunkResult = shrunkResult.takeIf { it.input != testResult.input },
-                    shrinkSteps = tracker.shrinkSteps
-                ).also {
-                    config.reporter.reportFailure(it)
-                    throw it
-                }
-            }
+        PropertyFalsifiedException(
+            seed = config.seed.value,
+            iteration = iteration,
+            original = testFailure,
+            shrunk = shrunkResult.takeIf { it.input != testFailure.input },
+            shrinkSteps = shrinkTracker.shrinkSteps
+        ).also {
+            config.reporter.reportFailure(it)
+            throw it
         }
     }
 
     val startingIteration = (config.replayIteration ?: 1)
     (startingIteration..<startingIteration + config.iterations).forEach(::runIteration)
     config.reporter.reportSuccess(config.iterations)
-}
-
-private fun <T> Test<T>.getResultFor(t: T): TestResult<T> {
-    val failure = test(t) ?: return TestResult.Success(t)
-    return TestResult.Failure(t, failure)
 }
 
 private class ShrinkTracker<T>(
@@ -75,39 +61,34 @@ private class ShrinkTracker<T>(
     fun shouldStopShrinking(): Boolean =
         shrinkingConstraint.shouldStopShrinking()
 
-    fun recordShrinkAttempt(result: TestResult<T>): Boolean {
-        if (!seenValues.add(result.input)) {
-            return false
-        }
+    fun recordShrinkAttempt(input: T): Boolean {
+        if (!seenValues.add(input)) return false
 
         shrinkingConstraint.onStep()
         shrinkSteps += 1
 
-        if (printSteps) {
-            val suffix = if (result is TestResult.Failure) "(falsified)" else "(succeeded)"
-            println("step ${shrinkSteps}: ${result.input} $suffix")
-        }
-
+        if (printSteps) println("step ${shrinkSteps}: $input")
         return true
     }
 }
 
-private tailrec fun <T> getSmallestCounterExample(
-    testResult: TestResult.Failure<T>,
-    iterator: Iterator<GenResultV2<TestResult<T>>>,
+private tailrec fun <T> Test<T>.getSmallestCounterExample(
+    smallestSoFar: TestFailure<T>,
+    candidates: Iterator<GenResultV2<T>>,
     tracker: ShrinkTracker<T>,
-): TestResult.Failure<T> {
-    if (!iterator.hasNext() || tracker.shouldStopShrinking()) return testResult
+): TestFailure<T> {
+    if (!candidates.hasNext() || tracker.shouldStopShrinking()) return smallestSoFar
 
-    val (shrunkTestResult, newShrinks) = iterator.next()
+    val (shrunkInput, newInputShrinks) = candidates.next()
+    val testResult = test(shrunkInput)
 
-    if (!tracker.recordShrinkAttempt(shrunkTestResult)) {
-        return getSmallestCounterExample(testResult, iterator, tracker)
+    if (!tracker.recordShrinkAttempt(shrunkInput)) {
+        return getSmallestCounterExample(smallestSoFar, candidates, tracker)
     }
 
-    return if (shrunkTestResult is TestResult.Failure) {
-        getSmallestCounterExample(shrunkTestResult, newShrinks.iterator(), tracker)
+    return if (testResult is TestFailure) {
+        getSmallestCounterExample(testResult, newInputShrinks.iterator(), tracker)
     } else {
-        getSmallestCounterExample(testResult, iterator, tracker)
+        getSmallestCounterExample(smallestSoFar, candidates, tracker)
     }
 }
