@@ -5,9 +5,9 @@ import com.tamj0rd2.ktcheck.GenFacade
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.trees
+import com.tamj0rd2.ktcheck.core.RandomTree
+import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.treeWhere
+import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.trees
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.forAll
 import com.tamj0rd2.ktcheck.v2.GenResultV2
@@ -31,7 +31,7 @@ internal class GenResults<T>(
     val shrunkValues get() = shrinks.map { it.value }.toList()
 }
 
-internal fun <T> Gen<T>.generate(tree: ProducerTree = ProducerTree.new()): GenResults<T> = when (this) {
+internal fun <T> Gen<T>.generate(tree: RandomTree = RandomTree.new()): GenResults<T> = when (this) {
     is GenV2 -> {
         val result = generate(tree)
         GenResults(result.value, collectShrinksRecursively(result.shrinks))
@@ -63,10 +63,10 @@ internal fun <T> Gen<T>.generating(value: T): GenResults<T> =
 internal fun <T> Gen<T>.generating(predicate: (T) -> Boolean): GenResults<T> =
     generate(findTreeProducing(Seed.random(), predicate))
 
-internal fun <T> Gen<T>.findTreeProducing(value: T, seed: Seed = Seed.random()): ProducerTree =
+internal fun <T> Gen<T>.findTreeProducing(value: T, seed: Seed = Seed.random()): RandomTree =
     findTreeProducing(seed) { it == value }
 
-internal fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): ProducerTree =
+internal fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): RandomTree =
     treeWhere(seed) { predicate(generate(it).value) }
 
 fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {

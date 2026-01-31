@@ -3,32 +3,32 @@ package com.tamj0rd2.ktcheck.core
 import kotlin.random.Random
 
 @ConsistentCopyVisibility
-internal data class ProducerTree private constructor(
+internal data class RandomTree private constructor(
     private val seed: Seed,
-    private val lazyLeft: Lazy<ProducerTree>,
-    private val lazyRight: Lazy<ProducerTree>,
+    private val lazyLeft: Lazy<RandomTree>,
+    private val lazyRight: Lazy<RandomTree>,
 ) {
     val random get() = Random(seed.value)
-    val left: ProducerTree by lazyLeft
-    val right: ProducerTree by lazyRight
+    val left: RandomTree by lazyLeft
+    val right: RandomTree by lazyRight
 
     companion object {
-        internal fun new(seed: Seed = Seed.random()): ProducerTree = ProducerTree(
+        internal fun new(seed: Seed = Seed.random()): RandomTree = RandomTree(
             seed = seed,
             lazyLeft = lazy { new(seed.next(1)) },
             lazyRight = lazy { new(seed.next(2)) },
         )
     }
 
-    internal fun withLeft(left: ProducerTree) = copy(lazyLeft = lazyOf(left))
-    internal fun withRight(right: ProducerTree) = copy(lazyRight = lazyOf(right))
+    internal fun withLeft(left: RandomTree) = copy(lazyLeft = lazyOf(left))
+    internal fun withRight(right: RandomTree) = copy(lazyRight = lazyOf(right))
 
     override fun toString(): String = visualise(maxDepth = 10)
 
     @Suppress("unused")
     internal fun visualise(maxDepth: Int = 3, forceEval: Boolean = false): String {
         fun visualise(
-            tree: ProducerTree,
+            tree: RandomTree,
             indent: String,
             prefix: String,
             isLast: Boolean?,
@@ -36,7 +36,7 @@ internal data class ProducerTree private constructor(
         ): String {
             if (currentDepth >= maxDepth) return "${indent}${prefix}...\n"
 
-            fun visualiseBranch(lazyTree: Lazy<ProducerTree>, side: String): String? {
+            fun visualiseBranch(lazyTree: Lazy<RandomTree>, side: String): String? {
                 val newIndent = when (isLast) {
                     null -> "" // Root level, no indentation
                     true -> "$indent    "

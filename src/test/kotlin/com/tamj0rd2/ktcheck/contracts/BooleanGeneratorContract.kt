@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 import com.tamj0rd2.ktcheck.core.shrinkers.BoolShrinker.defaultOrigin
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
@@ -24,7 +24,7 @@ internal interface BooleanGeneratorContract : BaseContract {
     @Test
     fun `using the same seed generates the same value`() {
         val gen = bool()
-        val tree = ProducerTree.new()
+        val tree = RandomTree.new()
         val values = List(1000) { gen.generate(tree).value }
         val firstValue = values.first()
         expectThat(values.drop(1)).all { isEqualTo(firstValue) }

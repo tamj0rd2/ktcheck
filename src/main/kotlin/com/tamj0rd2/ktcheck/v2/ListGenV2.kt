@@ -1,13 +1,13 @@
 package com.tamj0rd2.ktcheck.v2
 
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 
 internal class ListGenV2<T>(
     private val gen: GenV2<T>,
     private val sizeGen: IntGenV2,
 ) : GenV2<List<T>> {
 
-    override fun generate(tree: ProducerTree): GenResultV2<List<T>> {
+    override fun generate(tree: RandomTree): GenResultV2<List<T>> {
         val (size, sizeShrinks) = sizeGen.generate(tree.left)
         val elementResults = generateListWithResults(tree.right, size)
         return buildResult(sizeShrinks, elementResults)
@@ -42,7 +42,7 @@ internal class ListGenV2<T>(
     )
 
     private fun generateListWithResults(
-        tree: ProducerTree,
+        tree: RandomTree,
         size: Int,
     ): List<GenResultV2<T>> {
         val results = mutableListOf<GenResultV2<T>>()

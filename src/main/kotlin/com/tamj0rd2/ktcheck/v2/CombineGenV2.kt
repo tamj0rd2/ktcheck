@@ -1,13 +1,13 @@
 package com.tamj0rd2.ktcheck.v2
 
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 
 internal class CombineGenV2<T1, T2, R>(
     private val gen1: GenV2<T1>,
     private val gen2: GenV2<T2>,
     private val combine: (T1, T2) -> R,
 ) : GenV2<R> {
-    override fun generate(tree: ProducerTree): GenResultV2<R> {
+    override fun generate(tree: RandomTree): GenResultV2<R> {
         return combine(gen1.generate(tree.left), gen2.generate(tree.right))
     }
 

@@ -3,7 +3,7 @@ package com.tamj0rd2.ktcheck.contracts
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -117,7 +117,7 @@ internal interface DistinctListGeneratorContract : BaseContract {
         val intGen = int(0..2)
         val gen = intGen.list(3, distinct = true)
 
-        val result = gen.generate(ProducerTree.new())
+        val result = gen.generate(RandomTree.new())
         expectThat(result.value).size.isEqualTo(3)
         expectThat(result.shrunkValues).isEmpty()
     }

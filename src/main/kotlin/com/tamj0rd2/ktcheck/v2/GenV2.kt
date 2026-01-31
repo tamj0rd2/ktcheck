@@ -3,11 +3,11 @@ package com.tamj0rd2.ktcheck.v2
 import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenFacade
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 import kotlin.reflect.KClass
 
 internal interface GenV2<T> : Gen<T> {
-    fun generate(tree: ProducerTree): GenResultV2<T>
+    fun generate(tree: RandomTree): GenResultV2<T>
 
     companion object : GenFacade by GenV2Facade
 }
@@ -35,7 +35,7 @@ internal data class GenResultV2<T>(
 private object GenV2Facade : GenFacade {
     override fun <T> Gen<T>.sample(seed: Long): T {
         return (this as? GenV2<T>)?.generate(
-            ProducerTree.new(
+            RandomTree.new(
                 com.tamj0rd2.ktcheck.core.Seed(
                     seed
                 )

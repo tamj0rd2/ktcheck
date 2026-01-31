@@ -3,12 +3,12 @@ package com.tamj0rd2.ktcheck.v2
 import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenerationException
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 
 internal class CombinerGenV2<T>(
     private val block: (CombinerContext) -> T,
 ) : GenV2<T> {
-    override fun generate(tree: ProducerTree): GenResultV2<T> {
+    override fun generate(tree: RandomTree): GenResultV2<T> {
         val context = CombinerContextV2(tree)
         val value = block(context)
         return buildResult(value, context.resultsByIndex)
@@ -44,7 +44,7 @@ internal class CombinerGenV2<T>(
     }
 
     private class CombinerContextV2(
-        private var tree: ProducerTree,
+        private var tree: RandomTree,
     ) : CombinerContext {
         val resultsByIndex = mutableListOf<GenResultV2<*>>()
 

@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck.v2
 
 import com.tamj0rd2.ktcheck.GenerationException
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 import kotlin.reflect.KClass
 
 internal class ExceptionIgnoringGenV2<T>(
@@ -9,7 +9,7 @@ internal class ExceptionIgnoringGenV2<T>(
     private val threshold: Int,
     private val klass: KClass<out Throwable>,
 ) : GenV2<T> {
-    override fun generate(tree: ProducerTree): GenResultV2<T> {
+    override fun generate(tree: RandomTree): GenResultV2<T> {
         var lastFailure: Throwable? = null
 
         return generateSequence(tree) { it.right }

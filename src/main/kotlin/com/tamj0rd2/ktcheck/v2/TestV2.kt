@@ -6,7 +6,7 @@ import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.Test
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.TestResult
-import com.tamj0rd2.ktcheck.core.ProducerTree
+import com.tamj0rd2.ktcheck.core.RandomTree
 import com.tamj0rd2.ktcheck.v2.GenV2.Companion.map
 
 @OptIn(HardcodedTestConfig::class)
@@ -15,7 +15,7 @@ internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
     val testResultsGen = gen.map { test.getResultFor(it) }
 
     fun runIteration(iteration: Int) {
-        val sampleTree = ProducerTree.new(config.seed.next(iteration))
+        val sampleTree = RandomTree.new(config.seed.next(iteration))
         val (testResult, shrinks) = (testResultsGen as GenV2).generate(sampleTree)
 
         when (testResult) {

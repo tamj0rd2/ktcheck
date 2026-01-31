@@ -1,8 +1,8 @@
 package com.tamj0rd2.ktcheck.contracts
 
-import com.tamj0rd2.ktcheck.core.ProducerTree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.tree
-import com.tamj0rd2.ktcheck.core.ProducerTreeDsl.Companion.treeWhere
+import com.tamj0rd2.ktcheck.core.RandomTree
+import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.tree
+import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.treeWhere
 import org.junit.jupiter.api.Test
 import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
@@ -15,7 +15,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
     @Test
     fun `constant always produces the same value and doesn't shrink`() {
         // todo: move this test elsewhere.
-        val result = constant(10).generate(ProducerTree.new())
+        val result = constant(10).generate(RandomTree.new())
         expectThat(result.value).isEqualTo(10)
         expectThat(result.shrunkValues).isEmpty()
     }
@@ -37,7 +37,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val originalGen = int(0..10)
         val doublingGen = originalGen.map { it * 2 }
 
-        val tree = ProducerTree.new()
+        val tree = RandomTree.new()
         val originalResult = originalGen.generate(tree)
         val doubledResult = doublingGen.generate(tree)
 
