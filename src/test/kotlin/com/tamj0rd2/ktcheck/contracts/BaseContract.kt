@@ -1,7 +1,7 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Gen
-import com.tamj0rd2.ktcheck.GenFacade
+import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
@@ -18,7 +18,7 @@ import strikt.api.expectThat
 import strikt.assertions.isNotNull
 import java.time.Duration
 
-internal interface BaseContract : GenFacade
+internal interface BaseContract : GenBuilders
 
 internal class GenResults<T>(
     val value: T,

@@ -7,7 +7,7 @@ import com.tamj0rd2.ktcheck.core.RandomTree
 
 internal class CombinerGenV2<T>(
     private val block: (CombinerContext) -> T,
-) : GenV2<T> {
+) : GenV2<T>() {
     override fun generate(tree: RandomTree): GenResultV2<T> {
         val context = CombinerContextV2(tree)
         val value = block(context)

@@ -8,7 +8,7 @@ import kotlin.random.nextInt
 internal class IntGenV2(
     private val range: IntRange,
     private val shrinkTarget: Int = IntShrinker.defaultShrinkTarget(range),
-) : GenV2<Int> {
+) : GenV2<Int>() {
     override fun generate(tree: RandomTree): GenResultV2<Int> {
         val value = tree.random.nextInt(range)
         return buildResult(value)

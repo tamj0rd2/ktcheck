@@ -1,6 +1,7 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.GenerationException.ConditionalLogicDetectedDuringCombine
+import com.tamj0rd2.ktcheck.Gens.string
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import strikt.api.expectDoesNotThrow

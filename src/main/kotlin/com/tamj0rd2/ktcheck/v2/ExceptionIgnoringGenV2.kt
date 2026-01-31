@@ -8,7 +8,7 @@ internal class ExceptionIgnoringGenV2<T>(
     private val gen: GenV2<T>,
     private val threshold: Int,
     private val klass: KClass<out Throwable>,
-) : GenV2<T> {
+) : GenV2<T>() {
     override fun generate(tree: RandomTree): GenResultV2<T> {
         var lastFailure: Throwable? = null
 

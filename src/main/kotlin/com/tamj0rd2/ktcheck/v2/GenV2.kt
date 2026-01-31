@@ -2,15 +2,57 @@ package com.tamj0rd2.ktcheck.v2
 
 import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
-import com.tamj0rd2.ktcheck.GenFacade
+import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.core.RandomTree
+import com.tamj0rd2.ktcheck.core.Seed
 import kotlin.reflect.KClass
 
-internal interface GenV2<T> : Gen<T> {
-    fun generate(tree: RandomTree): GenResultV2<T>
-    fun edgeCases(): List<GenResultV2<T>> = emptyList()
+internal sealed class GenV2<T> : Gen<T> {
+    abstract fun generate(tree: RandomTree): GenResultV2<T>
+    open fun edgeCases(): List<GenResultV2<T>> = emptyList()
 
-    companion object : GenFacade by GenV2Facade
+    override fun sample(seed: Long): T {
+        return generate(RandomTree.new(Seed(seed))).value ?: error("sample(seed) only supported for GenV2")
+    }
+
+    override fun <R> map(fn: (T) -> R): GenV2<R> {
+        return MapGenV2(this, fn)
+    }
+
+    override fun <R> flatMap(fn: (T) -> Gen<R>): GenV2<R> {
+        @Suppress("UNCHECKED_CAST")
+        return FlatMapGenV2(this, fn as (T) -> GenV2<R>)
+    }
+
+    override fun <T2, R> combineWith(
+        nextGen: Gen<T2>,
+        combine: (T, T2) -> R,
+    ): GenV2<R> {
+        return CombineGenV2(this, nextGen as GenV2, combine)
+    }
+
+    override fun filter(
+        threshold: Int,
+        predicate: (T) -> Boolean,
+    ): GenV2<T> {
+        return PredicateFilterGenV2(this, threshold, predicate)
+    }
+
+    override fun ignoreExceptions(
+        klass: KClass<out Exception>,
+        threshold: Int,
+    ): GenV2<T> {
+        return ExceptionIgnoringGenV2(this, threshold, klass)
+    }
+
+    override fun list(
+        size: IntRange,
+        distinct: Boolean,
+    ): GenV2<List<T>> = if (distinct) {
+        DistinctListGenV2(this, size)
+    } else {
+        ListGenV2(this, size)
+    }
 }
 
 internal data class GenResultV2<T>(
@@ -33,50 +75,10 @@ internal data class GenResultV2<T>(
     }
 }
 
-private object GenV2Facade : GenFacade {
-    override fun <T> Gen<T>.sample(seed: Long): T {
-        return (this as? GenV2<T>)?.generate(
-            RandomTree.new(
-                com.tamj0rd2.ktcheck.core.Seed(
-                    seed
-                )
-            )
-        )?.value
-            ?: error("sample(seed) only supported for GenV2")
-    }
-
-    override fun <T, R> Gen<T>.map(fn: (T) -> R): Gen<R> {
-        return MapGenV2(this as GenV2, fn)
-    }
-
-    override fun <T, R> Gen<T>.flatMap(fn: (T) -> Gen<R>): Gen<R> {
-        @Suppress("UNCHECKED_CAST")
-        return FlatMapGenV2(this as GenV2, fn as (T) -> GenV2<R>)
-    }
-
-    override fun <T1, T2, R> Gen<T1>.combineWith(
-        nextGen: Gen<T2>,
-        combine: (T1, T2) -> R,
-    ): Gen<R> {
-        return CombineGenV2(this as GenV2, nextGen as GenV2, combine)
-    }
+internal object GenV2Builders : GenBuilders {
 
     override fun <T> combine(block: CombinerContext.() -> T): Gen<T> {
         return CombinerGenV2(block)
-    }
-
-    override fun <T> Gen<T>.filter(
-        threshold: Int,
-        predicate: (T) -> Boolean,
-    ): Gen<T> {
-        return PredicateFilterGenV2(this as GenV2, threshold, predicate)
-    }
-
-    override fun <T> Gen<T>.ignoreExceptions(
-        klass: KClass<out Exception>,
-        threshold: Int,
-    ): Gen<T> {
-        return ExceptionIgnoringGenV2(this as GenV2, threshold, klass)
     }
 
     override fun <T> constant(value: T): Gen<T> {
@@ -95,15 +97,6 @@ private object GenV2Facade : GenFacade {
     override fun long(): Gen<Long> {
         // todo: implement this properly
         return int().map { it.toLong() }
-    }
-
-    override fun <T> Gen<T>.list(
-        size: IntRange,
-        distinct: Boolean,
-    ): Gen<List<T>> = if (distinct) {
-        DistinctListGenV2(this as GenV2, size)
-    } else {
-        ListGenV2(this as GenV2, size)
     }
 
     override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {

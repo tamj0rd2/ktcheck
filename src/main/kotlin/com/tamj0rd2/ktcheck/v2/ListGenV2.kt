@@ -5,7 +5,7 @@ import com.tamj0rd2.ktcheck.core.RandomTree
 internal class ListGenV2<T>(
     private val gen: GenV2<T>,
     private val sizeRange: IntRange,
-) : GenV2<List<T>> {
+) : GenV2<List<T>>() {
     private val sizeGen = IntGenV2(sizeRange)
 
     override fun edgeCases(): List<GenResultV2<List<T>>> {
