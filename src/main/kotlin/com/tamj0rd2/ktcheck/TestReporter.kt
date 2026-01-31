@@ -25,7 +25,7 @@ class PrintingTestReporter(
         val shrunkFailure = exception.shrunk
 
         val output = buildString {
-            appendLine("Seed: ${exception.seed} - failed on iteration ${exception.iteration}\n")
+            appendLine("Seed: ${exception.seed} - property falsified on iteration ${exception.iteration}\n")
 
             if (shrunkFailure != null) {
                 appendLine(formatFailure(prefix = "Shrunk ", result = shrunkFailure))
@@ -34,9 +34,7 @@ class PrintingTestReporter(
             }
 
             if (showAllDiagnostics || shrunkFailure == null) {
-                appendLine()
                 appendLine(formatFailure(prefix = "Original ", result = exception.original))
-                appendLine("-----------------")
             }
         }
 
@@ -45,7 +43,7 @@ class PrintingTestReporter(
 
     private fun formatFailure(prefix: String, result: Property.Falsification<*>): String = buildString {
         appendLine("${prefix}Arguments:")
-        appendLine("-----------------")
+        appendLine("--------------------")
         when (result.input) {
             is Pair<*, *> -> {
                 appendLine("1st -> ${result.input.first}")
@@ -61,9 +59,11 @@ class PrintingTestReporter(
             else -> appendLine(result.input)
         }
 
-        appendLine()
-        appendLine("${prefix}Failure:")
-        appendLine("-----------------")
-        appendLine(result.error)
+        if (result.error != null) {
+            appendLine()
+            appendLine("${prefix}Failure:")
+            appendLine("--------------------")
+            appendLine(result.error)
+        }
     }
 }
