@@ -1,15 +1,14 @@
 package com.tamj0rd2.ktcheck.v2
 
 import com.tamj0rd2.ktcheck.HardcodedTestConfig
+import com.tamj0rd2.ktcheck.Property
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.ShrinkingConstraint
-import com.tamj0rd2.ktcheck.Test
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.TestFailure
 import com.tamj0rd2.ktcheck.core.RandomTree
 
 @OptIn(HardcodedTestConfig::class)
-internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
+internal fun <T> test(config: TestConfig, gen: GenV2<T>, property: Property<T>) {
     val edgeCases = gen.edgeCases()
 
     fun runIteration(iteration: Int) {
@@ -19,14 +18,14 @@ internal fun <T> test(config: TestConfig, gen: GenV2<T>, test: Test<T>) {
             gen.generate(RandomTree.new(config.seed.next(iteration)))
         }
 
-        val testFailure = test.test(input.value) ?: return
+        val testFailure = property.test(input.value) ?: return
 
         val shrinkTracker = ShrinkTracker<T>(
             printSteps = config.printShrinkSteps,
             shrinkingConstraint = config.shrinkingConstraint.apply { onStart() }
         )
 
-        val shrunkResult = test.getSmallestCounterExample(
+        val shrunkResult = property.getSmallestCounterExample(
             smallestSoFar = testFailure,
             candidates = input.shrinks.iterator(),
             tracker = shrinkTracker,
@@ -72,11 +71,11 @@ private class ShrinkTracker<T>(
     }
 }
 
-private tailrec fun <T> Test<T>.getSmallestCounterExample(
-    smallestSoFar: TestFailure<T>,
+private tailrec fun <T> Property<T>.getSmallestCounterExample(
+    smallestSoFar: Property.Falsification<T>,
     candidates: Iterator<GenResultV2<T>>,
     tracker: ShrinkTracker<T>,
-): TestFailure<T> {
+): Property.Falsification<T> {
     if (!candidates.hasNext() || tracker.shouldStopShrinking()) return smallestSoFar
 
     val (shrunkInput, newInputShrinks) = candidates.next()
@@ -86,7 +85,7 @@ private tailrec fun <T> Test<T>.getSmallestCounterExample(
         return getSmallestCounterExample(smallestSoFar, candidates, tracker)
     }
 
-    return if (testResult is TestFailure) {
+    return if (testResult is Property.Falsification) {
         getSmallestCounterExample(testResult, newInputShrinks.iterator(), tracker)
     } else {
         getSmallestCounterExample(smallestSoFar, candidates, tracker)

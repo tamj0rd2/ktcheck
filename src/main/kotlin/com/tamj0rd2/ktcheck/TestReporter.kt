@@ -43,7 +43,7 @@ class PrintingTestReporter(
         printStream.println(output)
     }
 
-    private fun formatFailure(prefix: String, result: TestFailure<*>): String = buildString {
+    private fun formatFailure(prefix: String, result: Property.Falsification<*>): String = buildString {
         appendLine("${prefix}Arguments:")
         appendLine("-----------------")
         when (result.input) {
