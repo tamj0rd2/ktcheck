@@ -1,10 +1,12 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.GenerationException.FilterLimitReached
+import com.tamj0rd2.ktcheck.v2.GenV2
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.all
+import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import strikt.assertions.isFalse
 import strikt.assertions.isGreaterThan
@@ -114,5 +116,14 @@ internal interface FilterGeneratorContract : BaseContract {
 
         val values = possiblyThrowingGen.samples().take(100).toList()
         expectThat(values).all { isEqualTo(3) }
+    }
+
+    @Test
+    fun `filter preserves edge cases from underlying generator`() {
+        val gen = int(0..100).filter { it % 2 == 0 } as GenV2
+
+        val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
+
+        expectThat(edgeCaseValues).contains(listOf(0, 100))
     }
 }

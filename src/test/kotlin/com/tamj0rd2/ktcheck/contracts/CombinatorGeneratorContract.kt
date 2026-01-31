@@ -143,7 +143,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
     fun `combineWith produces edge case permutations from both generators`() {
         val gen1 = int(0..100)
         val gen2 = int(0..100)
-        val combined = gen1.combineWith(gen2, ::Pair) as GenV2<Pair<Int, Int>>
+        val combined = gen1.combineWith(gen2, ::Pair) as GenV2
 
         val edgeCases = combined.edgeCases().map { it.value }.toSet()
 

@@ -18,6 +18,17 @@ import kotlin.math.abs
 
 // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
 internal interface ShrinkingChallengeContract : BaseContract {
+
+    @Test
+    fun deletion() = testShrinking(
+        gen = (int().list() + int(0..10)).filter { (list, index) -> index < list.size },
+        test = { (list, index) ->
+            val element = list[index]
+            element !in list.toMutableList().apply { remove(element) }
+        },
+        didShrinkCorrectly = { it == Pair(listOf(0, 0), 0) },
+    )
+
     @Test
     fun `difference must not be zero`() {
         testShrinking(

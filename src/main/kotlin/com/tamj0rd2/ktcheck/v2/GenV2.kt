@@ -103,7 +103,7 @@ private object GenV2Facade : GenFacade {
     ): Gen<List<T>> = if (distinct) {
         DistinctListGenV2(this as GenV2, size)
     } else {
-        ListGenV2(this as GenV2, IntGenV2(size))
+        ListGenV2(this as GenV2, size)
     }
 
     override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {

@@ -4,8 +4,35 @@ import com.tamj0rd2.ktcheck.core.RandomTree
 
 internal class ListGenV2<T>(
     private val gen: GenV2<T>,
-    private val sizeGen: IntGenV2,
+    private val sizeRange: IntRange,
 ) : GenV2<List<T>> {
+    private val sizeGen = IntGenV2(sizeRange)
+
+    override fun edgeCases(): List<GenResultV2<List<T>>> {
+        val cases = mutableListOf<GenResultV2<List<T>>>()
+
+        // todo: I don't like any of this.
+        // Empty list if size range allows
+        if (0 in sizeRange) {
+            cases.add(buildResult(emptySequence(), emptyList()))
+        }
+
+        // Singleton lists with element edge cases
+        if (1 in sizeRange) {
+            gen.edgeCases().forEach { elementEdgeCase ->
+                cases.add(buildResult(emptySequence(), listOf(elementEdgeCase)))
+            }
+        }
+
+        // Duplicate lists with element edge cases
+        if (2 in sizeRange) {
+            gen.edgeCases().forEach { elementEdgeCase ->
+                cases.add(buildResult(emptySequence(), listOf(elementEdgeCase, elementEdgeCase)))
+            }
+        }
+
+        return cases
+    }
 
     override fun generate(tree: RandomTree): GenResultV2<List<T>> {
         val (size, sizeShrinks) = sizeGen.generate(tree.left)

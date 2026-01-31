@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.contracts
 
+import com.tamj0rd2.ktcheck.v2.GenV2
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.any
@@ -61,5 +62,32 @@ internal interface ListGeneratorContract : BaseContract {
         expectThat(firstNonSizeShrink.shrinks.toList())
             .describedAs("shrinks of ${firstNonSizeShrink.value}")
             .any { get { value }.size.isLessThan(root.value.size) }
+    }
+
+    @Test
+    fun `edge cases include an empty list when size range allows`() {
+        val gen = int().list(0..10) as GenV2
+
+        val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
+
+        expectThat(edgeCaseValues).contains(listOf(emptyList()))
+    }
+
+    @Test
+    fun `edge cases include singleton lists with element edge cases`() {
+        val gen = int(0..100).list(0..10) as GenV2
+
+        val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
+
+        expectThat(edgeCaseValues).contains(listOf(listOf(0), listOf(100)))
+    }
+
+    @Test
+    fun `edge cases include duplicate lists with element edge cases`() {
+        val gen = int(0..100).list(0..10) as GenV2
+
+        val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
+
+        expectThat(edgeCaseValues).contains(listOf(listOf(0, 0), listOf(100, 100)))
     }
 }

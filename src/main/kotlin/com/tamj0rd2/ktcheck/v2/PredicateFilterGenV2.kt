@@ -8,6 +8,10 @@ internal class PredicateFilterGenV2<T>(
     private val threshold: Int,
     private val predicate: (T) -> Boolean,
 ) : GenV2<T> {
+    override fun edgeCases(): List<GenResultV2<T>> {
+        return gen.edgeCases().mapNotNull { it.filter(predicate) }
+    }
+
     override fun generate(tree: RandomTree): GenResultV2<T> {
         return generateSequence(tree) { it.right }
             .take(threshold)
