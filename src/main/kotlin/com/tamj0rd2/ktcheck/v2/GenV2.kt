@@ -3,16 +3,16 @@ package com.tamj0rd2.ktcheck.v2
 import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
-import com.tamj0rd2.ktcheck.core.RandomTree
 import com.tamj0rd2.ktcheck.core.Seed
 import kotlin.reflect.KClass
 
 internal sealed class GenV2<T> : Gen<T> {
     abstract fun generate(tree: RandomTree): GenResultV2<T>
+
     open fun edgeCases(): List<GenResultV2<T>> = emptyList()
 
     override fun sample(seed: Long): T {
-        return generate(RandomTree.new(Seed(seed))).value ?: error("sample(seed) only supported for GenV2")
+        return generate(randomTree(Seed(seed))).value ?: error("sample(seed) only supported for GenV2")
     }
 
     override fun <R> map(fn: (T) -> R): GenV2<R> {
@@ -77,6 +77,7 @@ internal data class GenResultV2<T>(
 
 internal object GenV2Builders : GenBuilders {
 
+    @Deprecated("doesn't shrink properly")
     override fun <T> combine(block: CombinerContext.() -> T): Gen<T> {
         return CombinerGenV2(block)
     }

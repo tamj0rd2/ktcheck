@@ -5,7 +5,6 @@ import com.tamj0rd2.ktcheck.Property
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.core.RandomTree
 
 @OptIn(HardcodedTestConfig::class)
 internal fun <T> test(config: TestConfig, gen: GenV2<T>, property: Property<T>) {
@@ -15,7 +14,7 @@ internal fun <T> test(config: TestConfig, gen: GenV2<T>, property: Property<T>) 
         val input = if (iteration <= edgeCases.size) {
             edgeCases.elementAt(iteration - 1)
         } else {
-            gen.generate(RandomTree.new(config.seed.next(iteration)))
+            gen.generate(randomTree(config.seed.next(iteration)))
         }
 
         val testFailure = property.test(input.value) ?: return

@@ -1,34 +1,22 @@
 package com.tamj0rd2.ktcheck.core
 
-import kotlin.random.Random
-
-@ConsistentCopyVisibility
-internal data class RandomTree private constructor(
-    private val seed: Seed,
-    private val lazyLeft: Lazy<RandomTree>,
-    private val lazyRight: Lazy<RandomTree>,
+internal data class Tree<V>(
+    val data: V,
+    private val lazyLeft: Lazy<Tree<V>>,
+    private val lazyRight: Lazy<Tree<V>>,
 ) {
-    val random get() = Random(seed.value)
-    val left: RandomTree by lazyLeft
-    val right: RandomTree by lazyRight
+    val left get() = lazyLeft.value
+    val right get() = lazyRight.value
 
-    companion object {
-        internal fun new(seed: Seed = Seed.random()): RandomTree = RandomTree(
-            seed = seed,
-            lazyLeft = lazy { new(seed.next(1)) },
-            lazyRight = lazy { new(seed.next(2)) },
-        )
-    }
-
-    internal fun withLeft(left: RandomTree) = copy(lazyLeft = lazyOf(left))
-    internal fun withRight(right: RandomTree) = copy(lazyRight = lazyOf(right))
+    fun withLeft(left: Tree<V>): Tree<V> = copy(lazyLeft = lazyOf(left))
+    fun withRight(right: Tree<V>): Tree<V> = copy(lazyRight = lazyOf(right))
 
     override fun toString(): String = visualise(maxDepth = 10)
 
     @Suppress("unused")
     internal fun visualise(maxDepth: Int = 3, forceEval: Boolean = false): String {
         fun visualise(
-            tree: RandomTree,
+            tree: Tree<V>,
             indent: String,
             prefix: String,
             isLast: Boolean?,
@@ -36,7 +24,7 @@ internal data class RandomTree private constructor(
         ): String {
             if (currentDepth >= maxDepth) return "${indent}${prefix}...\n"
 
-            fun visualiseBranch(lazyTree: Lazy<RandomTree>, side: String): String? {
+            fun visualiseBranch(lazyTree: Lazy<Tree<V>>, side: String): String? {
                 val newIndent = when (isLast) {
                     null -> "" // Root level, no indentation
                     true -> "$indent    "
@@ -55,7 +43,7 @@ internal data class RandomTree private constructor(
             }
 
             return buildString {
-                appendLine("${indent}${prefix}${tree.seed}")
+                appendLine("${indent}${prefix}${tree.data}")
                 visualiseBranch(tree.lazyLeft, "L")?.let(::append)
                 visualiseBranch(tree.lazyRight, "R")?.let(::append)
             }

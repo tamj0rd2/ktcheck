@@ -1,8 +1,5 @@
 package com.tamj0rd2.ktcheck.contracts
 
-import com.tamj0rd2.ktcheck.core.RandomTree
-import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.tree
-import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.treeWhere
 import com.tamj0rd2.ktcheck.v2.GenV2
 import org.junit.jupiter.api.Test
 import strikt.api.expectDoesNotThrow
@@ -10,13 +7,12 @@ import strikt.api.expectThat
 import strikt.assertions.contains
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
-import kotlin.random.nextInt
 
 internal interface CombinatorGeneratorContract : BaseContract {
     @Test
     fun `constant always produces the same value and doesn't shrink`() {
         // todo: move this test elsewhere.
-        val result = constant(10).generate(RandomTree.new())
+        val result = constant(10).generate(tree())
         expectThat(result.value).isEqualTo(10)
         expectThat(result.shrunkValues).isEmpty()
     }
@@ -38,7 +34,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val originalGen = int(0..10)
         val doublingGen = originalGen.map { it * 2 }
 
-        val tree = RandomTree.new()
+        val tree = tree()
         val originalResult = originalGen.generate(tree)
         val doubledResult = doublingGen.generate(tree)
 
@@ -52,10 +48,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val bigGen = int(10..20)
         val gen = smallGen.flatMap { a -> bigGen.map { b -> a + b } }
 
-        val tree = tree {
-            left(smallGen.findTreeProducing(5))
-            right(bigGen.findTreeProducing(20))
-        }
+        val tree = tree()
+            .withLeft(smallGen.findTreeProducing(5))
+            .withRight(bigGen.findTreeProducing(20))
 
         val value = gen.generate(tree).value
         expectThat(value).isEqualTo(25)
@@ -71,10 +66,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
             }
         }
 
-        val tree = tree {
-            left(oneToThree.findTreeProducing(3))
-            right(fourToSix.findTreeProducing(6))
-        }
+        val tree = tree()
+            .withLeft(oneToThree.findTreeProducing(3))
+            .withRight(fourToSix.findTreeProducing(6))
 
         val result = gen.generate(tree)
         expectThat(result.value).isEqualTo(3 to 6)
@@ -90,15 +84,8 @@ internal interface CombinatorGeneratorContract : BaseContract {
     fun `flatMap allows changing the constraints of the inner generator`() {
         val gen = int(0..2).flatMap { int(10..10 + it) }
 
-        val tree = tree {
-            // initial int
-            left(treeWhere { it.random.nextInt(0..2) == 2 })
-
-            // index of char to select. upper bound depends on first int
-            right(treeWhere { it.random.nextInt(10..12) == 12 })
-        }
-
-        val result = gen.generate(tree)
+        // would require that the outer generator produced a 2
+        val result = gen.generating(12)
         expectThat(result.value).isEqualTo(12)
         expectDoesNotThrow { result.shrunkValues.toSet() }
     }
@@ -109,10 +96,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val bigGen = int(10..20)
         val gen = smallGen.combineWith(bigGen) { a, b -> a + b }
 
-        val tree = tree {
-            left(smallGen.findTreeProducing(5))
-            right(bigGen.findTreeProducing(20))
-        }
+        val tree = tree()
+            .withLeft(smallGen.findTreeProducing(5))
+            .withRight(bigGen.findTreeProducing(20))
 
         val value = gen.generate(tree).value
         expectThat(value).isEqualTo(25)
@@ -124,10 +110,9 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val fourToSix = int(4..6)
         val gen = oneToThree.combineWith(fourToSix, ::Pair)
 
-        val tree = tree {
-            left(oneToThree.findTreeProducing(3))
-            right(fourToSix.findTreeProducing(6))
-        }
+        val tree = tree()
+            .withLeft(oneToThree.findTreeProducing(3))
+            .withRight(fourToSix.findTreeProducing(6))
 
         val result = gen.generate(tree)
         expectThat(result.value).isEqualTo(3 to 6)

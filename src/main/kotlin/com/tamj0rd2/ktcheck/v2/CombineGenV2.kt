@@ -1,7 +1,5 @@
 package com.tamj0rd2.ktcheck.v2
 
-import com.tamj0rd2.ktcheck.core.RandomTree
-
 internal class CombineGenV2<T1, T2, R>(
     private val gen1: GenV2<T1>,
     private val gen2: GenV2<T2>,

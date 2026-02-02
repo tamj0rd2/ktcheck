@@ -1,7 +1,5 @@
 package com.tamj0rd2.ktcheck.v2
 
-import com.tamj0rd2.ktcheck.core.RandomTree
-
 internal class FlatMapGenV2<T, R>(
     private val gen: GenV2<T>,
     private val fn: (T) -> GenV2<R>,

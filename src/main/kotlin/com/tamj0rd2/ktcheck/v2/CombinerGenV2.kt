@@ -3,7 +3,6 @@ package com.tamj0rd2.ktcheck.v2
 import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenerationException
-import com.tamj0rd2.ktcheck.core.RandomTree
 
 internal class CombinerGenV2<T>(
     private val block: (CombinerContext) -> T,

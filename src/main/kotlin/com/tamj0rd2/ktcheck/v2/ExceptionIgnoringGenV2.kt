@@ -1,7 +1,6 @@
 package com.tamj0rd2.ktcheck.v2
 
 import com.tamj0rd2.ktcheck.GenerationException
-import com.tamj0rd2.ktcheck.core.RandomTree
 import kotlin.reflect.KClass
 
 internal class ExceptionIgnoringGenV2<T>(

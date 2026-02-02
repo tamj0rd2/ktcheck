@@ -5,20 +5,43 @@ import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.core.RandomTree
-import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.treeWhere
-import com.tamj0rd2.ktcheck.core.RandomTreeDsl.Companion.trees
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.forAll
-import com.tamj0rd2.ktcheck.v2.GenResultV2
-import com.tamj0rd2.ktcheck.v2.GenV2
+import com.tamj0rd2.ktcheck.v2.RandomTree
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
 import strikt.api.expectThat
 import strikt.assertions.isNotNull
 import java.time.Duration
 
-internal interface BaseContract : GenBuilders
+internal interface BaseContract : GenBuilders {
+    fun tree(seed: Seed = Seed.random()): RandomTree
+
+    fun trees(seed: Seed = Seed.random()) =
+        Seed.sequence(seed).map(::tree)
+
+    fun treeWhere(seed: Seed = Seed.random(), predicate: (RandomTree) -> Boolean): RandomTree =
+        trees(seed).take(1_000_000).first(predicate)
+
+    fun <T> Gen<T>.generate(tree: RandomTree = tree()): GenResults<T>
+
+    fun <T> Gen<T>.sequence(): Sequence<GenResults<T>> =
+        generateSequence { generate() }
+
+    /** Retries generations until the exact [value] is produced. */
+    fun <T> Gen<T>.generating(value: T): GenResults<T> =
+        generating { it == value }
+
+    /** Retries generations until some value satisfying [predicate] is produced. */
+    fun <T> Gen<T>.generating(predicate: (T) -> Boolean): GenResults<T> =
+        generate(findTreeProducing(Seed.random(), predicate))
+
+    fun <T> Gen<T>.findTreeProducing(value: T, seed: Seed = Seed.random()): RandomTree =
+        findTreeProducing(seed) { it == value }
+
+    fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): RandomTree =
+        treeWhere(seed) { predicate(generate(it).value) }
+}
 
 internal class GenResults<T>(
     val value: T,
@@ -30,44 +53,6 @@ internal class GenResults<T>(
 
     val shrunkValues get() = shrinks.map { it.value }.toList()
 }
-
-internal fun <T> Gen<T>.generate(tree: RandomTree = RandomTree.new()): GenResults<T> = when (this) {
-    is GenV2 -> {
-        val result = generate(tree)
-        GenResults(result.value, collectShrinksRecursively(result.shrinks))
-    }
-
-    else -> error("Unsupported Gen type: ${this::class}")
-}
-
-private fun <T> GenV2<T>.collectShrinksRecursively(shrinks: Sequence<GenResultV2<T>>): Sequence<GenResults<T>> =
-    sequence {
-        for (shrink in shrinks) {
-            yield(
-                GenResults(
-                    value = shrink.value,
-                    shrinks = collectShrinksRecursively(shrink.shrinks)
-                )
-            )
-        }
-    }
-
-internal fun <T> Gen<T>.sequence(): Sequence<GenResults<T>> =
-    trees().map { generate(it) }
-
-/** Retries generations until the exact [value] is produced. */
-internal fun <T> Gen<T>.generating(value: T): GenResults<T> =
-    generating { it == value }
-
-/** Retries generations until some value satisfying [predicate] is produced. */
-internal fun <T> Gen<T>.generating(predicate: (T) -> Boolean): GenResults<T> =
-    generate(findTreeProducing(Seed.random(), predicate))
-
-internal fun <T> Gen<T>.findTreeProducing(value: T, seed: Seed = Seed.random()): RandomTree =
-    findTreeProducing(seed) { it == value }
-
-internal fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): RandomTree =
-    treeWhere(seed) { predicate(generate(it).value) }
 
 fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
     var shrinksBeforeTimeout = -1
