@@ -1,6 +1,5 @@
 package com.tamj0rd2.ktcheck.v2
 
-import com.tamj0rd2.ktcheck.CombinerContext
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.core.Seed
@@ -76,11 +75,6 @@ internal data class GenResultV2<T>(
 }
 
 internal object GenV2Builders : GenBuilders {
-
-    @Deprecated("doesn't shrink properly")
-    override fun <T> combine(block: CombinerContext.() -> T): Gen<T> {
-        return CombinerGenV2(block)
-    }
 
     override fun <T> constant(value: T): Gen<T> {
         return ConstantGenV2(value)

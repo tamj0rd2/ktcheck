@@ -76,10 +76,9 @@ interface Gen<T> {
      * val gen2 = Gen.int() + Gen.boolean()
      * ```
      *
-     * To combine more than 2 generators, use [Gens.combine] instead.
+     * To combine more than 2 generators, use [Gens.zip] instead.
      *
-     * For dependent generation (where the second generator depends on the first value),
-     * use [flatMap] or [Gens.combine] instead.
+     * For dependent generation (where the second generator depends on the first value), use [flatMap].
      */
     infix operator fun <T2> plus(nextGen: Gen<T2>): Gen<Pair<T, T2>> = combineWith(nextGen, ::Pair)
 
@@ -117,54 +116,6 @@ object Gens : GenBuilders by GenV2Builders {
 }
 
 internal interface GenBuilders {
-    /**
-     * Combines multiple generators into a single generator using a builder-style DSL.
-     * Each generator in the block is bound sequentially, and their shrinks are combined.
-     *
-     * Example:
-     * ```
-     * val gen = Gen.combine {
-     *     val x = Gen.int().bind()
-     *     val y = Gen.int().bind()
-     *     x to y
-     * }
-     * ```
-     *
-     * This is equivalent to using [plus] but with a more convenient syntax:
-     * ```
-     * val gen = (Gen.int() + Gen.bool()).map { (x, y) -> x + y }
-     * ```
-     *
-     * **Warning about conditionals:** The combiner requires that calls to [CombinerContext.bind] always happen in the
-     * same order, and the same number of times. If conditional logic is present that alters how `bind` is called, it
-     * will lead to invalid or non-deterministic generation and shrinking.
-     *
-     * If a conditional is required, **do this**:
-     * ```
-     * Gen.combine {
-     *   val changeBehaviour = Gen.bool().bind()
-     *   val lowValue = Gen.int(0..10).bind()
-     *   val highValue = Gen.int(100..200).bind()
-     *   if (changeBehaviour) lowValue else highValue // Conditional only affects result
-     * }
-     * ```
-     *
-     * **Not this**:
-     * ```
-     * Gen.combine {
-     *    val changeBehaviour = Gen.bool().bind()
-     *    val gen = if (changeBehaviour) Gen.int(0..10) else Gen.int(100..200)
-     *    gen.bind() // Conditional affects which generator is bound
-     * }
-     * ```
-     *
-     *
-     * @throws GenerationException.ConditionalLogicDetectedDuringCombine if conditional logic is present which affects
-     * the order or presence of bind calls.
-     */
-    @Deprecated("doesn't shrink properly")
-    fun <T> combine(block: CombinerContext.() -> T): Gen<T>
-
     fun <T> constant(value: T): Gen<T>
 
     fun bool(shrinkTarget: Boolean = false): Gen<Boolean>
@@ -193,8 +144,4 @@ internal interface GenBuilders {
         if (options.isEmpty()) throw OneOfEmpty()
         return int(0..<options.size).map { options[it] }
     }
-}
-
-interface CombinerContext {
-    fun <T> Gen<T>.bind(): T
 }
