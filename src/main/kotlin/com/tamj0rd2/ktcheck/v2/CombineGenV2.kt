@@ -13,7 +13,6 @@ internal class CombineGenV2<T1, T2, R>(
         val leftEdgeCases = gen1.edgeCases()
         val rightEdgeCases = gen2.edgeCases()
 
-        // Return cartesian product of edge cases from both generators
         return leftEdgeCases.flatMap { left ->
             rightEdgeCases.map { right ->
                 combine(left, right)

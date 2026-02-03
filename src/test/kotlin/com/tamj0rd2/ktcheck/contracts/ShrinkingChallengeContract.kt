@@ -3,11 +3,13 @@ package com.tamj0rd2.ktcheck.contracts
 import com.tamj0rd2.ktcheck.Counter
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.Gen
+import com.tamj0rd2.ktcheck.Gens
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.ThrowingProperty
 import com.tamj0rd2.ktcheck.checkAll
+import com.tamj0rd2.ktcheck.core.tuple
 import com.tamj0rd2.ktcheck.forAll
 import com.tamj0rd2.ktcheck.positive
 import org.junit.jupiter.api.Test
@@ -21,38 +23,38 @@ internal interface ShrinkingChallengeContract : BaseContract {
 
     @Test
     fun deletion() = testShrinking(
-        gen = (int().list() + int(0..10)).filter { (list, index) -> index < list.size },
+        gen = Gens.zip(int().list(), int(0..10)).filter { (list, index) -> index < list.size },
         test = { (list, index) ->
             val element = list[index]
             element !in list.toMutableList().apply { remove(element) }
         },
-        didShrinkCorrectly = { it == Pair(listOf(0, 0), 0) },
+        didShrinkCorrectly = { it == tuple(listOf(0, 0), 0) },
     )
 
     @Test
     fun `difference must not be zero`() {
         testShrinking(
-            gen = int(IntRange.positive) + int(IntRange.positive),
-            test = { it.first < 10 || abs(it.first - it.second) != 0 },
-            didShrinkCorrectly = { it == Pair(10, 10) },
+            gen = Gens.zip(int(IntRange.positive), int(IntRange.positive)),
+            test = { (a, b) -> a < 10 || abs(a - b) != 0 },
+            didShrinkCorrectly = { it == tuple(10, 10) },
         )
     }
 
     @Test
     fun `difference must not be small`() {
         testShrinking(
-            gen = int(IntRange.positive) + int(IntRange.positive),
-            test = { it.first < 10 || abs(it.first - it.second) !in 1..4 },
-            didShrinkCorrectly = { it == Pair(10, 6) },
+            gen = Gens.zip(int(IntRange.positive), int(IntRange.positive)),
+            test = { (a, b) -> a < 10 || abs(a - b) !in 1..4 },
+            didShrinkCorrectly = { it == tuple(10, 6) },
         )
     }
 
     @Test
     fun `difference must not be one`() {
         testShrinking(
-            gen = int(IntRange.positive) + int(IntRange.positive),
-            test = { it.first < 10 || abs(it.first - it.second) != 1 },
-            didShrinkCorrectly = { it == Pair(10, 9) },
+            gen = Gens.zip(int(IntRange.positive), int(IntRange.positive)),
+            test = { (a, b) -> a < 10 || abs(a - b) != 1 },
+            didShrinkCorrectly = { it == tuple(10, 9) },
         )
     }
 
