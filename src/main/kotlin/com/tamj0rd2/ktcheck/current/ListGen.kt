@@ -1,10 +1,10 @@
-package com.tamj0rd2.ktcheck.v2
+package com.tamj0rd2.ktcheck.current
 
-internal class ListGenV2<T>(
-    private val gen: GenV2<T>,
+internal class ListGen<T>(
+    private val gen: GenImpl<T>,
     private val sizeRange: IntRange,
-) : GenV2<List<T>>() {
-    private val sizeGen = IntGenV2(sizeRange)
+) : GenImpl<List<T>>() {
+    private val sizeGen = IntGen(sizeRange)
 
     override fun edgeCases(): List<GenResultV2<List<T>>> {
         val cases = mutableListOf<GenResultV2<List<T>>>()

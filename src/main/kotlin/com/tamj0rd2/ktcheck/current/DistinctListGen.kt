@@ -1,13 +1,13 @@
-package com.tamj0rd2.ktcheck.v2
+package com.tamj0rd2.ktcheck.current
 
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 
-internal class DistinctListGenV2<T>(
-    private val gen: GenV2<T>,
+internal class DistinctListGen<T>(
+    private val gen: GenImpl<T>,
     private val sizeRange: IntRange,
-) : GenV2<List<T>>() {
+) : GenImpl<List<T>>() {
     override fun generate(tree: RandomTree): GenResultV2<List<T>> {
-        val sizeResult = IntGenV2(sizeRange).generate(tree.left)
+        val sizeResult = IntGen(sizeRange).generate(tree.left)
         val elementResults = generateListWithResults(
             tree = tree.right,
             minSize = sizeRange.first,
@@ -17,7 +17,7 @@ internal class DistinctListGenV2<T>(
         val actualSize = elementResults.size
 
         val sizeResultToUse = sizeResult.takeIf { it.value == actualSize }
-            ?: IntGenV2(sizeRange).generate(tree.left)
+            ?: IntGen(sizeRange).generate(tree.left)
 
         return buildResult(sizeResultToUse.shrinks, elementResults)
     }

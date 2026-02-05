@@ -1,4 +1,4 @@
-package com.tamj0rd2.ktcheck.v2
+package com.tamj0rd2.ktcheck.current
 
 import com.tamj0rd2.ktcheck.HardcodedTestConfig
 import com.tamj0rd2.ktcheck.Property
@@ -7,7 +7,7 @@ import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
 
 @OptIn(HardcodedTestConfig::class)
-internal fun <T> test(config: TestConfig, gen: GenV2<T>, property: Property<T>) {
+internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>) {
     val edgeCases = gen.edgeCases()
 
     fun runIteration(iteration: Int) {

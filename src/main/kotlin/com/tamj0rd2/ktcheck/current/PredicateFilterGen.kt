@@ -1,12 +1,12 @@
-package com.tamj0rd2.ktcheck.v2
+package com.tamj0rd2.ktcheck.current
 
 import com.tamj0rd2.ktcheck.GenerationException
 
-internal class PredicateFilterGenV2<T>(
-    private val gen: GenV2<T>,
+internal class PredicateFilterGen<T>(
+    private val gen: GenImpl<T>,
     private val threshold: Int,
     private val predicate: (T) -> Boolean,
-) : GenV2<T>() {
+) : GenImpl<T>() {
     override fun edgeCases(): List<GenResultV2<T>> {
         return gen.edgeCases().mapNotNull { it.filter(predicate) }
     }

@@ -6,8 +6,8 @@ import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.Seed
+import com.tamj0rd2.ktcheck.current.RandomTree
 import com.tamj0rd2.ktcheck.forAll
-import com.tamj0rd2.ktcheck.v2.RandomTree
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
 import strikt.api.expectThat

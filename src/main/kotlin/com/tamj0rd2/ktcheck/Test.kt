@@ -1,7 +1,5 @@
 package com.tamj0rd2.ktcheck
 
-import com.tamj0rd2.ktcheck.v2.GenV2
-
 sealed interface Property<T> {
     fun test(input: T): Falsification<T>?
 
@@ -40,7 +38,7 @@ fun <T> checkAll(config: TestConfig, gen: Gen<T>, property: BooleanProperty<T>) 
 
 private fun <T> runPropertyTest(config: TestConfig, gen: Gen<T>, property: Property<T>) {
     when (gen) {
-        is GenV2 -> com.tamj0rd2.ktcheck.v2.test(config, gen, property)
+        is com.tamj0rd2.ktcheck.current.GenImpl -> com.tamj0rd2.ktcheck.current.test(config, gen, property)
         else -> throw IllegalArgumentException("Unsupported Gen implementation: ${gen::class}")
     }
 }

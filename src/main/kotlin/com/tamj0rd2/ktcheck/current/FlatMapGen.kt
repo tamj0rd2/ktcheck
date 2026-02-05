@@ -1,9 +1,9 @@
-package com.tamj0rd2.ktcheck.v2
+package com.tamj0rd2.ktcheck.current
 
-internal class FlatMapGenV2<T, R>(
-    private val gen: GenV2<T>,
-    private val fn: (T) -> GenV2<R>,
-) : GenV2<R>() {
+internal class FlatMapGen<T, R>(
+    private val gen: GenImpl<T>,
+    private val fn: (T) -> GenImpl<R>,
+) : GenImpl<R>() {
     override fun generate(tree: RandomTree): GenResultV2<R> {
         val (outerValue, outerShrinks) = gen.generate(tree.left)
         val (innerValue, innerShrinks) = fn(outerValue).generate(tree.right)

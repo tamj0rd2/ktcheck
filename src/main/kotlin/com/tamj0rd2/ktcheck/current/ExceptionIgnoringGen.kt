@@ -1,13 +1,13 @@
-package com.tamj0rd2.ktcheck.v2
+package com.tamj0rd2.ktcheck.current
 
 import com.tamj0rd2.ktcheck.GenerationException
 import kotlin.reflect.KClass
 
-internal class ExceptionIgnoringGenV2<T>(
-    private val gen: GenV2<T>,
+internal class ExceptionIgnoringGen<T>(
+    private val gen: GenImpl<T>,
     private val threshold: Int,
     private val klass: KClass<out Throwable>,
-) : GenV2<T>() {
+) : GenImpl<T>() {
     override fun generate(tree: RandomTree): GenResultV2<T> {
         var lastFailure: Throwable? = null
 
