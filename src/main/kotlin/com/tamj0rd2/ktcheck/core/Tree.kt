@@ -13,7 +13,6 @@ internal data class Tree<V>(
 
     override fun toString(): String = visualise(maxDepth = 10)
 
-    @Suppress("unused")
     internal fun visualise(maxDepth: Int = 3, forceEval: Boolean = false): String {
         fun visualise(
             tree: Tree<V>,

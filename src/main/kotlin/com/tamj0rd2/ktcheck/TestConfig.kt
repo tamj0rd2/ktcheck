@@ -37,7 +37,6 @@ data class TestConfig private constructor(
 
     fun withShrinkingConstraint(constraint: ShrinkingConstraint) = copy(shrinkingConstraint = constraint)
 
-    @Suppress("unused")
     @Deprecated("I might move this functionality to the Reporter")
     fun printShrinkSteps() = copy(printShrinkSteps = true)
 

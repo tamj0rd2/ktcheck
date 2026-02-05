@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package com.tamj0rd2.ktcheck
 
 val IntRange.Companion.all get() = Int.MIN_VALUE..Int.MAX_VALUE

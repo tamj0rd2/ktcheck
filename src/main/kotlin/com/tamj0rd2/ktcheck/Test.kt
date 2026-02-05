@@ -28,13 +28,11 @@ fun interface ThrowingProperty<T> : Property<T> {
         if (invoke(input)) null else Property.Falsification(input, null)
 }
 
-@Suppress("unused")
 fun <T> forAll(gen: Gen<T>, property: ThrowingProperty<T>) = forAll(TestConfig(), gen, property)
 
 fun <T> forAll(config: TestConfig, gen: Gen<T>, property: ThrowingProperty<T>) =
     runPropertyTest(config, gen, property as Property<T>)
 
-@Suppress("unused")
 fun <T> checkAll(gen: Gen<T>, property: BooleanProperty<T>) = checkAll(TestConfig(), gen, property)
 
 fun <T> checkAll(config: TestConfig, gen: Gen<T>, property: BooleanProperty<T>) =

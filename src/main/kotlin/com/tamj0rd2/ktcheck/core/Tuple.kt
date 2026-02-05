@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package com.tamj0rd2.ktcheck.core
 
 fun <A, B> tuple(
