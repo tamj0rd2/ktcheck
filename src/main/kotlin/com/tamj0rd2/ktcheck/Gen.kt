@@ -16,33 +16,12 @@ import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import com.tamj0rd2.ktcheck.core.tuple
 import com.tamj0rd2.ktcheck.v2.GenV2Builders
 import java.util.*
-import kotlin.Boolean
-import kotlin.Char
-import kotlin.Exception
-import kotlin.Int
-import kotlin.Long
-import kotlin.String
-import kotlin.collections.Collection
-import kotlin.collections.Iterable
-import kotlin.collections.List
-import kotlin.collections.Set
-import kotlin.collections.distinct
-import kotlin.collections.joinToString
 import kotlin.collections.plus
-import kotlin.collections.random
-import kotlin.collections.sorted
-import kotlin.collections.toList
-import kotlin.collections.toSet
 import kotlin.plus
 import kotlin.random.Random
-import kotlin.ranges.IntRange
-import kotlin.ranges.random
 import kotlin.reflect.KClass
-import kotlin.sequences.Sequence
-import kotlin.sequences.map
 import kotlin.sequences.plus
 import kotlin.text.plus
-import kotlin.text.random
 
 interface Gen<T> {
     /**
@@ -403,4 +382,21 @@ object Gens : GenBuilders by GenV2Builders {
         nextGen: Gen<T10>,
     ): Gen<Tuple10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> =
         combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+    /**
+     * Syntactic sugar for:
+     *
+     * ```kotlin
+     * genA.flatMap { a -> makeGenB(a).map { b -> tuple(a, b) } }
+     * ```
+     *
+     * and
+     *
+     * ```kotlin
+     * genA.flatMap { a -> Gens.zip(Gens.constant(a), makeGenB(a)) }
+     * ```
+     */
+    @ExperimentalKtCheck
+    fun <T1, T2> Gen<T1>.retainAndFlatMap(f: (T1) -> Gen<T2>): Gen<Tuple2<T1, T2>> =
+        flatMap { a -> f(a).map { b -> tuple(a, b) } }
 }
