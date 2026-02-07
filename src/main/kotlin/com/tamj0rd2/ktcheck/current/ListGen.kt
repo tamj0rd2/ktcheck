@@ -1,10 +1,12 @@
 package com.tamj0rd2.ktcheck.current
 
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
+
 internal class ListGen<T>(
     private val gen: GenImpl<T>,
     private val sizeRange: IntRange,
 ) : GenImpl<List<T>>() {
-    private val sizeGen = IntGen(sizeRange)
+    private val sizeGen = IntGen(sizeRange, IntShrinker.defaultShrinkTarget(sizeRange))
 
     override fun edgeCases(): List<GenResultV2<List<T>>> {
         val cases = mutableListOf<GenResultV2<List<T>>>()
