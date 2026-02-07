@@ -21,7 +21,7 @@ internal interface ListGeneratorContract : BaseContract {
 
         val result = gen.generating(listOf(4))
 
-        expectThat(result.shrunkValues).isEqualTo(
+        expectThat(result).shrunkValues.isEqualTo(
             listOf(
                 // shrinks the size
                 emptyList(),

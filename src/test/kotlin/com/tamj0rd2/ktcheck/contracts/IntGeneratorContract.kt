@@ -75,21 +75,20 @@ internal interface IntGeneratorContract : BaseContract {
     @Test
     fun `shrinks the generated value`() {
         val result = int(0..4).generating(4)
-
-        val shrunkValues = result.shrunkValues.toList().distinct()
-        expectThat(shrunkValues).isEqualTo(listOf(0, 2, 3))
+        expectThat(result).shrunkValues
+        expectThat(result).shrunkValues.isEqualTo(listOf(0, 2, 3))
     }
 
     @Test
     fun `10 shrinks correctly`() {
         val result = int(0..10).generating(10)
-        expectThat(result.shrunkValues).isEqualTo(listOf(0, 5, 8, 9))
+        expectThat(result).shrunkValues.isEqualTo(listOf(0, 5, 8, 9))
     }
 
     @Test
     fun `-10 shrinks correctly`() {
         val result = int(-10..0).generating(-10)
-        expectThat(result.shrunkValues).isEqualTo(listOf(0, -5, -8, -9))
+        expectThat(result).shrunkValues.isEqualTo(listOf(0, -5, -8, -9))
     }
 
     @TestFactory
@@ -100,7 +99,7 @@ internal interface IntGeneratorContract : BaseContract {
         return shrinkTargets.map { shrinkTarget ->
             dynamicTest("shrink target: $shrinkTarget") {
                 val result = int(range, shrinkTarget).generating(shrinkTarget)
-                expectThat(result.shrunkValues).isEmpty()
+                expectThat(result).shrunkValues.isEmpty()
             }
         }
     }
@@ -110,7 +109,7 @@ internal interface IntGeneratorContract : BaseContract {
         val range = -50..50
         generateSequence { range.random() }.take(100).filter { it != 0 }.forEach { value ->
             val result = int(range).generating(value)
-            expectThat(result.shrunkValues).isNotEmpty().contains(0)
+            expectThat(result).shrunkValues.isNotEmpty().contains(0)
         }
     }
 
@@ -119,7 +118,7 @@ internal interface IntGeneratorContract : BaseContract {
         val range = -50..50
         generateSequence { range.random() }.take(100).forEach { value ->
             val result = int(range).generating(value)
-            expectThat(result.shrunkValues).doesNotContain(value)
+            expectThat(result).shrunkValues.doesNotContain(value)
         }
     }
 
@@ -128,7 +127,7 @@ internal interface IntGeneratorContract : BaseContract {
         val range = -50..50
         generateSequence { range.random() }.take(100).filter { it != 0 }.forEach { value ->
             val result = int(range).generating(value)
-            expectThat(result.shrunkValues)
+            expectThat(result).shrunkValues
                 .isNotEmpty()
                 .doesNotContain(value)
                 .all {
@@ -140,19 +139,19 @@ internal interface IntGeneratorContract : BaseContract {
     @Test
     fun `shrinks with custom shrink target in positive range`() {
         val result = int(0..10, 5).generating(10)
-        expectThat(result.shrunkValues).isEqualTo(listOf(5, 8, 9))
+        expectThat(result).shrunkValues.isEqualTo(listOf(5, 8, 9))
     }
 
     @Test
     fun `shrinks with custom shrink target in negative range`() {
         val result = int(-20..-10, -15).generating(-10)
-        expectThat(result.shrunkValues).isEqualTo(listOf(-15, -12, -11))
+        expectThat(result).shrunkValues.isEqualTo(listOf(-15, -12, -11))
     }
 
     @Test
     fun `shrinks with custom shrink target in mixed range`() {
         val result = int(-5..10, 3).generating(7)
-        expectThat(result.shrunkValues).isEqualTo(listOf(3, 5, 6))
+        expectThat(result).shrunkValues.isEqualTo(listOf(3, 5, 6))
     }
 
     @Test

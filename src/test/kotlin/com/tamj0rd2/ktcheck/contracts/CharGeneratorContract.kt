@@ -77,7 +77,7 @@ internal interface CharGeneratorContract : BaseContract {
         val gen = char(chars)
 
         val result = gen.generating('d')
-        expectThat(result.shrunkValues).isEqualTo(listOf('a', 'c'))
+        expectThat(result).shrunkValues.isEqualTo(listOf('a', 'c'))
     }
 
     @Test
@@ -86,7 +86,7 @@ internal interface CharGeneratorContract : BaseContract {
         val gen = char(chars)
 
         val result = gen.generating('a')
-        expectThat(result.shrunkValues).isEmpty()
+        expectThat(result).shrunkValues.isEmpty()
     }
 
     @Test
@@ -97,7 +97,7 @@ internal interface CharGeneratorContract : BaseContract {
         gen.sequence()
             .filter { it.value != chars.first() }
             .take(100)
-            .forEach { expectThat(it.shrunkValues).first().isEqualTo(chars.first()) }
+            .forEach { expectThat(it).shrunkValues.first().isEqualTo(chars.first()) }
     }
 
     @Test
@@ -107,7 +107,7 @@ internal interface CharGeneratorContract : BaseContract {
 
         gen.sequence()
             .take(100)
-            .forEach { expectThat(it.shrunkValues).doesNotContain(it.value) }
+            .forEach { expectThat(it).shrunkValues.doesNotContain(it.value) }
     }
 
     @Test
@@ -122,7 +122,7 @@ internal interface CharGeneratorContract : BaseContract {
             .forEach {
                 val originalIndex = chars.indexOf(it.value)
 
-                expectThat(it.shrunkValues).isNotEmpty().all {
+                expectThat(it).shrunkValues.isNotEmpty().all {
                     get { chars.indexOf(this) }
                         .describedAs("shrunk index (closer to lowest)")
                         .isLessThan(originalIndex)

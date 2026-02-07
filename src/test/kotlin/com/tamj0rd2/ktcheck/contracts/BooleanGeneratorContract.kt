@@ -49,7 +49,7 @@ internal interface BooleanGeneratorContract : BaseContract {
         return testCases.map {
             DynamicTest.dynamicTest(it.toString()) {
                 val result = bool(it.shrinkTarget).generating(it.value)
-                expectThat(result.shrunkValues).isEqualTo(it.expectedShrinks)
+                expectThat(result).shrunkValues.isEqualTo(it.expectedShrinks)
             }
         }
     }

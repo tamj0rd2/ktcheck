@@ -54,7 +54,7 @@ internal interface DistinctListGeneratorContract : BaseContract {
         val result = gen.generating(listOf(1, 4))
         expectThat(result.value).isEqualTo(listOf(1, 4))
 
-        expectThat(result.shrunkValues).containsExactlyInAnyOrder(
+        expectThat(result).shrunkValues.containsExactlyInAnyOrder(
             // tries reducing set size (now 0)
             listOf(),
             // continues reducing set size (now 1). From tail first, then head.
@@ -77,7 +77,7 @@ internal interface DistinctListGeneratorContract : BaseContract {
         val result = gen.generating(listOf(1, 2, 3))
         expectThat(result.value).isEqualTo(listOf(1, 2, 3))
 
-        expectThat(result.shrunkValues).containsExactlyInAnyOrder(
+        expectThat(result).shrunkValues.containsExactlyInAnyOrder(
             // reduce list size (0)
             listOf(),
             // reduce list size (2), removing items at tail
@@ -118,6 +118,6 @@ internal interface DistinctListGeneratorContract : BaseContract {
 
         val result = gen.generate(tree())
         expectThat(result.value).size.isEqualTo(3)
-        expectThat(result.shrunkValues).isEmpty()
+        expectThat(result).shrunkValues.isEmpty()
     }
 }

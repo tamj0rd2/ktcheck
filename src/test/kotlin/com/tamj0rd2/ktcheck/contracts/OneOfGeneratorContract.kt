@@ -50,6 +50,6 @@ internal interface OneOfGeneratorContract : BaseContract {
         val gen = oneOf(values)
 
         val result = gen.generating("cherry")
-        expectThat(result.shrunkValues).isEqualTo(listOf("banana", "apple"))
+        expectThat(result).shrunkValues.isEqualTo(listOf("banana", "apple"))
     }
 }

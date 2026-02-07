@@ -10,6 +10,7 @@ import com.tamj0rd2.ktcheck.current.RandomTree
 import com.tamj0rd2.ktcheck.forAll
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
+import strikt.api.DescribeableBuilder
 import strikt.api.expectThat
 import strikt.assertions.isNotNull
 import java.time.Duration
@@ -77,3 +78,5 @@ fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequi
         throw e
     }
 }
+
+internal val <T> DescribeableBuilder<GenResults<T>>.shrunkValues get() = get { shrunkValues }

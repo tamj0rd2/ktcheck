@@ -14,7 +14,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
         // todo: move this test elsewhere.
         val result = constant(10).generate(tree())
         expectThat(result.value).isEqualTo(10)
-        expectThat(result.shrunkValues).isEmpty()
+        expectThat(result).shrunkValues.isEmpty()
     }
 
     @Test
@@ -39,7 +39,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val doubledResult = doublingGen.generate(tree)
 
         expectThat(doubledResult.value).isEqualTo(originalResult.value * 2)
-        expectThat(doubledResult.shrunkValues).isEqualTo(originalResult.shrunkValues.map { it * 2 })
+        expectThat(doubledResult).shrunkValues.isEqualTo(originalResult.shrunkValues.map { it * 2 })
     }
 
     @Test
@@ -72,7 +72,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
         val result = gen.generate(tree)
         expectThat(result.value).isEqualTo(3 to 6)
-        expectThat(result.shrunkValues).contains(
+        expectThat(result).shrunkValues.contains(
             // inner value shrunk
             3 to 4,
             // outer value shrunk
