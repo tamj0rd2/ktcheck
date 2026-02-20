@@ -65,24 +65,19 @@ internal interface DistinctListGeneratorContract : BaseContract {
             val result = gen.generate(tree)
             expectThat(result.value).isEqualTo(listOf(1, 4))
 
-            try {
-                expectThat(result).shrunkValues.isNotEmpty().containsExactlyInAnyOrder(
-                    // tries reducing set size (now 0)
-                    listOf(),
-                    // continues reducing set size (now 1). From tail first, then head.
-                    listOf(1),
-                    listOf(4),
-                    // shrinks values, starting with index 0
-                    listOf(0, 4),
-                    // continues shrinking values at index 1
-                    listOf(1, 0),
-                    listOf(1, 2),
-                    listOf(1, 3),
-                )
-            } catch (e: AssertionError) {
-                println(tree.data)
-                throw e
-            }
+            expectThat(result).shrunkValues.isNotEmpty().containsExactlyInAnyOrder(
+                // tries reducing set size (now 0)
+                listOf(),
+                // continues reducing set size (now 1). From tail first, then head.
+                listOf(1),
+                listOf(4),
+                // shrinks values, starting with index 0
+                listOf(0, 4),
+                // continues shrinking values at index 1
+                listOf(1, 0),
+                listOf(1, 2),
+                listOf(1, 3),
+            )
         }
     }
 
@@ -131,7 +126,7 @@ internal interface DistinctListGeneratorContract : BaseContract {
             val result = gen.generate(tree)
             val maxOriginalValue = result.value.max()
 
-            expectThat(result).describedAs { "$this | (${tree.data})" }.shrunkValues.all {
+            expectThat(result).shrunkValues.all {
                 all { isLessThanOrEqualTo(maxOriginalValue) }
             }
         }

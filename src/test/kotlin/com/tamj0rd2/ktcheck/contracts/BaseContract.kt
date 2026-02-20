@@ -6,7 +6,7 @@ import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.Seed
-import com.tamj0rd2.ktcheck.current.RandomTree
+import com.tamj0rd2.ktcheck.core.Tree
 import com.tamj0rd2.ktcheck.forAll
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
@@ -16,15 +16,17 @@ import strikt.assertions.isNotNull
 import java.time.Duration
 
 internal interface BaseContract : GenBuilders {
-    fun tree(seed: Seed = Seed.random()): RandomTree
+    fun tree(seed: Seed = Seed.random()): Tree<*>
+    fun Tree<*>.withLeft(left: Tree<*>): Tree<*>
+    fun Tree<*>.withRight(right: Tree<*>): Tree<*>
 
     fun trees(seed: Seed = Seed.random()) =
         Seed.sequence(seed).map(::tree)
 
-    fun treeWhere(seed: Seed = Seed.random(), predicate: (RandomTree) -> Boolean): RandomTree =
+    fun treeWhere(seed: Seed = Seed.random(), predicate: (Tree<*>) -> Boolean): Tree<*> =
         trees(seed).take(1_000_000).first(predicate)
 
-    fun <T> Gen<T>.generate(tree: RandomTree = tree()): GenResults<T>
+    fun <T> Gen<T>.generate(tree: Tree<*> = tree()): GenResults<T>
 
     fun <T> Gen<T>.edgeCases(): List<GenResults<T>>
 
@@ -39,10 +41,10 @@ internal interface BaseContract : GenBuilders {
     fun <T> Gen<T>.generating(predicate: (T) -> Boolean): GenResults<T> =
         generate(findTreeProducing(Seed.random(), predicate))
 
-    fun <T> Gen<T>.findTreeProducing(value: T, seed: Seed = Seed.random()): RandomTree =
+    fun <T> Gen<T>.findTreeProducing(value: T, seed: Seed = Seed.random()): Tree<*> =
         findTreeProducing(seed) { it == value }
 
-    fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): RandomTree =
+    fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): Tree<*> =
         assertTimeoutPreemptively(Duration.ofSeconds(10)) {
             treeWhere(seed) { predicate(generate(it).value) }
         }

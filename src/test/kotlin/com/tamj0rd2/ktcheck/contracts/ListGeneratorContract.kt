@@ -104,7 +104,7 @@ internal interface ListGeneratorContract : BaseContract {
             val result = gen.generate(tree)
             val maxOriginalValue = result.value.max()
 
-            expectThat(result).describedAs { "$this | (${tree.data})" }.shrunkValues.all {
+            expectThat(result).shrunkValues.all {
                 all { isLessThanOrEqualTo(maxOriginalValue) }
             }
         }

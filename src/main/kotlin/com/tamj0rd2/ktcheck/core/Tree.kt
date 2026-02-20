@@ -1,15 +1,12 @@
 package com.tamj0rd2.ktcheck.core
 
-internal data class Tree<V>(
-    val data: V,
-    private val lazyLeft: Lazy<Tree<V>>,
-    private val lazyRight: Lazy<Tree<V>>,
-) {
-    val left get() = lazyLeft.value
-    val right get() = lazyRight.value
+internal abstract class Tree<V> {
+    protected abstract val data: V
+    protected abstract val lazyLeft: Lazy<Tree<V>>
+    protected abstract val lazyRight: Lazy<Tree<V>>
 
-    fun withLeft(left: Tree<V>): Tree<V> = copy(lazyLeft = lazyOf(left))
-    fun withRight(right: Tree<V>): Tree<V> = copy(lazyRight = lazyOf(right))
+    abstract val left: Tree<V>
+    abstract val right: Tree<V>
 
     override fun toString(): String = visualise(maxDepth = 10)
 
