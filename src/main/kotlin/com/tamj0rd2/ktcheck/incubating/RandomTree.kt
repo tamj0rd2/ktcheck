@@ -25,6 +25,8 @@ internal data class RandomTree(
             lazyLeft = lazy { new(seed.next(1)) },
             lazyRight = lazy { new(seed.next(2)) },
         )
+
+        val forEdgeCases = new(Seed(0))
     }
 }
 
@@ -45,6 +47,8 @@ internal data class PredeterminedValueProvider private constructor(private val v
     constructor(value: Int) : this(value as Any)
 
     override fun int(range: IntRange): Int {
-        return value as Int
+        check(value is Int) { "expected an Int but got ${value::class.simpleName}" }
+        check(value in range) { "expected an Int in range $range but got $value" }
+        return value
     }
 }

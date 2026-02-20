@@ -12,15 +12,15 @@ internal sealed class GenImpl<T> : Gen<T> {
 
     override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).value
 
-    override fun <R> map(fn: (T) -> R) = TODO()
+    override fun <R> map(fn: (T) -> R) = MapGen(this, fn)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <R> flatMap(fn: (T) -> Gen<R>) = TODO()
+    override fun <R> flatMap(fn: (T) -> Gen<R>) = FlatMapGen(this, fn as (T) -> GenImpl<R>)
 
     override fun <T2, R> combineWith(
         nextGen: Gen<T2>,
         combine: (T, T2) -> R,
-    ) = TODO()
+    ) = CombineWithGen(this, nextGen as GenImpl<T2>, combine)
 
     override fun filter(
         threshold: Int,
@@ -45,7 +45,7 @@ internal data class GenResultV2<T>(
 internal object GenV2Builders : GenBuilders {
 
     override fun <T> constant(value: T): Gen<T> {
-        return TODO()
+        return ConstantGen(value)
     }
 
     override fun bool(shrinkTarget: Boolean): Gen<Boolean> = int(
@@ -58,7 +58,7 @@ internal object GenV2Builders : GenBuilders {
     }
 
     override fun long(): Gen<Long> {
-        return TODO()
+        TODO()
     }
 
     override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {

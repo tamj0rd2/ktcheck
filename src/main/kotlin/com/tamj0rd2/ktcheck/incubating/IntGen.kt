@@ -12,6 +12,19 @@ internal class IntGen(
 
     override fun generate(tree: RandomTree): GenResultV2<Int> {
         val value = tree.provider.int(range)
+        return buildResult(tree, value)
+    }
+
+    override fun edgeCases(): List<GenResultV2<Int>> {
+        return setOf(0, range.first, range.first + 1, range.last - 1, range.last)
+            .filter { it in range }
+            .map { buildResult(RandomTree.forEdgeCases, it) }
+    }
+
+    private fun buildResult(
+        tree: RandomTree,
+        value: Int,
+    ): GenResultV2<Int> {
         val shrinkTrees = IntShrinker.shrink(value, range, shrinkTarget)
             .map { tree.withProvider(PredeterminedValueProvider(it)) }
 
@@ -19,9 +32,5 @@ internal class IntGen(
             value = value,
             shrinks = shrinkTrees,
         )
-    }
-
-    override fun edgeCases(): List<GenResultV2<Int>> {
-        return emptyList()
     }
 }

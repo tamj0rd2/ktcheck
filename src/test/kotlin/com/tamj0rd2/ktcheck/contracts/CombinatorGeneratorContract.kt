@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.contracts
 
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.Test
 import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
@@ -7,6 +8,7 @@ import strikt.assertions.contains
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotEmpty
+import strikt.assertions.map
 
 internal interface CombinatorGeneratorContract : BaseContract {
     @Test
@@ -17,6 +19,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
             val result = gen.generate(tree())
             expectThat(result.value).isEqualTo(10)
             expectThat(result).shrunkValues.isEmpty()
+            expectThat(gen.edgeCases()).isEmpty()
         }
     }
 
@@ -44,6 +47,8 @@ internal interface CombinatorGeneratorContract : BaseContract {
             expectThat(doubledResult).shrunkValues.isEqualTo(originalResult.shrunkValues.map { it * 2 })
         }
     }
+
+    // todo: add edge case tests for map.
 
     @Test
     fun `flatMap generates the second value based on the first`() {
@@ -78,10 +83,10 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val result = gen.generate(tree)
         expectThat(result.value).isEqualTo(3 to 6)
         expectThat(result).shrunkValues.contains(
-            // inner value shrunk
-            3 to 4,
             // outer value shrunk
             1 to 6,
+            // inner value shrunk
+            3 to 4,
         )
     }
 
@@ -94,6 +99,8 @@ internal interface CombinatorGeneratorContract : BaseContract {
         expectThat(result.value).isEqualTo(12)
         expectDoesNotThrow { result.shrunkValues.toSet() }
     }
+
+    // todo: add tests for edge cases in flatMap.
 
     @Test
     fun `combineWith merges two independent generators`() {
@@ -124,26 +131,32 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val result = gen.generate(tree)
         expectThat(result.value).isEqualTo(3 to 6)
         expectThat(result).shrunkValues.isNotEmpty().contains(
-            // inner value shrunk
-            3 to 4,
-            // outer value shrunk
+            // first value shrunk
             1 to 6,
+            // second value shrunk
+            3 to 4,
         )
     }
 
     @Test
     fun `combineWith produces edge case permutations from both generators`() {
-        val gen1 = int(0..100)
-        val gen2 = int(0..100)
+        val gen1 = int(0..10)
+        val gen2 = int(0..10)
         val combined = gen1.combineWith(gen2, ::Pair)
 
-        val edgeCases = combined.edgeCases().map { it.value }.toSet()
-
-        expectThat(edgeCases).contains(
+        val edgeCases = combined.edgeCases()
+        expectThat(edgeCases.map { it.value }).contains(
             0 to 0,
-            0 to 100,
-            100 to 0,
-            100 to 100,
+            0 to 10,
+            10 to 0,
+            10 to 10,
         )
+
+        val shrinksFor10 = IntShrinker.shrink(10, 0..10, 0).toList()
+        val edgeCaseWhereFirstIs10 = edgeCases.first { it.value.first == 10 }
+        expectThat(edgeCaseWhereFirstIs10).shrunkValues.map { it.first }.isEqualTo(shrinksFor10)
+
+        val edgeCaseWhereSecondIs10 = edgeCases.first { it.value.second == 10 }
+        expectThat(edgeCaseWhereSecondIs10).shrunkValues.map { it.second }.isEqualTo(shrinksFor10)
     }
 }
