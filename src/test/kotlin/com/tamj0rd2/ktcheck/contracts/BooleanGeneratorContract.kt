@@ -37,11 +37,8 @@ internal interface BooleanGeneratorContract : BaseContract {
         )
 
         val testCases = listOf(
-            // when value is true
             TestCase(value = true, shrinkTarget = false, expectedShrinks = listOf(false)),
             TestCase(value = true, shrinkTarget = true, expectedShrinks = emptyList()),
-
-            // when value is false
             TestCase(value = false, shrinkTarget = false, expectedShrinks = emptyList()),
             TestCase(value = false, shrinkTarget = true, expectedShrinks = listOf(true))
         )

@@ -1,0 +1,83 @@
+package com.tamj0rd2.ktcheck.incubating
+
+import com.tamj0rd2.ktcheck.Gen
+import com.tamj0rd2.ktcheck.GenBuilders
+import com.tamj0rd2.ktcheck.core.Seed
+import kotlin.reflect.KClass
+
+internal sealed class GenImpl<T> : Gen<T> {
+    abstract fun generate(tree: RandomTree): GenResultV2<T>
+
+    open fun edgeCases(): List<GenResultV2<T>> = emptyList()
+
+    override fun sample(seed: Long) = generate(randomTree(Seed(seed))).value
+
+    override fun <R> map(fn: (T) -> R) = TODO()
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <R> flatMap(fn: (T) -> Gen<R>) = TODO()
+
+    override fun <T2, R> combineWith(
+        nextGen: Gen<T2>,
+        combine: (T, T2) -> R,
+    ) = TODO()
+
+    override fun filter(
+        threshold: Int,
+        predicate: (T) -> Boolean,
+    ) = TODO()
+
+    override fun ignoreExceptions(
+        klass: KClass<out Exception>,
+        threshold: Int,
+    ) = TODO()
+
+    override fun list(size: IntRange) = TODO()
+
+    override fun distinctList(size: IntRange) = TODO()
+}
+
+internal data class GenResultV2<T>(
+    val value: T,
+    val shrinks: Sequence<GenResultV2<T>>,
+) {
+    fun <R> map(fn: (T) -> R): GenResultV2<R> =
+        GenResultV2(
+            value = fn(value),
+            shrinks = shrinks.map { it.map(fn) }
+        )
+
+    fun filter(predicate: (T) -> Boolean): GenResultV2<T>? {
+        if (!predicate(value)) return null
+
+        return GenResultV2(
+            value = value,
+            shrinks = shrinks.mapNotNull { it.filter(predicate) }
+        )
+    }
+}
+
+internal object GenV2Builders : GenBuilders {
+
+    override fun <T> constant(value: T): Gen<T> {
+        return TODO()
+    }
+
+    override fun bool(shrinkTarget: Boolean): Gen<Boolean> = int(
+        range = 0..1,
+        shrinkTarget = if (shrinkTarget) 1 else 0
+    ).map { it == 1 }
+
+    override fun int(range: IntRange, shrinkTarget: Int): Gen<Int> {
+        return TODO()
+    }
+
+    override fun long(): Gen<Long> {
+        return TODO()
+    }
+
+    override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {
+        val gensList = gens.map { it as GenImpl<T> }
+        return int(gensList.indices).flatMap { gensList[it] }
+    }
+}
