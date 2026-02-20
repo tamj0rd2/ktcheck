@@ -22,14 +22,16 @@ import kotlin.math.abs
 internal interface ShrinkingChallengeContract : BaseContract {
 
     @Test
-    fun deletion() = testShrinking(
-        gen = Gens.zip(int().list(), int(0..10)).filter { (list, index) -> index < list.size },
-        test = { (list, index) ->
-            val element = list[index]
-            element !in list.toMutableList().apply { remove(element) }
-        },
-        didShrinkCorrectly = { it == tuple(listOf(0, 0), 0) },
-    )
+    fun deletion() {
+        testShrinking(
+            gen = Gens.zip(int().list(), int(0..10)).filter { (list, index) -> index < list.size },
+            test = { (list, index) ->
+                val element = list[index]
+                element !in list.toMutableList().apply { remove(element) }
+            },
+            didShrinkCorrectly = { it == tuple(listOf(0, 0), 0) },
+        )
+    }
 
     @Test
     fun `difference must not be zero`() {

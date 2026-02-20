@@ -6,3 +6,7 @@ build
 .idea
 .kotlin
 /output.txt
+
+.tmp/
+tmp/
+/docs/plan

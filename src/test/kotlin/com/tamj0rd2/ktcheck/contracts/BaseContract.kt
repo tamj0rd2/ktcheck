@@ -10,7 +10,7 @@ import com.tamj0rd2.ktcheck.current.RandomTree
 import com.tamj0rd2.ktcheck.forAll
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
-import strikt.api.DescribeableBuilder
+import strikt.api.Assertion
 import strikt.api.expectThat
 import strikt.assertions.isNotNull
 import java.time.Duration
@@ -25,6 +25,8 @@ internal interface BaseContract : GenBuilders {
         trees(seed).take(1_000_000).first(predicate)
 
     fun <T> Gen<T>.generate(tree: RandomTree = tree()): GenResults<T>
+
+    fun <T> Gen<T>.edgeCases(): List<GenResults<T>>
 
     fun <T> Gen<T>.sequence(): Sequence<GenResults<T>> =
         generateSequence { generate() }
@@ -41,7 +43,9 @@ internal interface BaseContract : GenBuilders {
         findTreeProducing(seed) { it == value }
 
     fun <T> Gen<T>.findTreeProducing(seed: Seed = Seed.random(), predicate: (T) -> Boolean): RandomTree =
-        treeWhere(seed) { predicate(generate(it).value) }
+        assertTimeoutPreemptively(Duration.ofSeconds(10)) {
+            treeWhere(seed) { predicate(generate(it).value) }
+        }
 }
 
 internal class GenResults<T>(
@@ -52,7 +56,7 @@ internal class GenResults<T>(
         return "GenResults(value=$value)"
     }
 
-    val shrunkValues get() = shrinks.map { it.value }.toList()
+    val shrunkValues get() = shrinks.map { it.value }.distinct().toList()
 }
 
 fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
@@ -79,4 +83,5 @@ fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequi
     }
 }
 
-internal val <T> DescribeableBuilder<GenResults<T>>.shrunkValues get() = get { shrunkValues }
+internal val <T> Assertion.Builder<GenResults<T>>.value get() = get { value }
+internal val <T> Assertion.Builder<GenResults<T>>.shrunkValues get() = get { shrunkValues }.describedAs { "shrunk values: ($this)" }

@@ -1,12 +1,12 @@
 package com.tamj0rd2.ktcheck.contracts
 
-import com.tamj0rd2.ktcheck.current.GenImpl
 import org.junit.jupiter.api.Test
 import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
 import strikt.assertions.contains
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
+import strikt.assertions.isNotEmpty
 
 internal interface CombinatorGeneratorContract : BaseContract {
     @Test
@@ -116,7 +116,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
 
         val result = gen.generate(tree)
         expectThat(result.value).isEqualTo(3 to 6)
-        expectThat(result.shrunkValues.toList().distinct()).contains(
+        expectThat(result).shrunkValues.isNotEmpty().contains(
             // inner value shrunk
             3 to 4,
             // outer value shrunk
@@ -128,7 +128,7 @@ internal interface CombinatorGeneratorContract : BaseContract {
     fun `combineWith produces edge case permutations from both generators`() {
         val gen1 = int(0..100)
         val gen2 = int(0..100)
-        val combined = gen1.combineWith(gen2, ::Pair) as GenImpl
+        val combined = gen1.combineWith(gen2, ::Pair)
 
         val edgeCases = combined.edgeCases().map { it.value }.toSet()
 

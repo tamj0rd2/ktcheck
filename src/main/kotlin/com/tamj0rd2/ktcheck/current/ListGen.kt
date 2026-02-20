@@ -8,36 +8,33 @@ internal class ListGen<T>(
 ) : GenImpl<List<T>>() {
     private val sizeGen = IntGen(sizeRange, IntShrinker.defaultShrinkTarget(sizeRange))
 
+    override fun generate(tree: RandomTree): GenResultV2<List<T>> {
+        val (size, sizeShrinks) = sizeGen.generate(tree.left)
+        val elementResults = generateListWithResults(tree.right, size)
+        return buildResult(sizeShrinks, elementResults)
+    }
+
     override fun edgeCases(): List<GenResultV2<List<T>>> {
         val cases = mutableListOf<GenResultV2<List<T>>>()
 
-        // todo: I don't like any of this.
-        // Empty list if size range allows
         if (0 in sizeRange) {
             cases.add(buildResult(emptySequence(), emptyList()))
         }
 
-        // Singleton lists with element edge cases
         if (1 in sizeRange) {
             gen.edgeCases().forEach { elementEdgeCase ->
                 cases.add(buildResult(emptySequence(), listOf(elementEdgeCase)))
             }
         }
 
-        // Duplicate lists with element edge cases
-        if (2 in sizeRange) {
+        sizeRange.firstOrNull { it > 1 }?.let { size ->
             gen.edgeCases().forEach { elementEdgeCase ->
-                cases.add(buildResult(emptySequence(), listOf(elementEdgeCase, elementEdgeCase)))
+                val listOfDupes = List(size) { elementEdgeCase }
+                cases.add(buildResult(emptySequence(), listOfDupes))
             }
         }
 
         return cases
-    }
-
-    override fun generate(tree: RandomTree): GenResultV2<List<T>> {
-        val (size, sizeShrinks) = sizeGen.generate(tree.left)
-        val elementResults = generateListWithResults(tree.right, size)
-        return buildResult(sizeShrinks, elementResults)
     }
 
     private fun buildResult(
