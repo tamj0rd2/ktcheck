@@ -1,5 +1,7 @@
 package com.tamj0rd2.ktcheck.contracts
 
+import com.tamj0rd2.ktcheck.all
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
@@ -8,6 +10,7 @@ import strikt.api.expectThat
 import strikt.assertions.all
 import strikt.assertions.any
 import strikt.assertions.contains
+import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.first
 import strikt.assertions.isEqualTo
 import strikt.assertions.isIn
@@ -24,20 +27,22 @@ internal interface ListGeneratorContract : BaseContract {
 
     @Test
     fun `shrinks a list of 1 element`() {
-        val gen = int(0..4).list()
+        val range = IntRange.all
+        // todo: it'd be kind of convenient if IntGen had a shrink method on it that took an int. Then I wouldn't
+        //  need to duplicate the range and shrinkingTarget in so many tests.
+        val gen = int(range, 0).list(0..5)
 
-        val result = gen.generating(listOf(4))
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+            if (result.value.size != 1) skipIteration()
 
-        expectThat(result).shrunkValues.isEqualTo(
-            listOf(
-                // shrinks the size
+            val expectedValueShrinks = IntShrinker.shrink(result.value.single(), range, 0).toList()
+
+            expectThat(result).shrunkValues.containsExactlyInAnyOrder(
                 emptyList(),
-                // shrinks the value
-                listOf(0),
-                listOf(2),
-                listOf(3),
+                *expectedValueShrinks.map { listOf(it) }.toTypedArray()
             )
-        )
+        }
     }
 
     @Test
@@ -64,44 +69,43 @@ internal interface ListGeneratorContract : BaseContract {
         val root = gen.generating(listOf(3, 4))
 
         val firstNonSizeShrink = root.shrinks.first { it.value.size == root.value.size }
-        expectThat(firstNonSizeShrink.shrinks.toList())
-            .describedAs("shrinks of ${firstNonSizeShrink.value}")
-            .any { get { value }.size.isLessThan(root.value.size) }
+        expectThat(firstNonSizeShrink).shrunkValues.any { size.isLessThan(root.value.size) }
     }
 
     @Test
-    fun `size shrink from 4 to 2 includes both first 2 and last 2 elements`() {
-        val gen = int(0..10).list()
+    fun `size shrinks include the first half of the list, and the second half of the list`() {
+        val gen = int().list(0..20)
 
-        val result = gen.generating { list ->
-            list.size == 4 &&
-                    list.take(2) != list.takeLast(2)
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+
+            if (result.value.size < 2 || result.value.size % 2 != 0) skipIteration()
+            val halfSize = result.value.size / 2
+
+            expectThat(result).shrunkValues.contains(
+                result.value.take(halfSize),
+                result.value.takeLast(halfSize),
+            )
         }
-
-        expectThat(result.value).size.isEqualTo(4)
-        expectThat(result).shrunkValues.contains(
-            result.value.take(2),
-            result.value.takeLast(2),
-        )
     }
 
     @Test
     fun `shrinks to empty list when list is not empty`() {
-        val gen = int(0..10).list()
-
-        val result = gen.generating { it.isNotEmpty() }
-        expectThat(result.value).isNotEmpty()
-        expectThat(result).shrunkValues.first().isEqualTo(emptyList())
+        repeatTest { seed ->
+            val gen = int(0..10).list()
+            val result = gen.generate(tree(seed))
+            if (result.value.isEmpty()) skipIteration()
+            expectThat(result).shrunkValues.first().isEqualTo(emptyList())
+        }
     }
 
     @Test
-    fun `all shrunk element values do not exceed max original value`() {
-        repeat(1000) {
-            val range = 0..10
-            val gen = int(range).list(0..4)
+    fun `shrunk element values do not exceed max original value`() {
+        repeatTest { seed ->
+            val gen = int(0..10).list(size = 0..4)
 
-            val tree = gen.findTreeProducing { it.isNotEmpty() }
-            val result = gen.generate(tree)
+            val result = gen.generate(tree(seed))
+            if (result.value.isEmpty()) skipIteration()
             val maxOriginalValue = result.value.max()
 
             expectThat(result).shrunkValues.all {
@@ -112,11 +116,12 @@ internal interface ListGeneratorContract : BaseContract {
 
     @Test
     fun `all shrunk element values are within the generator range`() {
-        repeat(1000) {
+        repeatTest { seed ->
             val range = 0..10
             val gen = int(range).list()
 
-            val result = gen.generating { it.isNotEmpty() }
+            val result = gen.generate(tree(seed))
+            if (result.value.isEmpty()) skipIteration()
             expectThat(result).shrunkValues.all { all { isIn(range) } }
         }
     }

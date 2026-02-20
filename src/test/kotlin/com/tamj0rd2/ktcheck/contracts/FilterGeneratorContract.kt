@@ -1,60 +1,47 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.GenerationException.FilterLimitReached
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.all
 import strikt.assertions.contains
 import strikt.assertions.isEqualTo
-import strikt.assertions.isFalse
-import strikt.assertions.isGreaterThan
-import strikt.assertions.isNotEmpty
 import strikt.assertions.isNotEqualTo
 
 internal interface FilterGeneratorContract : BaseContract {
     @Test
-    fun `can filter generated values`() {
+    fun `can filter generated values and their shrinks`() {
         val gen = int(1..10).filter { it % 2 == 0 }
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+            expectThat(result).value.assertThat("is even") { it % 2 == 0 }
+            expectThat(result).shrunkValues.all { assertThat("is even") { it % 2 == 0 } }
+        }
 
-        gen.samples()
-            .take(100)
-            .forEach { expectThat(it % 2).isEqualTo(0) }
+        // todo: add some - deeply shrunk values are finite function. call it above.
+        gen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
+    }
+
+    @Test
+    // todo: this should only happen if it matches the filter.
+    fun `filter preserves edge cases from underlying generator`() {
+        val gen = int(0..100).filter { it % 2 == 0 }
+
+        val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
+
+        expectThat(edgeCaseValues).contains(listOf(0, 100))
     }
 
     @Test
     fun `throws if the filter threshold is exceeded`() {
         val gen = int(1..10).filter { it > 10 }
-
-        expectThrows<FilterLimitReached> { gen.samples().first() }
+        expectThrows<FilterLimitReached> { gen.generate() }
     }
 
     @Test
-    fun `doesn't produce shrinks that would fail the predicate, which would otherwise lead to infinite shrinking`() {
-        val gen = int(1..4).filter { it > 2 }
-
-        val result = gen.generating(4)
-        expectThat(result.shrunkValues.toList())
-            .describedAs("shrunk values")
-            .isNotEmpty()
-            .all { isGreaterThan(2) }
-        gen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
-    }
-
-    @Test
-    fun `can ignore exceptions in generated values`() {
-        class TestException : Exception()
-
-        val possiblyThrowingGen = bool()
-            .map { if (it) throw TestException() else false }
-            .ignoreExceptions(TestException::class)
-
-        val values = possiblyThrowingGen.samples().take(100).toList()
-        expectThat(values).all { isFalse() }
-    }
-
-    @Test
-    fun `doesn't produce shrinks that would cause the exception, which would otherwise lead to infinite shrinking`() {
+    fun `can ignore exceptions in generated values and shrinks`() {
         class TestException : Exception()
 
         val possiblyThrowingGen = int(1..3)
@@ -66,11 +53,13 @@ internal interface FilterGeneratorContract : BaseContract {
             }
             .ignoreExceptions(TestException::class)
 
-        val result = possiblyThrowingGen.generating(3)
-        expectThat(result.shrunkValues.toList())
-            .describedAs("shrunk values")
-            .isNotEmpty()
-            .all { isNotEqualTo(1) }
+        repeatTest { seed ->
+            val result = possiblyThrowingGen.generate(tree(seed))
+            expectThat(result).value.isNotEqualTo(1)
+            expectThat(result).shrunkValues.all { isNotEqualTo(1) }
+        }
+
+        // todo: add some - deeply shrunk values are finite function. call it above.
         possiblyThrowingGen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
     }
 
@@ -94,7 +83,7 @@ internal interface FilterGeneratorContract : BaseContract {
             .map { throw NotIgnoredException() }
             .ignoreExceptions(IgnoredException::class)
 
-        expectThrows<NotIgnoredException> { throwingGen.samples().first() }
+        expectThrows<NotIgnoredException> { throwingGen.generate() }
     }
 
     @Test
@@ -113,16 +102,15 @@ internal interface FilterGeneratorContract : BaseContract {
             .ignoreExceptions(IgnoredException1::class)
             .ignoreExceptions(IgnoredException2::class)
 
-        val values = possiblyThrowingGen.samples().take(100).toList()
-        expectThat(values).all { isEqualTo(3) }
+        repeatTest { seed ->
+            val result = possiblyThrowingGen.generate(tree(seed))
+            expectThat(result).value.isEqualTo(3)
+        }
     }
 
     @Test
-    fun `filter preserves edge cases from underlying generator`() {
-        val gen = int(0..100).filter { it % 2 == 0 }
-
-        val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
-
-        expectThat(edgeCaseValues).contains(listOf(0, 100))
+    fun `ignoreExceptions propagates edge cases from underlying generator`() {
+        Assumptions.assumeTrue(false)
+        TODO("write this test")
     }
 }

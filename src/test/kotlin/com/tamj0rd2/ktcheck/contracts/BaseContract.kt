@@ -10,6 +10,7 @@ import com.tamj0rd2.ktcheck.core.Tree
 import com.tamj0rd2.ktcheck.forAll
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
+import org.opentest4j.TestSkippedException
 import strikt.api.Assertion
 import strikt.api.expectThat
 import strikt.assertions.isNotNull
@@ -87,3 +88,30 @@ fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequi
 
 internal val <T> Assertion.Builder<GenResults<T>>.value get() = get { value }
 internal val <T> Assertion.Builder<GenResults<T>>.shrunkValues get() = get { shrunkValues }.describedAs { "shrunk values: ($this)" }
+
+internal fun repeatTest(property: (Seed) -> Unit) {
+    assertTimeoutPreemptively(Duration.ofSeconds(2)) {
+        var successCount = 0
+        var iteration = 0
+
+        while (successCount < 500) {
+            iteration++
+
+            val seed = Seed.random()
+            try {
+                property(seed)
+                successCount++
+            } catch (e: TestSkippedException) {
+                // skip and continue to the next iteration
+            } catch (e: Throwable) {
+                println("Test failed on iteration $iteration - $seed")
+                println("Successes beforehand: $successCount")
+                throw e
+            }
+        }
+    }
+}
+
+internal fun skipIteration(): Nothing = throw TestSkippedException()
+
+private class TestSkippedException : AssertionError("Test skipped")

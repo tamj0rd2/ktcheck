@@ -12,21 +12,23 @@ internal interface CombinatorGeneratorContract : BaseContract {
     @Test
     fun `constant always produces the same value and doesn't shrink`() {
         // todo: move this test elsewhere.
-        val result = constant(10).generate(tree())
-        expectThat(result.value).isEqualTo(10)
-        expectThat(result).shrunkValues.isEmpty()
+        val gen = constant(10)
+        repeatTest {
+            val result = gen.generate(tree())
+            expectThat(result.value).isEqualTo(10)
+            expectThat(result).shrunkValues.isEmpty()
+        }
     }
 
     @Test
     fun `same seed produces same sample`() {
-        // todo: move this test elsewhere.
-        val seed = 12345L
-        val gen = int(-1000..1000)
-
-        val firstRun = gen.samples(seed).take(100).toList()
-        val secondRun = gen.samples(seed).take(100).toList()
-
-        expectThat(secondRun).isEqualTo(firstRun)
+        // todo: move this test elsewhere. also, it's duplicated in CharGeneratorContract.
+        repeatTest { seed ->
+            val gen = int(-1000..1000)
+            val firstRun = gen.generate(tree(seed))
+            val secondRun = gen.generate(tree(seed))
+            expectThat(firstRun.value).isEqualTo(secondRun.value)
+        }
     }
 
     @Test
@@ -34,12 +36,13 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val originalGen = int(0..10)
         val doublingGen = originalGen.map { it * 2 }
 
-        val tree = tree()
-        val originalResult = originalGen.generate(tree)
-        val doubledResult = doublingGen.generate(tree)
+        repeatTest { seed ->
+            val originalResult = originalGen.generate(tree(seed))
+            val doubledResult = doublingGen.generate(tree(seed))
 
-        expectThat(doubledResult.value).isEqualTo(originalResult.value * 2)
-        expectThat(doubledResult).shrunkValues.isEqualTo(originalResult.shrunkValues.map { it * 2 })
+            expectThat(doubledResult.value).isEqualTo(originalResult.value * 2)
+            expectThat(doubledResult).shrunkValues.isEqualTo(originalResult.shrunkValues.map { it * 2 })
+        }
     }
 
     @Test
@@ -48,12 +51,14 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val bigGen = int(10..20)
         val gen = smallGen.flatMap { a -> bigGen.map { b -> a + b } }
 
-        val tree = tree()
-            .withLeft(smallGen.findTreeProducing(5))
-            .withRight(bigGen.findTreeProducing(20))
+        repeatTest { seed ->
+            val tree = tree(seed)
+            val expectedOuterValue = smallGen.generate(tree.left).value
+            val expectedInnerValue = bigGen.generate(tree.right).value
 
-        val value = gen.generate(tree).value
-        expectThat(value).isEqualTo(25)
+            val value = gen.generate(tree).value
+            expectThat(value).isEqualTo(expectedOuterValue + expectedInnerValue)
+        }
     }
 
     @Test
@@ -96,12 +101,14 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val bigGen = int(10..20)
         val gen = smallGen.combineWith(bigGen) { a, b -> a + b }
 
-        val tree = tree()
-            .withLeft(smallGen.findTreeProducing(5))
-            .withRight(bigGen.findTreeProducing(20))
+        repeatTest { seed ->
+            val tree = tree(seed)
+            val expectedOuterValue = smallGen.generate(tree.left).value
+            val expectedInnerValue = bigGen.generate(tree.right).value
 
-        val value = gen.generate(tree).value
-        expectThat(value).isEqualTo(25)
+            val value = gen.generate(tree).value
+            expectThat(value).isEqualTo(expectedOuterValue + expectedInnerValue)
+        }
     }
 
     @Test

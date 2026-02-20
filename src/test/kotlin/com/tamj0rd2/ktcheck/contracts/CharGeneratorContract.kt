@@ -14,7 +14,6 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isLessThan
 import strikt.assertions.isNotEmpty
 
-// todo: most these tests could be made more generic and framed around the oneOfValues generator
 internal interface CharGeneratorContract : BaseContract {
     @TestFactory
     fun `can generate a character from a collection`(): List<DynamicTest> {
@@ -42,91 +41,72 @@ internal interface CharGeneratorContract : BaseContract {
 
     @Test
     fun `generates a variety of characters over multiple runs`() {
+        val chars = 'a'..'z'
         withCounter {
-            char(('a'..'z').toList()).samples().take(100000).forEach { value ->
-                collect(
-                    when (value) {
-                        in 'a'..'i' -> "a-i"
-                        in 'j'..'r' -> "j-r"
-                        in 's'..'z' -> "s-z"
-                        else -> "other"
-                    }
-                )
-            }
-        }.checkPercentages(
-            mapOf(
-                "a-i" to 30.0,
-                "j-r" to 30.0,
-                "s-z" to 30.0
-            )
-        )
+            char(chars).samples().take(100000).forEach { collect(it) }
+        }.checkPercentages(chars.associateWith { (100.0 / chars.count()) - 1 })
     }
 
     @Test
     fun `using the same seed generates the same values`() {
-        val seed = 12345L
-        val gen = char(('a'..'z').toList())
-        val firstRun = gen.samples(seed).take(100).toList()
-        val secondRun = gen.samples(seed).take(100).toList()
-        expectThat(secondRun).isEqualTo(firstRun)
+        repeatTest { seed ->
+            val gen = char('a'..'z')
+            val firstRun = gen.generate(tree(seed))
+            val secondRun = gen.generate(tree(seed))
+            expectThat(firstRun.value).isEqualTo(secondRun.value)
+        }
     }
 
     @Test
-    fun `shrinks toward the smallest character, smallest first`() {
-        val chars = 'a'..'d'
+    fun `shrinks for non-minimal values always yield the minimal value`() {
+        val chars = 'a'..'z'
         val gen = char(chars)
 
-        val result = gen.generating('d')
-        expectThat(result).shrunkValues.isEqualTo(listOf('a', 'c'))
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+            if (result.value == chars.first()) skipIteration()
+            expectThat(result).shrunkValues.first().isEqualTo(chars.first())
+        }
     }
 
     @Test
-    fun `if the smallest character was generated, it won't yield any shrinks`() {
-        val chars = 'a'..'d'
-        val gen = char(chars)
+    fun `shrinks never yield the value being shrunk`() {
+        val gen = char('a'..'z')
 
-        val result = gen.generating('a')
-        expectThat(result).shrunkValues.isEmpty()
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+            expectThat(result).shrunkValues.doesNotContain(result.value)
+        }
     }
 
     @Test
-    fun `shrinks for the non-lowest character always yield the smallest character`() {
-        val chars = ('a'..'z').toList()
-        val gen = char(chars)
+    fun `when the minimal value is generated, no shrinks are yielded`() {
+        val chars = 'a'..'z'
 
-        gen.sequence()
-            .filter { it.value != chars.first() }
-            .take(100)
-            .forEach { expectThat(it).shrunkValues.first().isEqualTo(chars.first()) }
+        repeatTest {
+            val result = char(chars).generate(tree(it))
+            if (result.value != chars.first()) skipIteration()
+            expectThat(result).shrunkValues.isEmpty()
+        }
     }
 
     @Test
-    fun `the original generated character is not included in shrinks`() {
-        val chars = ('a'..'z').toList()
+    fun `shrinks are closer to the minimal character than the original generated character`() {
+        val chars = 'a'..'z'
+        val minimal = chars.first()
         val gen = char(chars)
 
-        gen.sequence()
-            .take(100)
-            .forEach { expectThat(it).shrunkValues.doesNotContain(it.value) }
-    }
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+            if (result.value == minimal) skipIteration()
 
-    @Test
-    fun `shrinks are closer to the lowest character than the original generated character`() {
-        val chars = ('a'..'z').toList()
-        val gen = char(chars)
-        val lowestChar = chars.first()
+            val originalIndex = chars.indexOf(result.value)
 
-        gen.sequence()
-            .filter { it.value != lowestChar }
-            .take(100)
-            .forEach {
-                val originalIndex = chars.indexOf(it.value)
-
-                expectThat(it).shrunkValues.isNotEmpty().all {
-                    get { chars.indexOf(this) }
-                        .describedAs("shrunk index (closer to lowest)")
-                        .isLessThan(originalIndex)
-                }
+            expectThat(result).shrunkValues.isNotEmpty().all {
+                get { chars.indexOf(this) }
+                    .describedAs("shrunk index (closer to lowest)")
+                    .isLessThan(originalIndex)
             }
+        }
     }
 }

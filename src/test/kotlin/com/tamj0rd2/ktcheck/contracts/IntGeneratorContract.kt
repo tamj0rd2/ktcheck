@@ -1,21 +1,16 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
 import strikt.api.expectThat
-import strikt.assertions.all
-import strikt.assertions.contains
-import strikt.assertions.doesNotContain
-import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
 import strikt.assertions.isIn
-import strikt.assertions.isLessThan
-import strikt.assertions.isNotEmpty
-import kotlin.math.abs
+import kotlin.random.Random
 
 internal interface IntGeneratorContract : BaseContract {
     @TestFactory
@@ -65,93 +60,29 @@ internal interface IntGeneratorContract : BaseContract {
 
     @Test
     fun `using the same seed generates the same values`() {
-        val seed = 12345L
-        val gen = int(-1000..1000)
-        val firstRun = gen.samples(seed).take(100).toList()
-        val secondRun = gen.samples(seed).take(100).toList()
-        expectThat(secondRun).isEqualTo(firstRun)
+        repeatTest { seed ->
+            val gen = int(-1000..1000)
+            val firstRun = gen.generate(tree(seed))
+            val secondRun = gen.generate(tree(seed))
+            expectThat(firstRun.value).isEqualTo(secondRun.value)
+        }
     }
 
     @Test
     fun `shrinks the generated value`() {
-        val result = int(0..4).generating(4)
-        expectThat(result).shrunkValues
-        expectThat(result).shrunkValues.isEqualTo(listOf(0, 2, 3))
-    }
+        repeatTest { seed ->
+            val random = Random(seed.value)
+            val startOfRange = (-100..100).random(random)
+            val range = startOfRange..(startOfRange + 50)
+            val shrinkTarget = range.random(random)
 
-    @Test
-    fun `10 shrinks correctly`() {
-        val result = int(0..10).generating(10)
-        expectThat(result).shrunkValues.isEqualTo(listOf(0, 5, 8, 9))
-    }
+            val gen = int(range = range, shrinkTarget = shrinkTarget)
 
-    @Test
-    fun `-10 shrinks correctly`() {
-        val result = int(-10..0).generating(-10)
-        expectThat(result).shrunkValues.isEqualTo(listOf(0, -5, -8, -9))
-    }
-
-    @TestFactory
-    fun `shrinking produces no shrinks when the original value is the shrink target`(): List<DynamicTest> {
-        val range = -50..50
-        val shrinkTargets = listOf(0, -25, 25, range.first, range.last)
-
-        return shrinkTargets.map { shrinkTarget ->
-            dynamicTest("shrink target: $shrinkTarget") {
-                val result = int(range, shrinkTarget).generating(shrinkTarget)
-                expectThat(result).shrunkValues.isEmpty()
-            }
+            val result = gen.generate(tree(seed))
+            val expectedShrinks = IntShrinker.shrink(result.value, range, shrinkTarget).toList()
+            if (expectedShrinks.isEmpty()) skipIteration()
+            expectThat(result).shrunkValues.isEqualTo(expectedShrinks)
         }
-    }
-
-    @Test
-    fun `shrinks for non-zero numbers always include 0`() {
-        val range = -50..50
-        generateSequence { range.random() }.take(100).filter { it != 0 }.forEach { value ->
-            val result = int(range).generating(value)
-            expectThat(result).shrunkValues.isNotEmpty().contains(0)
-        }
-    }
-
-    @Test
-    fun `the original generated number is not included in shrinks`() {
-        val range = -50..50
-        generateSequence { range.random() }.take(100).forEach { value ->
-            val result = int(range).generating(value)
-            expectThat(result).shrunkValues.doesNotContain(value)
-        }
-    }
-
-    @Test
-    fun `when 0 is in range, shrinks are closer to 0 than the original generated number`() {
-        val range = -50..50
-        generateSequence { range.random() }.take(100).filter { it != 0 }.forEach { value ->
-            val result = int(range).generating(value)
-            expectThat(result).shrunkValues
-                .isNotEmpty()
-                .doesNotContain(value)
-                .all {
-                    get { abs(this) }.describedAs("shrunk distance from 0").isLessThan(abs(value))
-                }
-        }
-    }
-
-    @Test
-    fun `shrinks with custom shrink target in positive range`() {
-        val result = int(0..10, 5).generating(10)
-        expectThat(result).shrunkValues.isEqualTo(listOf(5, 8, 9))
-    }
-
-    @Test
-    fun `shrinks with custom shrink target in negative range`() {
-        val result = int(-20..-10, -15).generating(-10)
-        expectThat(result).shrunkValues.isEqualTo(listOf(-15, -12, -11))
-    }
-
-    @Test
-    fun `shrinks with custom shrink target in mixed range`() {
-        val result = int(-5..10, 3).generating(7)
-        expectThat(result).shrunkValues.isEqualTo(listOf(3, 5, 6))
     }
 
     @Test

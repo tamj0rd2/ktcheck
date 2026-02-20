@@ -1,9 +1,7 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
-import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.checkAll
-import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker.shrink
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.assertTimeoutPreemptively
@@ -29,12 +27,14 @@ internal interface DistinctListGeneratorContract : BaseContract {
     }
 
     @Test
-    fun `generates lists with distinct elements`() = checkAll(
-        TestConfig().withIterations(100),
-        int(0..100).distinctList(5),
-    ) {
-        expectThat(it.size).isEqualTo(5)
-        expectThat(it).hasSize(5) // confirms no duplicates
+    fun `generates lists with distinct elements`() {
+        val gen = int(0..100).distinctList(5)
+
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+            expectThat(result.value).hasSize(5)
+            expectThat(result.value.toSet()).hasSize(5)
+        }
     }
 
     @Test
@@ -45,15 +45,15 @@ internal interface DistinctListGeneratorContract : BaseContract {
 
     @Test
     fun `shrinks a list of 1 element`() {
-        val intGen = int(0..10)
-        val gen = intGen.distinctList()
+        repeatTest { seed ->
+            val gen = int(0..10).distinctList(size = 0..5)
+            val result = gen.generate(tree(seed))
+            if (result.value.size != 1) skipIteration()
 
-        val result = gen.generating { it.size == 1 }
-        expectThat(result.value).hasSize(1)
-
-        val expectedValueShrinks = IntShrinker.shrink(result.value.single(), 0..10).map { listOf(it) }.toList()
-        expectThat(result).shrunkValues.first().isEqualTo(emptyList())
-        expectThat(result).shrunkValues.get { drop(1) }.isEqualTo(expectedValueShrinks)
+            val expectedValueShrinks = shrink(result.value.single(), 0..10).map { listOf(it) }.toList()
+            expectThat(result).shrunkValues.first().isEqualTo(emptyList())
+            expectThat(result).shrunkValues.get { drop(1) }.isEqualTo(expectedValueShrinks)
+        }
     }
 
     @Test
@@ -89,11 +89,12 @@ internal interface DistinctListGeneratorContract : BaseContract {
     }
 
     @Test
-    fun `all generated lists contain only distinct elements`() = checkAll(
-        TestConfig().withIterations(100),
-        int(0..100).distinctList(0..10),
-    ) {
-        expectThat(it.toSet()).hasSize(it.size)
+    fun `all generated lists contain only distinct elements`() {
+        repeatTest { seed ->
+            val gen = int(0..10).distinctList(0..10)
+            val result = gen.generate(tree(seed))
+            expectThat(result.value.toSet()).hasSize(result.value.size)
+        }
     }
 
     @Test
@@ -111,21 +112,22 @@ internal interface DistinctListGeneratorContract : BaseContract {
     fun `shrinks to empty list when list is not empty`() {
         val gen = int(0..10).distinctList()
 
-        val result = gen.generating { it.isNotEmpty() }
-        expectThat(result.value).isNotEmpty()
-        expectThat(result).shrunkValues.first().isEqualTo(emptyList())
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
+            if (result.value.isEmpty()) skipIteration()
+            expectThat(result).shrunkValues.first().isEqualTo(emptyList())
+        }
     }
 
     @Test
-    fun `all shrunk element values do not exceed max original value`() {
-        repeat(1000) {
-            val range = 0..10
-            val gen = int(range).distinctList(0..4)
+    fun `no shrunk element values exceed the max original value`() {
+        repeatTest { seed ->
+            val gen = int(0..10).distinctList(0..4)
 
-            val tree = gen.findTreeProducing { it.isNotEmpty() }
-            val result = gen.generate(tree)
+            val result = gen.generate(tree(seed))
+            if (result.value.isEmpty()) skipIteration()
+
             val maxOriginalValue = result.value.max()
-
             expectThat(result).shrunkValues.all {
                 all { isLessThanOrEqualTo(maxOriginalValue) }
             }
@@ -134,22 +136,23 @@ internal interface DistinctListGeneratorContract : BaseContract {
 
     @Test
     fun `all shrunk element values are within the generator range`() {
-        repeat(1000) {
+        repeatTest { seed ->
             val range = 0..10
             val gen = int(range).distinctList()
 
-            val result = gen.generating { it.isNotEmpty() }
+            val result = gen.generate(tree(seed))
+            if (result.value.isEmpty()) skipIteration()
             expectThat(result).shrunkValues.all { all { isIn(range) } }
         }
     }
 
     @Test
     fun `all shrunk lists fall within the specified size bounds`() {
-        repeat(1000) {
+        repeatTest { seed ->
             val minSize = 2
             val gen = int(0..10).distinctList(minSize..10)
 
-            val result = gen.generate(tree())
+            val result = gen.generate(tree(seed))
             val originalSize = result.value.size
             expectThat(result).shrunkValues.all { size.isIn(minSize..originalSize) }
         }
