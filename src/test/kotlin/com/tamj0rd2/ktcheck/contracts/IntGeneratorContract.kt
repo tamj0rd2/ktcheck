@@ -91,4 +91,6 @@ internal interface IntGeneratorContract : BaseContract {
             int(0..10, 20)
         }
     }
+
+    // todo: add edge case tests
 }

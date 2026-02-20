@@ -8,9 +8,9 @@ import kotlin.reflect.KClass
 internal sealed class GenImpl<T> : Gen<T> {
     abstract fun generate(tree: RandomTree): GenResultV2<T>
 
-    open fun edgeCases(): List<GenResultV2<T>> = emptyList()
+    abstract fun edgeCases(): List<GenResultV2<T>>
 
-    override fun sample(seed: Long) = generate(randomTree(Seed(seed))).value
+    override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).value
 
     override fun <R> map(fn: (T) -> R) = TODO()
 
@@ -39,23 +39,8 @@ internal sealed class GenImpl<T> : Gen<T> {
 
 internal data class GenResultV2<T>(
     val value: T,
-    val shrinks: Sequence<GenResultV2<T>>,
-) {
-    fun <R> map(fn: (T) -> R): GenResultV2<R> =
-        GenResultV2(
-            value = fn(value),
-            shrinks = shrinks.map { it.map(fn) }
-        )
-
-    fun filter(predicate: (T) -> Boolean): GenResultV2<T>? {
-        if (!predicate(value)) return null
-
-        return GenResultV2(
-            value = value,
-            shrinks = shrinks.mapNotNull { it.filter(predicate) }
-        )
-    }
-}
+    val shrinks: Sequence<RandomTree>,
+)
 
 internal object GenV2Builders : GenBuilders {
 
@@ -69,7 +54,7 @@ internal object GenV2Builders : GenBuilders {
     ).map { it == 1 }
 
     override fun int(range: IntRange, shrinkTarget: Int): Gen<Int> {
-        return TODO()
+        return IntGen(range, shrinkTarget)
     }
 
     override fun long(): Gen<Long> {

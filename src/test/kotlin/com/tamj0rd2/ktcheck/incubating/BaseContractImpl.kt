@@ -8,7 +8,7 @@ import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.Tree
 
 internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Builders {
-    override fun tree(seed: Seed) = randomTree(seed)
+    override fun tree(seed: Seed) = RandomTree.new(seed)
     override fun Tree<*>.withLeft(left: Tree<*>) = (this as RandomTree).withLeft(left as RandomTree)
     override fun Tree<*>.withRight(right: Tree<*>) = (this as RandomTree).withRight(right as RandomTree)
 
@@ -18,15 +18,10 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
         return GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
 
-    private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<GenResultV2<T>>): Sequence<GenResults<T>> =
+    private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {
             for (shrink in shrinks) {
-                yield(
-                    GenResults(
-                        value = shrink.value,
-                        shrinks = collectShrinksRecursively(shrink.shrinks)
-                    )
-                )
+                yield(generate(shrink))
             }
         }
 
