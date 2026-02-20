@@ -16,7 +16,8 @@ internal class IntGen(
     }
 
     override fun edgeCases(): List<GenResultV2<Int>> {
-        return setOf(0, range.first, range.first + 1, range.last - 1, range.last)
+        return setOf(0, range.first, range.last)
+            .flatMap { listOf(it, it - 1, it + 1) }
             .filter { it in range }
             .map { buildResult(RandomTree.forEdgeCases, it) }
     }

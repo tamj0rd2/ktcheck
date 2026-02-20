@@ -95,8 +95,8 @@ internal interface IntGeneratorContract : BaseContract {
 
     @Test
     fun `creates common edge cases and their shrinks`() {
-        val edgeCases = int(0..10).edgeCases()
-        expectThat(edgeCases.map { it.value }).containsExactlyInAnyOrder(listOf(0, 1, 9, 10))
+        val edgeCases = int(-10..10).edgeCases()
+        expectThat(edgeCases.map { it.value }).containsExactlyInAnyOrder(listOf(-10, -9, -1, 0, 1, 9, 10))
 
         val edgeCaseFor9 = edgeCases.single { it.value == 9 }
         val expectedShrinks = IntShrinker.shrink(9, 0..10, 0).toList()
