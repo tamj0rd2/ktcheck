@@ -25,12 +25,12 @@ internal sealed class GenImpl<T> : Gen<T> {
     override fun filter(
         threshold: Int,
         predicate: (T) -> Boolean,
-    ) = TODO()
+    ) = FilterGen(this, threshold, predicate)
 
     override fun ignoreExceptions(
         klass: KClass<out Exception>,
         threshold: Int,
-    ) = TODO()
+    ) = IgnoreExceptionGen(this, klass, threshold)
 
     override fun list(size: IntRange) = TODO()
 

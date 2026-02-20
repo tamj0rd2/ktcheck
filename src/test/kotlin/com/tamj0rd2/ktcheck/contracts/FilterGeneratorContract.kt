@@ -1,14 +1,17 @@
 package com.tamj0rd2.ktcheck.contracts
 
+import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.GenerationException.FilterLimitReached
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertTimeoutPreemptively
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.all
 import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotEqualTo
+import java.time.Duration
 
 internal interface FilterGeneratorContract : BaseContract {
     @Test
@@ -53,11 +56,14 @@ internal interface FilterGeneratorContract : BaseContract {
             }
             .ignoreExceptions(TestException::class)
 
-        repeatTest { seed ->
-            val result = possiblyThrowingGen.generate(tree(seed))
-            expectThat(result).value.isNotEqualTo(1)
-            expectThat(result).shrunkValues.all { isNotEqualTo(1) }
-        }
+        withCounter {
+            repeatTest { seed ->
+                val result = possiblyThrowingGen.generate(tree(seed))
+                expectThat(result).value.isNotEqualTo(1)
+                expectThat(result).shrunkValues.all { isNotEqualTo(1) }
+                collect("has-shrinks", result.shrunkValues.isNotEmpty())
+            }
+        }.checkPercentages("has-shrinks", mapOf(true to 45.0))
 
         // todo: add some - deeply shrunk values are finite function. call it above.
         possiblyThrowingGen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
@@ -71,7 +77,9 @@ internal interface FilterGeneratorContract : BaseContract {
             .map { throw IgnoredException() }
             .ignoreExceptions(IgnoredException::class)
 
-        expectThrows<FilterLimitReached> { throwingGen.samples().first() }
+        assertTimeoutPreemptively(Duration.ofSeconds(1)) {
+            expectThrows<FilterLimitReached> { throwingGen.samples().first() }
+        }
     }
 
     @Test
