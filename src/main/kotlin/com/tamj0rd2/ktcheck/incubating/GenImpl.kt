@@ -48,21 +48,11 @@ internal object GenV2Builders : GenBuilders {
         return ConstantGen(value)
     }
 
-    override fun bool(shrinkTarget: Boolean): Gen<Boolean> = int(
-        range = 0..1,
-        shrinkTarget = if (shrinkTarget) 1 else 0
-    ).map { it == 1 }
-
     override fun int(range: IntRange, shrinkTarget: Int): Gen<Int> {
         return IntGen(range, shrinkTarget)
     }
 
     override fun long(): Gen<Long> {
         TODO()
-    }
-
-    override fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {
-        val gensList = gens.map { it as GenImpl<T> }
-        return int(gensList.indices).flatMap { gensList[it] }
     }
 }

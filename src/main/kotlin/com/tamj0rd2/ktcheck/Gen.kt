@@ -128,7 +128,10 @@ interface Gen<T> {
 internal interface GenBuilders {
     fun <T> constant(value: T): Gen<T>
 
-    fun bool(shrinkTarget: Boolean = false): Gen<Boolean>
+    fun bool(shrinkTarget: Boolean = false): Gen<Boolean> = int(
+        range = 0..1,
+        shrinkTarget = if (shrinkTarget) 1 else 0
+    ).map { it == 1 }
 
     fun int(
         range: IntRange = Int.MIN_VALUE..Int.MAX_VALUE,
@@ -146,7 +149,10 @@ internal interface GenBuilders {
     fun <T> oneOf(vararg gens: Gen<T>): Gen<T> = oneOf(gens.toList())
 
     /** Shrinks toward the first generator */
-    fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T>
+    fun <T> oneOf(gens: Collection<Gen<T>>): Gen<T> {
+        val gensList = gens.toList()
+        return int(gensList.indices).flatMap { gensList[it] }
+    }
 
     /** Shrinks toward the first value. Individual values will not be shrunk. */
     fun <T> oneOf(values: Iterable<T>): Gen<T> {
