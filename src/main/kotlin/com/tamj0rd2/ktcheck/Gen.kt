@@ -1,7 +1,6 @@
 package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.GenerationException.OneOfEmpty
-import com.tamj0rd2.ktcheck.Gens.plus
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.Tuple10
 import com.tamj0rd2.ktcheck.core.Tuple2
@@ -75,7 +74,7 @@ interface Gen<T> {
      * Use this when you want to create a new generator that produces values based on two independent generators. i.e.
      * the value from one generator does not influence the value from the other generator.
      *
-     * You can also combine independent generators using [Gens.zip] or [Gens.plus].
+     * You can also combine independent generators using [Gens.zip] or [Gen.plus].
      *
      * For dependent generation (where the second generator depends on the first value), use [flatMap].
      *
@@ -125,6 +124,8 @@ interface Gen<T> {
     fun set(size: Int): Gen<Set<T>> = set(size..size)
 }
 
+object Gens : GenBuilders by GenV2Builders
+
 internal interface GenBuilders {
     fun <T> constant(value: T): Gen<T>
 
@@ -160,12 +161,6 @@ internal interface GenBuilders {
         if (options.isEmpty()) throw OneOfEmpty()
         return int(0..<options.size).map { options[it] }
     }
-}
-
-object Gens : GenBuilders by GenV2Builders {
-    fun Gen<Char>.string(size: IntRange): Gen<String> = list(size).map { it.joinToString("") }
-
-    fun Gen<Char>.string(size: Int) = string(size..size)
 
     /**
      * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
@@ -301,120 +296,124 @@ object Gens : GenBuilders by GenV2Builders {
         gen10: Gen<T10>,
     ): Gen<Tuple10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> =
         zip(gen1, gen2, gen3, gen4, gen5, gen6, gen7, gen8, gen9) + gen10
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus2")
-    infix operator fun <T1, T2> Gen<T1>.plus(
-        nextGen: Gen<T2>,
-    ): Gen<Tuple2<T1, T2>> =
-        combineWith(nextGen) { first, second -> tuple(first, second) }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus3")
-    infix operator fun <T1, T2, T3> Gen<Tuple2<T1, T2>>.plus(
-        nextGen: Gen<T3>,
-    ): Gen<Tuple3<T1, T2, T3>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus4")
-    infix operator fun <T1, T2, T3, T4> Gen<Tuple3<T1, T2, T3>>.plus(
-        nextGen: Gen<T4>,
-    ): Gen<Tuple4<T1, T2, T3, T4>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus5")
-    infix operator fun <T1, T2, T3, T4, T5> Gen<Tuple4<T1, T2, T3, T4>>.plus(
-        nextGen: Gen<T5>,
-    ): Gen<Tuple5<T1, T2, T3, T4, T5>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus6")
-    infix operator fun <T1, T2, T3, T4, T5, T6> Gen<Tuple5<T1, T2, T3, T4, T5>>.plus(
-        nextGen: Gen<T6>,
-    ): Gen<Tuple6<T1, T2, T3, T4, T5, T6>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus7")
-    infix operator fun <T1, T2, T3, T4, T5, T6, T7> Gen<Tuple6<T1, T2, T3, T4, T5, T6>>.plus(
-        nextGen: Gen<T7>,
-    ): Gen<Tuple7<T1, T2, T3, T4, T5, T6, T7>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus8")
-    infix operator fun <T1, T2, T3, T4, T5, T6, T7, T8> Gen<Tuple7<T1, T2, T3, T4, T5, T6, T7>>.plus(
-        nextGen: Gen<T8>,
-    ): Gen<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus9")
-    infix operator fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> Gen<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>>.plus(
-        nextGen: Gen<T9>,
-    ): Gen<Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
-     *
-     * @see [Gen.combineWith]
-     */
-    @JvmName("plus10")
-    infix operator fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Gen<Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.plus(
-        nextGen: Gen<T10>,
-    ): Gen<Tuple10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> =
-        combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
-
-    /**
-     * Syntactic sugar for:
-     *
-     * ```kotlin
-     * genA.flatMap { a -> makeGenB(a).map { b -> tuple(a, b) } }
-     * ```
-     *
-     * and
-     *
-     * ```kotlin
-     * genA.flatMap { a -> Gens.zip(Gens.constant(a), makeGenB(a)) }
-     * ```
-     */
-    @ExperimentalKtCheck
-    fun <T1, T2> Gen<T1>.retainAndFlatMap(f: (T1) -> Gen<T2>): Gen<Tuple2<T1, T2>> =
-        flatMap { a -> f(a).map { b -> tuple(a, b) } }
 }
+
+fun Gen<Char>.string(size: IntRange): Gen<String> = list(size).map { it.joinToString("") }
+
+fun Gen<Char>.string(size: Int) = string(size..size)
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus2")
+infix operator fun <T1, T2> Gen<T1>.plus(
+    nextGen: Gen<T2>,
+): Gen<Tuple2<T1, T2>> =
+    combineWith(nextGen) { first, second -> tuple(first, second) }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus3")
+infix operator fun <T1, T2, T3> Gen<Tuple2<T1, T2>>.plus(
+    nextGen: Gen<T3>,
+): Gen<Tuple3<T1, T2, T3>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus4")
+infix operator fun <T1, T2, T3, T4> Gen<Tuple3<T1, T2, T3>>.plus(
+    nextGen: Gen<T4>,
+): Gen<Tuple4<T1, T2, T3, T4>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus5")
+infix operator fun <T1, T2, T3, T4, T5> Gen<Tuple4<T1, T2, T3, T4>>.plus(
+    nextGen: Gen<T5>,
+): Gen<Tuple5<T1, T2, T3, T4, T5>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus6")
+infix operator fun <T1, T2, T3, T4, T5, T6> Gen<Tuple5<T1, T2, T3, T4, T5>>.plus(
+    nextGen: Gen<T6>,
+): Gen<Tuple6<T1, T2, T3, T4, T5, T6>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus7")
+infix operator fun <T1, T2, T3, T4, T5, T6, T7> Gen<Tuple6<T1, T2, T3, T4, T5, T6>>.plus(
+    nextGen: Gen<T7>,
+): Gen<Tuple7<T1, T2, T3, T4, T5, T6, T7>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus8")
+infix operator fun <T1, T2, T3, T4, T5, T6, T7, T8> Gen<Tuple7<T1, T2, T3, T4, T5, T6, T7>>.plus(
+    nextGen: Gen<T8>,
+): Gen<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus9")
+infix operator fun <T1, T2, T3, T4, T5, T6, T7, T8, T9> Gen<Tuple8<T1, T2, T3, T4, T5, T6, T7, T8>>.plus(
+    nextGen: Gen<T9>,
+): Gen<Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Combines independent generators. The resulting generator produces a tuple of values, one from each input generator.
+ *
+ * @see [Gen.combineWith]
+ */
+@JvmName("plus10")
+infix operator fun <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Gen<Tuple9<T1, T2, T3, T4, T5, T6, T7, T8, T9>>.plus(
+    nextGen: Gen<T10>,
+): Gen<Tuple10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> =
+    combineWith(nextGen) { tuple, nextValue -> tuple + nextValue }
+
+/**
+ * Syntactic sugar for:
+ *
+ * ```kotlin
+ * genA.flatMap { a -> makeGenB(a).map { b -> tuple(a, b) } }
+ * ```
+ *
+ * and
+ *
+ * ```kotlin
+ * genA.flatMap { a -> Gens.zip(Gens.constant(a), makeGenB(a)) }
+ * ```
+ */
+@ExperimentalKtCheck
+fun <T1, T2> Gen<T1>.retainAndFlatMap(f: (T1) -> Gen<T2>): Gen<Tuple2<T1, T2>> =
+    flatMap { a -> f(a).map { b -> tuple(a, b) } }
