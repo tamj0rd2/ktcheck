@@ -5,14 +5,15 @@ internal class MapGen<T, R>(
     private val fn: (T) -> R,
 ) : GenImpl<R>() {
     override fun generate(tree: RandomTree): GenResultV2<R> {
-        val (value, shrinks) = wrappedGen.generate(tree)
+        val result = wrappedGen.generate(tree)
         return GenResultV2(
-            value = fn(value),
-            shrinks = shrinks,
+            value = fn(result.value),
+            tree = tree,
+            shrinks = result.shrinks,
         )
     }
 
-    override fun edgeCases(): List<GenResultV2<R>> {
+    override fun edgeCases(tree: RandomTree): List<GenResultV2<R>> {
         return emptyList()
     }
 }

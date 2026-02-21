@@ -14,11 +14,12 @@ internal class FlatMapGen<T, R>(
 
         return GenResultV2(
             value = innerResult.value,
+            tree = tree,
             shrinks = shrinks,
         )
     }
 
-    override fun edgeCases(): List<GenResultV2<R>> {
+    override fun edgeCases(tree: RandomTree): List<GenResultV2<R>> {
         return emptyList()
     }
 }

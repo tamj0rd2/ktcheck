@@ -12,11 +12,11 @@ internal class ListGen<T>(
         return buildResult(tree, sizeResult, listElementResults)
     }
 
-    override fun edgeCases(): List<GenResultV2<List<T>>> {
-        return sizeGen.edgeCases().flatMap { sizeResult ->
-            elementGen.edgeCases().map { elementResult ->
+    override fun edgeCases(tree: RandomTree): List<GenResultV2<List<T>>> {
+        return sizeGen.edgeCases(tree.left).flatMap { sizeResult ->
+            elementGen.edgeCases(tree.right).map { elementResult ->
                 val elementResults = List(sizeResult.value) { elementResult }
-                buildResult(RandomTree.forEdgeCases, sizeResult, elementResults)
+                buildResult(tree, sizeResult, elementResults)
             }
         }
     }
@@ -46,6 +46,7 @@ internal class ListGen<T>(
 
         return GenResultV2(
             value = listElementResults.map { it.value },
+            tree = tree,
             shrinks = sizeBasedShrinks + elementBasedShrinks,
         )
     }

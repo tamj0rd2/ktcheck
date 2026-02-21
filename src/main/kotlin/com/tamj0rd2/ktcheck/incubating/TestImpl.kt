@@ -8,7 +8,7 @@ import com.tamj0rd2.ktcheck.TestConfig
 
 @OptIn(HardcodedTestConfig::class)
 internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>) {
-    val edgeCases = gen.edgeCases()
+    val edgeCases = gen.edgeCases(RandomTree.forEdgeCases)
 
     fun runIteration(iteration: Int) {
         val input = if (iteration <= edgeCases.size) {
@@ -79,15 +79,15 @@ private tailrec fun <T> GenImpl<T>.getSmallestCounterExample(
 ): Property.Falsification<T> {
     if (!candidates.hasNext() || tracker.shouldStopShrinking()) return smallestSoFar
 
-    val (shrunkInput, newInputShrinks) = generate(candidates.next())
-    val testResult = property.test(shrunkInput)
+    val shrunkInputResult = generate(candidates.next())
+    val testResult = property.test(shrunkInputResult.value)
 
-    if (!tracker.recordShrinkAttempt(shrunkInput)) {
+    if (!tracker.recordShrinkAttempt(shrunkInputResult.value)) {
         return getSmallestCounterExample(property, smallestSoFar, candidates, tracker)
     }
 
     return if (testResult is Property.Falsification) {
-        getSmallestCounterExample(property, testResult, newInputShrinks.iterator(), tracker)
+        getSmallestCounterExample(property, testResult, shrunkInputResult.shrinks.iterator(), tracker)
     } else {
         getSmallestCounterExample(property, smallestSoFar, candidates, tracker)
     }

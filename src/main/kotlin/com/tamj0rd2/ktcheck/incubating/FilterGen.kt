@@ -15,7 +15,7 @@ internal class FilterGen<T>(
             ?: throw GenerationException.FilterLimitReached(threshold)
     }
 
-    override fun edgeCases(): List<GenResultV2<T>> {
-        return gen.edgeCases().filter { predicate(it.value) }
+    override fun edgeCases(tree: RandomTree): List<GenResultV2<T>> {
+        return gen.edgeCases(tree).filter { predicate(it.value) }
     }
 }

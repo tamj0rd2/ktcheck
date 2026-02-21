@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
 internal sealed class GenImpl<T> : Gen<T> {
     abstract fun generate(tree: RandomTree): GenResultV2<T>
 
-    abstract fun edgeCases(): List<GenResultV2<T>>
+    abstract fun edgeCases(tree: RandomTree): List<GenResultV2<T>>
 
     override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).value
 
@@ -39,6 +39,7 @@ internal sealed class GenImpl<T> : Gen<T> {
 
 internal data class GenResultV2<T>(
     val value: T,
+    val tree: RandomTree,
     val shrinks: Sequence<RandomTree>,
 )
 

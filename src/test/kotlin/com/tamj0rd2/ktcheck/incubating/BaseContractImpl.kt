@@ -26,7 +26,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
         }
 
     override fun <T> Gen<T>.edgeCases(): List<GenResults<T>> {
-        val result = (this as GenImpl).edgeCases()
+        val result = (this as GenImpl).edgeCases(RandomTree.forEdgeCases)
         return result.map { GenResults(it.value, collectShrinksRecursively(it.shrinks)) }
     }
 }
