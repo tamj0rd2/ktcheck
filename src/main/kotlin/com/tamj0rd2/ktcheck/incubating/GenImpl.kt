@@ -53,6 +53,7 @@ internal object GenV2Builders : GenBuilders {
     }
 
     override fun long(): Gen<Long> {
-        TODO()
+        // todo: implement properly
+        return int().map { it.toLong() }
     }
 }
