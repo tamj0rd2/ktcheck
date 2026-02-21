@@ -8,6 +8,7 @@ import com.tamj0rd2.ktcheck.core.Tree
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
+import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
 import kotlin.random.Random
 
@@ -18,6 +19,22 @@ internal class IntGeneratorTest : BaseContractImpl(), IntGeneratorContract {
         val tree = tree().withProvider(PredeterminedValueProvider(100))
 
         expectThrows<IllegalStateException> { gen.generate(tree) }
+    }
+
+    @Test
+    fun `generated values and their shrinks are reproducible`() {
+        repeatTest { seed ->
+            val gen = GenV2Builders.int(0..10)
+
+            val originalResult = gen.generate(tree(seed))
+            val originalShrunkValues = originalResult.shrinks.map { gen.generate(it).value }.distinct().toList()
+            val regenerated = gen.generate(originalResult.tree as Tree<*>)
+
+            expectThat(regenerated).value.isEqualTo(originalResult.value)
+            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalShrunkValues)
+            // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
+            expectThat(regenerated).shrunkValues.isEqualTo(originalShrunkValues)
+        }
     }
 
     @Test
