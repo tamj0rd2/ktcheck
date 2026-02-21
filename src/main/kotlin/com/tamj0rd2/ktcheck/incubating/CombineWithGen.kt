@@ -23,8 +23,12 @@ internal class CombineWithGen<T1, T2, R>(
         val rightEdgeCasesToUse = rightEdgeCases.ifEmpty { listOf(rightGen.generate(root.right)) }
 
         return leftEdgeCasesToUse.flatMap { leftEdgeCase ->
-            rightEdgeCasesToUse.map { rightEdgeCases ->
-                buildResult(root, leftEdgeCase, rightEdgeCases)
+            rightEdgeCasesToUse.map { rightEdgeCase ->
+                val stableRoot = root
+                    .withLeft(leftEdgeCase.tree)
+                    .withRight(rightEdgeCase.tree)
+
+                buildResult(stableRoot, leftEdgeCase, rightEdgeCase)
             }
         }
     }
