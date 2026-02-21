@@ -32,7 +32,7 @@ internal sealed class GenImpl<T> : Gen<T> {
         threshold: Int,
     ) = IgnoreExceptionGen(this, klass, threshold)
 
-    override fun list(size: IntRange) = TODO()
+    override fun list(size: IntRange) = ListGen(this, size)
 
     override fun distinctList(size: IntRange) = TODO()
 }

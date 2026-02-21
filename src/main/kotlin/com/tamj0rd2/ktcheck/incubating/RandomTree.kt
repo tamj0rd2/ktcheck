@@ -19,6 +19,26 @@ internal data class RandomTree(
     fun withLeft(left: RandomTree): RandomTree = copy(lazyLeft = lazyOf(left))
     fun withRight(right: RandomTree): RandomTree = copy(lazyRight = lazyOf(right))
 
+    fun skipRight(amount: Int) = walkRight(this, amount)
+
+    fun replaceLeftAtOffset(rightOffset: Int, newLeftTree: RandomTree): RandomTree {
+        fun RandomTree.replaceLeftTree(stepsRemaining: Int): RandomTree {
+            if (stepsRemaining == 0) return withLeft(newLeftTree)
+            return withRight(right.replaceLeftTree(stepsRemaining - 1))
+        }
+
+        return replaceLeftTree(rightOffset)
+    }
+
+    fun replaceRightTreeAtIndex(index: Int, newRightTree: RandomTree): RandomTree {
+        fun RandomTree.replaceRightTree(stepsRemaining: Int): RandomTree {
+            if (stepsRemaining == 0) return newRightTree
+            return withRight(right.replaceRightTree(stepsRemaining - 1))
+        }
+
+        return replaceRightTree(index + 1)
+    }
+
     companion object {
         fun new(seed: Seed = Seed.random()): RandomTree = RandomTree(
             provider = RandomValueProvider(seed),
@@ -27,6 +47,11 @@ internal data class RandomTree(
         )
 
         val forEdgeCases = new(Seed(0))
+
+        private tailrec fun walkRight(tree: RandomTree, amount: Int): RandomTree = when (amount) {
+            0 -> tree
+            else -> walkRight(tree.right, amount - 1)
+        }
     }
 }
 

@@ -1,6 +1,5 @@
 package com.tamj0rd2.ktcheck.contracts
 
-import com.tamj0rd2.ktcheck.all
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.DynamicTest.dynamicTest
@@ -30,7 +29,7 @@ internal interface ListGeneratorContract : BaseContract {
 
     @Test
     fun `shrinks a list of 1 element`() {
-        val range = IntRange.all
+        val range = 0..10
         // todo: it'd be kind of convenient if IntGen had a shrink method on it that took an int. Then I wouldn't
         //  need to duplicate the range and shrinkingTarget in so many tests.
         val gen = int(range, 0).list(0..5)
