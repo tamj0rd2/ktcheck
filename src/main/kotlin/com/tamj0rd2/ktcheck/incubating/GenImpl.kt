@@ -5,6 +5,8 @@ import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.core.Seed
 import kotlin.reflect.KClass
 
+// todo: one thing on my mind is that each generator should do a final check to make sure the constraints are upheld
+//  post generation/edge case creation. put that in a contract somewhere.
 internal sealed class GenImpl<T> : Gen<T> {
     abstract fun generate(tree: RandomTree): GenResultV2<T>
 
@@ -45,13 +47,9 @@ internal data class GenResultV2<T>(
 
 internal object GenV2Builders : GenBuilders {
 
-    override fun <T> constant(value: T): Gen<T> {
-        return ConstantGen(value)
-    }
+    override fun <T> constant(value: T) = ConstantGen(value)
 
-    override fun int(range: IntRange, shrinkTarget: Int): Gen<Int> {
-        return IntGen(range, shrinkTarget)
-    }
+    override fun int(range: IntRange, shrinkTarget: Int) = IntGen(range, shrinkTarget)
 
     override fun long(): Gen<Long> {
         // todo: implement properly

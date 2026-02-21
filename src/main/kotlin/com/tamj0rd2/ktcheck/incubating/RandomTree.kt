@@ -22,22 +22,37 @@ internal data class RandomTree(
     fun skipRight(amount: Int) = walkRight(this, amount)
 
     fun replaceLeftAtOffset(rightOffset: Int, newLeftTree: RandomTree): RandomTree {
-        fun RandomTree.replaceLeftTree(stepsRemaining: Int): RandomTree {
-            if (stepsRemaining == 0) return withLeft(newLeftTree)
-            return withRight(right.replaceLeftTree(stepsRemaining - 1))
-        }
-
-        return replaceLeftTree(rightOffset)
+        return walkRightAndReplaceLeftTrees(listOf(rightOffset to newLeftTree))
     }
 
-    fun replaceRightTreeAtIndex(index: Int, newRightTree: RandomTree): RandomTree {
-        fun RandomTree.replaceRightTree(stepsRemaining: Int): RandomTree {
-            if (stepsRemaining == 0) return newRightTree
-            return withRight(right.replaceRightTree(stepsRemaining - 1))
+    fun walkRightAndReplaceLeftTrees(newTrees: List<Pair<Int, RandomTree>>): RandomTree {
+        if (newTrees.isEmpty()) return this
+
+        val indicesToReplace = newTrees.map { it.first }.toSet()
+        val maxIndex = indicesToReplace.max()
+        val newTrees = newTrees.sortedBy { it.first }.map { it.second }
+        var newTreeMarker = 0
+
+        // todo: make this tail recursive.
+        fun RandomTree.replaceLeftTree(index: Int): RandomTree = when {
+            index > maxIndex -> {
+                this
+            }
+
+            index !in indicesToReplace -> {
+                withRight(right.replaceLeftTree(index + 1))
+            }
+
+            else -> {
+                val newTree = newTrees[newTreeMarker]
+                newTreeMarker += 1
+                withLeft(newTree).withRight(right.replaceLeftTree(index + 1))
+            }
         }
 
-        return replaceRightTree(index + 1)
+        return replaceLeftTree(0)
     }
+
 
     companion object {
         fun new(seed: Seed = Seed.random()): RandomTree = RandomTree(

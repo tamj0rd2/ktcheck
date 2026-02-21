@@ -16,7 +16,16 @@ internal class ListGen<T>(
         return sizeGen.edgeCases(tree.left).flatMap { sizeResult ->
             elementGen.edgeCases(tree.right).map { elementResult ->
                 val elementResults = List(sizeResult.value) { elementResult }
-                buildResult(tree, sizeResult, elementResults)
+
+                val elementResultsTree = tree.right.walkRightAndReplaceLeftTrees(
+                    elementResults.mapIndexed { index, elementResult -> index to elementResult.tree }
+                )
+
+                val reproducibleTree = tree
+                    .withLeft(sizeResult.tree)
+                    .withRight(elementResultsTree)
+
+                buildResult(reproducibleTree, sizeResult, elementResults)
             }
         }
     }

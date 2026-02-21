@@ -19,7 +19,7 @@ internal class IntGen(
         return setOf(0, range.first, range.last)
             .flatMap { listOf(it, it - 1, it + 1) }
             .filter { it in range }
-            .map { buildResult(tree, it) }
+            .map { buildResult(tree = tree.withProvider(PredeterminedValueProvider(it)), value = it) }
     }
 
     private fun buildResult(
