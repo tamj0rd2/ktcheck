@@ -89,6 +89,14 @@ fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequi
 internal val <T> Assertion.Builder<GenResults<T>>.value get() = get { value }
 internal val <T> Assertion.Builder<GenResults<T>>.shrunkValues get() = get { shrunkValues }.describedAs { "shrunk values: ($this)" }
 
+internal fun <T> ignoreSkips(block: () -> T) {
+    try {
+        block()
+    } catch (e: TestSkippedException) {
+        // skip and continue to the next iteration
+    }
+}
+
 internal fun repeatTest(property: (Seed) -> Unit) {
     assertTimeoutPreemptively(Duration.ofSeconds(2)) {
         var successCount = 0

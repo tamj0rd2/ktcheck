@@ -78,53 +78,76 @@ internal interface ListGeneratorContract : BaseContract {
     fun `size shrinks include the first half of the list, and the second half of the list`() {
         val gen = int().list(0..20)
 
-        repeatTest { seed ->
-            val result = gen.generate(tree(seed))
-
+        fun checkShrinks(result: GenResults<List<Int>>) {
             if (result.value.size < 2 || result.value.size % 2 != 0) skipIteration()
             val halfSize = result.value.size / 2
 
-            expectThat(result).shrunkValues.contains(
+            expectThat(result).shrunkValues.isNotEmpty().contains(
                 result.value.take(halfSize),
                 result.value.takeLast(halfSize),
             )
+        }
+
+        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
+
+        // todo: if I decide to keep current, remove condition.
+        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
+            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
         }
     }
 
     @Test
     fun `shrinks to empty list when list is not empty`() {
-        repeatTest { seed ->
-            val gen = int(0..10).list()
-            val result = gen.generate(tree(seed))
+        val gen = int(0..10).list()
+
+        fun checkShrinks(result: GenResults<List<Int>>) {
             if (result.value.isEmpty()) skipIteration()
-            expectThat(result).shrunkValues.first().isEqualTo(emptyList())
+            expectThat(result).shrunkValues.isNotEmpty().first().isEqualTo(emptyList())
+        }
+
+        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
+
+        // todo: if I decide to keep current, remove condition.
+        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
+            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
         }
     }
 
     @Test
     fun `shrunk element values do not exceed max original value`() {
-        repeatTest { seed ->
-            val gen = int(0..10).list(size = 0..4)
-
-            val result = gen.generate(tree(seed))
+        val gen = int(0..10).list(size = 0..4)
+        fun checkShrinks(result: GenResults<List<Int>>) {
             if (result.value.isEmpty()) skipIteration()
             val maxOriginalValue = result.value.max()
 
-            expectThat(result).shrunkValues.all {
+            expectThat(result).shrunkValues.isNotEmpty().all {
                 all { isLessThanOrEqualTo(maxOriginalValue) }
             }
+        }
+
+        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
+
+        // todo: if I decide to keep current, remove condition.
+        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
+            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
         }
     }
 
     @Test
     fun `all shrunk element values are within the generator range`() {
-        repeatTest { seed ->
-            val range = 0..10
-            val gen = int(range).list()
+        val range = 0..10
+        val gen = int(range).list()
 
-            val result = gen.generate(tree(seed))
+        fun checkShrinks(result: GenResults<List<Int>>) {
             if (result.value.isEmpty()) skipIteration()
-            expectThat(result).shrunkValues.all { all { isIn(range) } }
+            expectThat(result).shrunkValues.isNotEmpty().all { all { isIn(range) } }
+        }
+
+        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
+
+        // todo: if I decide to keep current, remove condition.
+        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
+            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
         }
     }
 
