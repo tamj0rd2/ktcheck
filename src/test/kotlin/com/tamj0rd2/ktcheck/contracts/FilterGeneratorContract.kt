@@ -8,8 +8,8 @@ import org.junit.jupiter.api.assertTimeoutPreemptively
 import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.all
-import strikt.assertions.contains
 import strikt.assertions.isEqualTo
+import strikt.assertions.isLessThanOrEqualTo
 import strikt.assertions.isNotEqualTo
 import java.time.Duration
 
@@ -17,24 +17,37 @@ internal interface FilterGeneratorContract : BaseContract {
     @Test
     fun `can filter generated values and their shrinks`() {
         val gen = int(1..10).filter { it % 2 == 0 }
-        repeatTest { seed ->
-            val result = gen.generate(tree(seed))
-            expectThat(result).value.assertThat("is even") { it % 2 == 0 }
-            expectThat(result).shrunkValues.all { assertThat("is even") { it % 2 == 0 } }
-        }
+
+        withCounter {
+            fun checkResult(result: GenResults<Int>) {
+                expectThat(result).value.assertThat("is even") { it % 2 == 0 }
+                expectThat(result).shrunkValues.all { assertThat("is even") { it % 2 == 0 } }
+                collect("has-shrinks", result.shrunkValues.any())
+            }
+
+            repeatTest { seed -> checkResult(gen.generate(tree(seed))) }
+            gen.edgeCases().forEach { ignoreSkips { checkResult(it) } }
+        }.checkPercentages("has-shrinks", mapOf(true to 35.0))
 
         // todo: add some - deeply shrunk values are finite function. call it above.
         gen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
     }
 
+    // todo: will need a similar test for exception generation
     @Test
-    // todo: this should only happen if it matches the filter.
-    fun `filter preserves edge cases from underlying generator`() {
-        val gen = int(0..100).filter { it % 2 == 0 }
+    fun `shrinks of filter are never greater than the originally generated value`() {
+        withCounter {
+            val gen = int(1..10).filter { it % 2 == 0 }
 
-        val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
+            fun checkResult(result: GenResults<Int>) {
+                if (result.value <= 2) skipIteration()
+                expectThat(result).shrunkValues.all { isLessThanOrEqualTo(result.value) }
+                collect("has-shrinks", result.shrunkValues.any())
+            }
 
-        expectThat(edgeCaseValues).contains(listOf(0, 100))
+            repeatTest { seed -> checkResult(gen.generate(tree(seed))) }
+            gen.edgeCases().forEach { ignoreSkips { checkResult(it) } }
+        }.checkPercentages("has-shrinks", mapOf(true to 35.0))
     }
 
     @Test
