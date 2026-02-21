@@ -18,13 +18,13 @@ internal object IntShrinker : Shrinker<Int, IntRange> {
         yield(target)
 
         // yield progressively closer values by repeatedly halving the original distance
-        val originalDistance = value - target
-        var divisor = 2
+        val originalDistance = value.toLong() - target.toLong()
+        var divisor = 2L
         while (true) {
             val shrinkAmount = originalDistance / divisor
-            if (shrinkAmount == 0) break
+            if (shrinkAmount == 0L) break
 
-            val candidate = value - shrinkAmount
+            val candidate = (value.toLong() - shrinkAmount).toInt()
             if (candidate in range && candidate != target) {
                 yield(candidate)
             }

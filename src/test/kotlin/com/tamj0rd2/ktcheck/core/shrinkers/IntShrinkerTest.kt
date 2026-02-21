@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.core.shrinkers
 
+import com.tamj0rd2.ktcheck.full
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.api.expectThrows
@@ -93,5 +94,11 @@ class IntShrinkerTest {
         expectThrows<IllegalArgumentException> {
             IntShrinker.shrink(10, 0..10, 20).toList()
         }
+    }
+
+    @Test
+    fun `shrinking works across the full int range`() {
+        expectThat(IntShrinker.shrink(Int.MAX_VALUE, IntRange.full, 0).toList()).isNotEmpty()
+        expectThat(IntShrinker.shrink(Int.MIN_VALUE, IntRange.full, 0).toList()).isNotEmpty()
     }
 }
