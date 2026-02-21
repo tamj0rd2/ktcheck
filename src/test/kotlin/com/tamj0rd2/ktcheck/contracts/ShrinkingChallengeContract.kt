@@ -1,5 +1,6 @@
 package com.tamj0rd2.ktcheck.contracts
 
+import com.tamj0rd2.ktcheck.BooleanProperty
 import com.tamj0rd2.ktcheck.Counter
 import com.tamj0rd2.ktcheck.Counter.Companion.withCounter
 import com.tamj0rd2.ktcheck.Gen
@@ -7,7 +8,6 @@ import com.tamj0rd2.ktcheck.Gens
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.ThrowingProperty
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.core.tuple
 import com.tamj0rd2.ktcheck.forAll
@@ -64,7 +64,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
     fun distinct() {
         testShrinking(
             gen = int().list(),
-            test = ThrowingProperty { it.distinct().size < 3 },
+            test = BooleanProperty { it.distinct().size < 3 },
             didShrinkCorrectly = { it.toSet() in setOf(setOf(0, 1, 2), setOf(0, -1, -2), setOf(0, 1, -1)) },
         )
     }
@@ -113,7 +113,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
     private fun <T> testShrinking(
         testConfig: TestConfig = TestConfig().withIterations(500),
         gen: Gen<T>,
-        test: ThrowingProperty<T>,
+        test: BooleanProperty<T>,
         didShrinkCorrectly: (T) -> Boolean,
         minConfidence: Double = 100.0,
         categoriseShrinks: Counter.(Boolean, T, T) -> Unit = { _, _, _ -> },

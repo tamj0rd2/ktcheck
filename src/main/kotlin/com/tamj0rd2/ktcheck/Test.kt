@@ -6,8 +6,8 @@ sealed interface Property<T> {
     data class Falsification<T>(val input: T, val error: AssertionError?)
 }
 
-fun interface BooleanProperty<T> : Property<T> {
-    /** Runs the test on the given input. Should throw an AssertionError if the property fails. */
+/** Runs the test on the given input. Should throw an AssertionError if the property fails. */
+fun interface ThrowingProperty<T> : Property<T> {
     operator fun invoke(input: T)
 
     override fun test(input: T): Property.Falsification<T>? = try {
@@ -18,22 +18,22 @@ fun interface BooleanProperty<T> : Property<T> {
     }
 }
 
-fun interface ThrowingProperty<T> : Property<T> {
-    /** Runs the test on the given input. Should return false is the property fails */
+/** Runs the test on the given input. Should return false if the property fails */
+fun interface BooleanProperty<T> : Property<T> {
     operator fun invoke(input: T): Boolean
 
     override fun test(input: T): Property.Falsification<T>? =
         if (invoke(input)) null else Property.Falsification(input, null)
 }
 
-fun <T> forAll(gen: Gen<T>, property: ThrowingProperty<T>) = forAll(TestConfig(), gen, property)
+fun <T> forAll(gen: Gen<T>, property: BooleanProperty<T>) = forAll(TestConfig(), gen, property)
 
-fun <T> forAll(config: TestConfig, gen: Gen<T>, property: ThrowingProperty<T>) =
+fun <T> forAll(config: TestConfig, gen: Gen<T>, property: BooleanProperty<T>) =
     runPropertyTest(config, gen, property as Property<T>)
 
-fun <T> checkAll(gen: Gen<T>, property: BooleanProperty<T>) = checkAll(TestConfig(), gen, property)
+fun <T> checkAll(gen: Gen<T>, property: ThrowingProperty<T>) = checkAll(TestConfig(), gen, property)
 
-fun <T> checkAll(config: TestConfig, gen: Gen<T>, property: BooleanProperty<T>) =
+fun <T> checkAll(config: TestConfig, gen: Gen<T>, property: ThrowingProperty<T>) =
     runPropertyTest(config, gen, property as Property<T>)
 
 private fun <T> runPropertyTest(config: TestConfig, gen: Gen<T>, property: Property<T>) {
