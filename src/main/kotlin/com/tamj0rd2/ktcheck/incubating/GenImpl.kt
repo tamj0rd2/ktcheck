@@ -8,9 +8,9 @@ import kotlin.reflect.KClass
 // todo: one thing on my mind is that each generator should do a final check to make sure the constraints are upheld
 //  post generation/edge case creation. put that in a contract somewhere.
 internal sealed class GenImpl<T> : Gen<T> {
-    abstract fun generate(tree: RandomTree): GenResultV2<T>
+    abstract fun generate(root: RandomTree): GenResultV2<T>
 
-    abstract fun edgeCases(tree: RandomTree): List<GenResultV2<T>>
+    abstract fun edgeCases(root: RandomTree): List<GenResultV2<T>>
 
     override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).value
 

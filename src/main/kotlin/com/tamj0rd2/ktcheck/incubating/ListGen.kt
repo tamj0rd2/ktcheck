@@ -6,22 +6,22 @@ internal class ListGen<T>(
 ) : GenImpl<List<T>>() {
     private val sizeGen = IntGen(sizeRange, sizeRange.first)
 
-    override fun generate(tree: RandomTree): GenResultV2<List<T>> {
-        val sizeResult = sizeGen.generate(tree.left)
-        val listElementResults = generateElements(tree.right, sizeResult.value)
-        return buildResult(tree, sizeResult, listElementResults)
+    override fun generate(root: RandomTree): GenResultV2<List<T>> {
+        val sizeResult = sizeGen.generate(root.left)
+        val listElementResults = generateElements(root.right, sizeResult.value)
+        return buildResult(root, sizeResult, listElementResults)
     }
 
-    override fun edgeCases(tree: RandomTree): List<GenResultV2<List<T>>> {
-        return sizeGen.edgeCases(tree.left).flatMap { sizeResult ->
-            elementGen.edgeCases(tree.right).map { elementResult ->
+    override fun edgeCases(root: RandomTree): List<GenResultV2<List<T>>> {
+        return sizeGen.edgeCases(root.left).flatMap { sizeResult ->
+            elementGen.edgeCases(root.right).map { elementResult ->
                 val elementResults = List(sizeResult.value) { elementResult }
 
-                val elementResultsTree = tree.right.walkRightAndReplaceLeftTrees(
+                val elementResultsTree = root.right.walkRightAndReplaceLeftTrees(
                     elementResults.mapIndexed { index, elementResult -> index to elementResult.tree }
                 )
 
-                val reproducibleTree = tree
+                val reproducibleTree = root
                     .withLeft(sizeResult.tree)
                     .withRight(elementResultsTree)
 
@@ -31,31 +31,31 @@ internal class ListGen<T>(
     }
 
     private fun buildResult(
-        tree: RandomTree,
+        root: RandomTree,
         sizeResult: GenResultV2<Int>,
         listElementResults: List<GenResultV2<T>>,
     ): GenResultV2<List<T>> {
         val sizeBasedShrinks = sizeResult.shrinks.flatMap {
             sequence {
-                val tailRemovalShrink = tree.withLeft(it)
+                val tailRemovalShrink = root.withLeft(it)
                 yield(tailRemovalShrink)
 
                 val newSize = sizeGen.generate(it).value
                 val elementGenOffset = sizeResult.value - newSize
-                val headRemovalShrink = tree.withLeft(it).withRight(tree.skipRight(elementGenOffset + 1))
+                val headRemovalShrink = root.withLeft(it).withRight(root.skipRight(elementGenOffset + 1))
                 yield(headRemovalShrink)
             }
         }
 
         val elementBasedShrinks = listElementResults.asSequence().flatMapIndexed { index, elementResult ->
             elementResult.shrinks.map { shrink ->
-                tree.replaceLeftAtOffset(rightOffset = index + 1, newLeftTree = shrink)
+                root.replaceLeftAtOffset(rightOffset = index + 1, newLeftTree = shrink)
             }
         }
 
         return GenResultV2(
             value = listElementResults.map { it.value },
-            tree = tree,
+            tree = root,
             shrinks = sizeBasedShrinks + elementBasedShrinks,
         )
     }

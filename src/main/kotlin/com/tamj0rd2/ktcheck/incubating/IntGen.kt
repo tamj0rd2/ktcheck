@@ -10,28 +10,28 @@ internal class IntGen(
         require(shrinkTarget in range) { "Shrink target $shrinkTarget must be within the range $range" }
     }
 
-    override fun generate(tree: RandomTree): GenResultV2<Int> {
-        val value = tree.provider.int(range)
-        return buildResult(tree, value)
+    override fun generate(root: RandomTree): GenResultV2<Int> {
+        val value = root.provider.int(range)
+        return buildResult(root, value)
     }
 
-    override fun edgeCases(tree: RandomTree): List<GenResultV2<Int>> {
+    override fun edgeCases(root: RandomTree): List<GenResultV2<Int>> {
         return setOf(0, range.first, range.last)
             .flatMap { listOf(it, it - 1, it + 1) }
             .filter { it in range }
-            .map { buildResult(tree = tree.withProvider(PredeterminedValueProvider(it)), value = it) }
+            .map { buildResult(root = root.withProvider(PredeterminedValueProvider(it)), value = it) }
     }
 
     private fun buildResult(
-        tree: RandomTree,
+        root: RandomTree,
         value: Int,
     ): GenResultV2<Int> {
         val shrinkTrees = IntShrinker.shrink(value, range, shrinkTarget)
-            .map { tree.withProvider(PredeterminedValueProvider(it)) }
+            .map { root.withProvider(PredeterminedValueProvider(it)) }
 
         return GenResultV2(
             value = value,
-            tree = tree,
+            tree = root,
             shrinks = shrinkTrees,
         )
     }

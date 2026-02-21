@@ -5,42 +5,42 @@ internal class CombineWithGen<T1, T2, R>(
     private val rightGen: GenImpl<T2>,
     private val combine: (T1, T2) -> R,
 ) : GenImpl<R>() {
-    override fun generate(tree: RandomTree): GenResultV2<R> {
-        val leftResult = leftGen.generate(tree.left)
-        val rightResult = rightGen.generate(tree.right)
-        return buildResult(tree, leftResult, rightResult)
+    override fun generate(root: RandomTree): GenResultV2<R> {
+        val leftResult = leftGen.generate(root.left)
+        val rightResult = rightGen.generate(root.right)
+        return buildResult(root, leftResult, rightResult)
     }
 
-    override fun edgeCases(tree: RandomTree): List<GenResultV2<R>> {
-        val leftEdgeCases = leftGen.edgeCases(tree.left)
-        val rightEdgeCases = rightGen.edgeCases(tree.right)
+    override fun edgeCases(root: RandomTree): List<GenResultV2<R>> {
+        val leftEdgeCases = leftGen.edgeCases(root.left)
+        val rightEdgeCases = rightGen.edgeCases(root.right)
 
         if (leftEdgeCases.isEmpty() && rightEdgeCases.isEmpty()) {
             return emptyList()
         }
 
-        val leftEdgeCasesToUse = leftEdgeCases.ifEmpty { listOf(leftGen.generate(tree.left)) }
-        val rightEdgeCasesToUse = rightEdgeCases.ifEmpty { listOf(rightGen.generate(tree.right)) }
+        val leftEdgeCasesToUse = leftEdgeCases.ifEmpty { listOf(leftGen.generate(root.left)) }
+        val rightEdgeCasesToUse = rightEdgeCases.ifEmpty { listOf(rightGen.generate(root.right)) }
 
         return leftEdgeCasesToUse.flatMap { leftEdgeCase ->
             rightEdgeCasesToUse.map { rightEdgeCases ->
-                buildResult(tree, leftEdgeCase, rightEdgeCases)
+                buildResult(root, leftEdgeCase, rightEdgeCases)
             }
         }
     }
 
     private fun buildResult(
-        tree: RandomTree,
+        root: RandomTree,
         leftResult: GenResultV2<T1>,
         rightResult: GenResultV2<T2>,
     ): GenResultV2<R> {
-        val leftBasedShrinks = leftResult.shrinks.map { tree.withLeft(it) }
-        val rightBasedShrinks = rightResult.shrinks.map { tree.withRight(it) }
+        val leftBasedShrinks = leftResult.shrinks.map { root.withLeft(it) }
+        val rightBasedShrinks = rightResult.shrinks.map { root.withRight(it) }
         val shrinks = leftBasedShrinks + rightBasedShrinks
 
         return GenResultV2(
             value = combine(leftResult.value, rightResult.value),
-            tree = tree,
+            tree = root,
             shrinks = shrinks,
         )
     }
