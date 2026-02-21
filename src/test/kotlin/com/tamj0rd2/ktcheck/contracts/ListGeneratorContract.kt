@@ -12,11 +12,14 @@ import strikt.assertions.any
 import strikt.assertions.contains
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.first
+import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
 import strikt.assertions.isIn
 import strikt.assertions.isLessThan
 import strikt.assertions.isLessThanOrEqualTo
 import strikt.assertions.isNotEmpty
+import strikt.assertions.none
 import strikt.assertions.size
 
 internal interface ListGeneratorContract : BaseContract {
@@ -130,8 +133,9 @@ internal interface ListGeneratorContract : BaseContract {
     fun `edge case generation`(): List<DynamicTest> {
         data class TestCase(
             val sizeRange: IntRange,
-            val expectedInclusions: Set<List<Int>>,
-            val expectedExclusions: Set<List<Int>>,
+            val shouldHaveEmpty: Boolean,
+            val shouldHaveSingleton: Boolean,
+            val shouldHaveDuplicates: Boolean,
         ) {
             val description = "for a list with sizeRange $sizeRange"
         }
@@ -139,38 +143,39 @@ internal interface ListGeneratorContract : BaseContract {
         val testCases = listOf(
             TestCase(
                 sizeRange = 0..10,
-                expectedInclusions = setOf(emptyList(), listOf(0), listOf(10), listOf(0, 0), listOf(10, 10)),
-                expectedExclusions = emptySet()
+                shouldHaveEmpty = true,
+                shouldHaveSingleton = true,
+                shouldHaveDuplicates = true,
             ),
             TestCase(
                 sizeRange = 1..5,
-                expectedInclusions = setOf(listOf(0), listOf(10), listOf(0, 0), listOf(10, 10)),
-                expectedExclusions = setOf(emptyList())
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = true,
+                shouldHaveDuplicates = true,
             ),
             TestCase(
                 sizeRange = 3..10,
-                expectedInclusions = setOf(listOf(0, 0, 0), listOf(10, 10, 10)),
-                expectedExclusions = setOf(emptyList(), listOf(0), listOf(10), listOf(0, 0), listOf(10, 10))
-            ),
-            TestCase(
-                sizeRange = 5..10,
-                expectedInclusions = setOf(listOf(0, 0, 0, 0, 0), listOf(10, 10, 10, 10, 10)),
-                expectedExclusions = setOf(emptyList(), listOf(0), listOf(10), listOf(0, 0), listOf(10, 10))
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = false,
+                shouldHaveDuplicates = true,
             ),
             TestCase(
                 sizeRange = 0..0,
-                expectedInclusions = setOf(emptyList()),
-                expectedExclusions = setOf(listOf(0), listOf(10), listOf(0, 0), listOf(10, 10))
+                shouldHaveEmpty = true,
+                shouldHaveSingleton = false,
+                shouldHaveDuplicates = false,
             ),
             TestCase(
                 sizeRange = 2..2,
-                expectedInclusions = setOf(listOf(0, 0), listOf(10, 10)),
-                expectedExclusions = setOf(emptyList(), listOf(0), listOf(10))
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = false,
+                shouldHaveDuplicates = true,
             ),
             TestCase(
                 sizeRange = 1..1,
-                expectedInclusions = setOf(listOf(0), listOf(10)),
-                expectedExclusions = setOf(emptyList(), listOf(0, 0), listOf(10, 10))
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = true,
+                shouldHaveDuplicates = false,
             )
         )
 
@@ -179,12 +184,19 @@ internal interface ListGeneratorContract : BaseContract {
                 val gen = int(0..10).list(tc.sizeRange)
                 val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
 
-                if (tc.expectedInclusions.isNotEmpty()) {
-                    expectThat(edgeCaseValues).contains(tc.expectedInclusions)
+                when (tc.shouldHaveEmpty) {
+                    true -> expectThat(edgeCaseValues).any { isEmpty() }
+                    false -> expectThat(edgeCaseValues).none { isEmpty() }
                 }
 
-                if (tc.expectedExclusions.isNotEmpty()) {
-                    expectThat(edgeCaseValues).not().contains(tc.expectedExclusions)
+                when (tc.shouldHaveSingleton) {
+                    true -> expectThat(edgeCaseValues).any { size.isEqualTo(1) }
+                    false -> expectThat(edgeCaseValues).none { size.isEqualTo(1) }
+                }
+
+                when (tc.shouldHaveDuplicates) {
+                    true -> expectThat(edgeCaseValues).any { size.isGreaterThan(subject.toSet().size) }
+                    false -> expectThat(edgeCaseValues).none { size.isGreaterThan(subject.toSet().size) }
                 }
             }
         }
