@@ -159,4 +159,45 @@ internal interface CombinatorGeneratorContract : BaseContract {
         val edgeCaseWhereSecondIs10 = edgeCases.first { it.value.second == 10 }
         expectThat(edgeCaseWhereSecondIs10).shrunkValues.map { it.second }.isEqualTo(shrinksFor10)
     }
+
+    @Test
+    fun `combineWith can still produce edge cases for the first generator if the second generator has no edge cases`() {
+        val gen1 = int(0..10)
+        val gen2 = constant("hello")
+        val combinedGen = gen1.combineWith(gen2, ::Pair)
+
+        expectThat(gen1.edgeCases()).describedAs { "gen1 edge cases - $this" }.isNotEmpty()
+        expectThat(gen2.edgeCases()).describedAs { "gen2 edge cases - $this" }.isEmpty()
+        expectThat(combinedGen.edgeCases())
+            .describedAs { "combined edge cases - $this" }
+            .isNotEmpty()
+            .map { it.value.first }
+            .isEqualTo(gen1.edgeCases().map { it.value })
+    }
+
+    @Test
+    fun `combineWith can still produce edge cases for the second generator if the first generator has no edge cases`() {
+        val gen1 = constant("hello")
+        val gen2 = int(0..10)
+        val combinedGen = gen1.combineWith(gen2, ::Pair)
+
+        expectThat(gen1.edgeCases()).describedAs { "gen1 edge cases - $this" }.isEmpty()
+        expectThat(gen2.edgeCases()).describedAs { "gen2 edge cases - $this" }.isNotEmpty()
+        expectThat(combinedGen.edgeCases())
+            .describedAs { "combined edge cases - $this" }
+            .isNotEmpty()
+            .map { it.value.second }
+            .isEqualTo(gen2.edgeCases().map { it.value })
+    }
+
+    @Test
+    fun `combineWith doesn't yield any edge cases if neither generator has any`() {
+        val gen1 = constant("hello")
+        val gen2 = constant("world")
+        val combinedGen = gen1.combineWith(gen2, ::Pair)
+
+        expectThat(gen1.edgeCases()).describedAs { "gen1 edge cases - $this" }.isEmpty()
+        expectThat(gen2.edgeCases()).describedAs { "gen2 edge cases - $this" }.isEmpty()
+        expectThat(combinedGen.edgeCases()).isEmpty()
+    }
 }

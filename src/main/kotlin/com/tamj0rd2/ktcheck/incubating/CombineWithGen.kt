@@ -15,8 +15,15 @@ internal class CombineWithGen<T1, T2, R>(
         val leftEdgeCases = leftGen.edgeCases(tree.left)
         val rightEdgeCases = rightGen.edgeCases(tree.right)
 
-        return leftEdgeCases.flatMap { leftEdgeCase ->
-            rightEdgeCases.map { rightEdgeCases ->
+        if (leftEdgeCases.isEmpty() && rightEdgeCases.isEmpty()) {
+            return emptyList()
+        }
+
+        val leftEdgeCasesToUse = leftEdgeCases.ifEmpty { listOf(leftGen.generate(tree.left)) }
+        val rightEdgeCasesToUse = rightEdgeCases.ifEmpty { listOf(rightGen.generate(tree.right)) }
+
+        return leftEdgeCasesToUse.flatMap { leftEdgeCase ->
+            rightEdgeCasesToUse.map { rightEdgeCases ->
                 buildResult(tree, leftEdgeCase, rightEdgeCases)
             }
         }
