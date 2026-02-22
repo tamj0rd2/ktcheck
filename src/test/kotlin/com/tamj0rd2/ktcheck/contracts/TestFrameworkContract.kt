@@ -19,6 +19,7 @@ import strikt.assertions.isNotNull
 import kotlin.time.Duration.Companion.nanoseconds
 
 internal interface TestFrameworkContract : BaseContract {
+    override val exampleGen get() = null
 
     @Test
     fun `forAll reports a success if the property holds true`() {

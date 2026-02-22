@@ -1,9 +1,9 @@
 package com.tamj0rd2.ktcheck.current
 
-import com.tamj0rd2.ktcheck.contracts.CombinatorGeneratorContract
+import com.tamj0rd2.ktcheck.contracts.CombineWithGeneratorContract
 import org.junit.jupiter.api.Disabled
 
-internal class CombinatorGeneratorTests : BaseContractImpl(), CombinatorGeneratorContract {
+internal class CombineWithGeneratorTest : BaseContractImpl(), CombineWithGeneratorContract {
     // todo: when I decide whether or not to stick with incubating, I should figure out what to do with this.
     @Disabled
     override fun `combineWith can still produce edge cases for the first generator if the second generator has no edge cases`() {

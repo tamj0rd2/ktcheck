@@ -15,6 +15,9 @@ import strikt.assertions.isLessThan
 import strikt.assertions.isNotEmpty
 
 internal interface CharGeneratorContract : BaseContract {
+    // todo: once the default char set exists, remove 'a'..'z' defined here
+    override val exampleGen get() = char('a'..'z')
+
     @TestFactory
     fun `can generate a character from a collection`(): List<DynamicTest> {
         val testCases = mapOf(
@@ -45,16 +48,6 @@ internal interface CharGeneratorContract : BaseContract {
         withCounter {
             char(chars).samples().take(100000).forEach { collect(it) }
         }.checkPercentages(chars.associateWith { (100.0 / chars.count()) - 1 })
-    }
-
-    @Test
-    fun `using the same seed generates the same values`() {
-        repeatTest { seed ->
-            val gen = char('a'..'z')
-            val firstRun = gen.generate(tree(seed))
-            val secondRun = gen.generate(tree(seed))
-            expectThat(firstRun.value).isEqualTo(secondRun.value)
-        }
     }
 
     @Test

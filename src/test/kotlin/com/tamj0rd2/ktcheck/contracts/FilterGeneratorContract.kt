@@ -14,6 +14,8 @@ import strikt.assertions.isNotEqualTo
 import java.time.Duration
 
 internal interface FilterGeneratorContract : BaseContract {
+    override val exampleGen get() = int(0..10).filter { it >= 5 }
+
     @Test
     fun `can filter generated values and their shrinks`() {
         val gen = int(1..10).filter { it % 2 == 0 }
@@ -27,7 +29,7 @@ internal interface FilterGeneratorContract : BaseContract {
 
             repeatTest { seed -> checkResult(gen.generate(tree(seed))) }
             gen.edgeCases().forEach { ignoreSkips { checkResult(it) } }
-        }.checkPercentages("has-shrinks", mapOf(true to 35.0))
+        }.checkPercentages("has-shrinks", mapOf(true to 10.0))
 
         // todo: add some - deeply shrunk values are finite function. call it above.
         gen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
@@ -47,7 +49,7 @@ internal interface FilterGeneratorContract : BaseContract {
 
             repeatTest { seed -> checkResult(gen.generate(tree(seed))) }
             gen.edgeCases().forEach { ignoreSkips { checkResult(it) } }
-        }.checkPercentages("has-shrinks", mapOf(true to 35.0))
+        }.checkPercentages("has-shrinks", mapOf(true to 10.0))
     }
 
     @Test

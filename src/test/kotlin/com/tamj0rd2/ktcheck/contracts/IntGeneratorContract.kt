@@ -14,6 +14,8 @@ import strikt.assertions.isIn
 import kotlin.random.Random
 
 internal interface IntGeneratorContract : BaseContract {
+    override val exampleGen get() = int()
+
     @TestFactory
     fun `can generate an integer within a range`(): List<DynamicTest> {
         val testCases = mapOf(
@@ -57,16 +59,6 @@ internal interface IntGeneratorContract : BaseContract {
                 "zero" to 0.2
             )
         )
-    }
-
-    @Test
-    fun `using the same seed generates the same values`() {
-        repeatTest { seed ->
-            val gen = int(-1000..1000)
-            val firstRun = gen.generate(tree(seed))
-            val secondRun = gen.generate(tree(seed))
-            expectThat(firstRun.value).isEqualTo(secondRun.value)
-        }
     }
 
     @Test

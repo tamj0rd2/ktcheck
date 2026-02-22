@@ -8,6 +8,7 @@ import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.Tree
 
 internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Builders {
+    //=== Wiring ===//
     override fun tree(seed: Seed) = randomTree(seed)
     override fun Tree<*>.withLeft(left: Tree<*>) = (this as RandomTree).withLeft(left as RandomTree)
     override fun Tree<*>.withRight(right: Tree<*>) = (this as RandomTree).withRight(right as RandomTree)

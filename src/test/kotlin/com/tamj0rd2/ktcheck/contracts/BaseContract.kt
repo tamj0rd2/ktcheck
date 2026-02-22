@@ -8,15 +8,44 @@ import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.Tree
 import com.tamj0rd2.ktcheck.forAll
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import org.junit.jupiter.api.fail
 import org.opentest4j.TestSkippedException
 import strikt.api.Assertion
 import strikt.api.expectThat
+import strikt.assertions.containsExactlyInAnyOrder
+import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import java.time.Duration
 
 internal interface BaseContract : GenBuilders {
+    val exampleGen: Gen<*>?
+    val genShouldHaveEdgeCases: Boolean get() = true
+
+    fun getGenIfDefined(): Gen<Any> {
+        val gen = exampleGen
+        Assumptions.assumeTrue(gen != null)
+        @Suppress("UNCHECKED_CAST")
+        return gen as Gen<Any>
+    }
+
+    @Test
+    fun `generated values and their shrinks are deterministic`() {
+        repeatTest { seed ->
+            val gen = getGenIfDefined()
+            val originalResult = gen.generate(tree(seed))
+            val regenerated = gen.generate(tree(seed))
+
+            expectThat(regenerated).value.isEqualTo(originalResult.value)
+            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalResult.shrunkValues)
+            // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
+            expectThat(regenerated).shrunkValues.isEqualTo(originalResult.shrunkValues)
+        }
+    }
+
+    //=== Wiring ===//
     fun tree(seed: Seed = Seed.random()): Tree<*>
     fun Tree<*>.withLeft(left: Tree<*>): Tree<*>
     fun Tree<*>.withRight(right: Tree<*>): Tree<*>

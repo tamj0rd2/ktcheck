@@ -7,6 +7,8 @@ import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 
 internal interface OneOfGeneratorContract : BaseContract {
+    override val exampleGen get() = oneOf(1..10)
+
     @Test
     fun `can choose between generators uniformly`() {
         val gen = oneOf(

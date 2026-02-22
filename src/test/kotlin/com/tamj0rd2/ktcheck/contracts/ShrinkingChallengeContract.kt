@@ -20,6 +20,7 @@ import kotlin.math.abs
 
 // based on https://github.com/jlink/shrinking-challenge/tree/main/challenges
 internal interface ShrinkingChallengeContract : BaseContract {
+    override val exampleGen get() = null
 
     @Test
     fun deletion() {

@@ -19,6 +19,8 @@ import strikt.assertions.size
 import java.time.Duration
 
 internal interface DistinctListGeneratorContract : BaseContract {
+    override val exampleGen get() = int(0..10).distinctList(0..4)
+
     @Test
     fun `can generate a long distinct list without stack overflow`() {
         assertTimeoutPreemptively(Duration.ofSeconds(1)) {

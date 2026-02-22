@@ -143,6 +143,7 @@ internal interface GenBuilders {
 
     fun uuid(): Gen<UUID> = long().combineWith(long(), ::UUID)
 
+    // TODO: this should have a default
     fun char(chars: Iterable<Char>): Gen<Char> =
         oneOf(chars.distinct().sorted())
 
