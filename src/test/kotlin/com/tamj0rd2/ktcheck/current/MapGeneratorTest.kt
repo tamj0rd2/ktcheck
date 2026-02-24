@@ -4,8 +4,7 @@ import com.tamj0rd2.ktcheck.contracts.MapGeneratorContract
 import org.junit.jupiter.api.Disabled
 
 internal class MapGeneratorTest : BaseContractImpl(), MapGeneratorContract {
-    // todo: if I decide to keep this implementation, I re-enable this test and make it pass.
-    @Disabled
+    @Disabled("TODO: If I decide to keep this implementation, I need to fix this test")
     override fun `propagates mapped versions of the underlying edge cases and their shrinks`() {
         super.`propagates mapped versions of the underlying edge cases and their shrinks`()
     }
