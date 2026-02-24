@@ -60,13 +60,16 @@ private class ShrinkTracker<T>(
     fun shouldStopShrinking(): Boolean =
         shrinkingConstraint.shouldStopShrinking()
 
-    fun recordShrinkAttempt(input: T): Boolean {
+    fun recordShrinkAttempt(input: T, falsified: Boolean): Boolean {
         if (!seenValues.add(input)) return false
 
         shrinkingConstraint.onStep()
         shrinkSteps += 1
 
-        if (printSteps) println("step ${shrinkSteps}: $input")
+        if (printSteps) {
+            val prefix = if (falsified) "was falsified" else "not falsified"
+            println("$prefix: step ${shrinkSteps}: $input")
+        }
         return true
     }
 }
@@ -82,7 +85,7 @@ private tailrec fun <T> GenImpl<T>.getSmallestCounterExample(
     val shrunkInputResult = generate(candidates.next())
     val testResult = property.test(shrunkInputResult.value)
 
-    if (!tracker.recordShrinkAttempt(shrunkInputResult.value)) {
+    if (!tracker.recordShrinkAttempt(shrunkInputResult.value, testResult is Property.Falsification)) {
         return getSmallestCounterExample(property, smallestSoFar, candidates, tracker)
     }
 

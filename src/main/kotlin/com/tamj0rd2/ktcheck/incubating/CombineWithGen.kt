@@ -40,12 +40,25 @@ internal class CombineWithGen<T1, T2, R>(
     ): GenResultV2<R> {
         val leftBasedShrinks = leftResult.shrinks.map { root.withLeft(it) }
         val rightBasedShrinks = rightResult.shrinks.map { root.withRight(it) }
-        val shrinks = leftBasedShrinks + rightBasedShrinks
+
+        /**
+         * Although these shrinks would be reached recursively, keep in mind that this behaviour exists in the context
+         * of a property based testing library. Let's say we have a gen that gives back a pair of ints in range 0..10.
+         * If we recurse over all shrinks, we'll eventually reach (5, 5), however, we'll only reach it if the test is
+         * falsified before then. If all the tests that would lead to that value succeed, we'll never get to (5, 5).
+         * For example, (5, 10) might succeed, meaning (5, 5) will never be attempted.
+         * So we need cartesian shrinks to help reach values that we otherwise may not.
+         */
+        val cartesianShrinks = leftResult.shrinks.flatMap { left ->
+            rightResult.shrinks.map { right ->
+                root.withLeft(left).withRight(right)
+            }
+        }
 
         return GenResultV2(
             value = combine(leftResult.value, rightResult.value),
             tree = root,
-            shrinks = shrinks,
+            shrinks = cartesianShrinks + leftBasedShrinks + rightBasedShrinks,
         )
     }
 }

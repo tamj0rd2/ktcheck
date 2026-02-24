@@ -8,7 +8,6 @@ import com.tamj0rd2.ktcheck.Gens
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.core.tuple
 import com.tamj0rd2.ktcheck.forAll
 import com.tamj0rd2.ktcheck.positive
@@ -122,9 +121,9 @@ internal interface ShrinkingChallengeContract : BaseContract {
         val exceptionsWithBadShrinks = mutableListOf<PropertyFalsifiedException>()
 
         val counter = withCounter {
-            checkAll(testConfig, long()) { seed ->
+            repeatTest { seed ->
                 val exception = expectThrows<PropertyFalsifiedException> {
-                    forAll(TestConfig().withSeed(seed).withReporter(NoOpTestReporter), gen, test)
+                    forAll(TestConfig().withSeed(seed.value).withReporter(NoOpTestReporter), gen, test)
                 }.subject
 
                 @Suppress("UNCHECKED_CAST")

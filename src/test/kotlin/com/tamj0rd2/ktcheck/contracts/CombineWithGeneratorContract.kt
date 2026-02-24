@@ -63,11 +63,14 @@ internal interface CombineWithGeneratorContract : BaseContract {
         )
 
         val shrinksFor10 = IntShrinker.shrink(10, 0..10, 0).toList()
-        val edgeCaseWhereFirstIs10 = edgeCases.first { it.value.first == 10 }
-        expectThat(edgeCaseWhereFirstIs10).shrunkValues.map { it.first }.isEqualTo(shrinksFor10)
-
-        val edgeCaseWhereSecondIs10 = edgeCases.first { it.value.second == 10 }
-        expectThat(edgeCaseWhereSecondIs10).shrunkValues.map { it.second }.isEqualTo(shrinksFor10)
+        val edgeCaseWhereBothAre10 = edgeCases.single { it.value == Pair(10, 10) }
+        expectThat(edgeCaseWhereBothAre10).shrunkValues.contains(
+            listOf(
+                shrinksFor10.map { Pair(it, it) },
+                shrinksFor10.map { Pair(it, 10) },
+                shrinksFor10.map { Pair(10, it) },
+            ).flatten().distinct()
+        )
     }
 
     @Test
