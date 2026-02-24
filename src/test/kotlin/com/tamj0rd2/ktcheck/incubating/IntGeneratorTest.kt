@@ -1,15 +1,16 @@
 package com.tamj0rd2.ktcheck.incubating
 
 import com.tamj0rd2.ktcheck.contracts.IntGeneratorContract
+import com.tamj0rd2.ktcheck.contracts.value
 import org.junit.jupiter.api.Test
-import strikt.api.expectThrows
+import strikt.api.expectThat
+import strikt.assertions.isIn
 
 internal class IntGeneratorTest : BaseContractImpl(), IntGeneratorContract {
     @Test
-    fun `throws if the given value provider would cause the generated value to be out of range`() {
+    fun `falls back to random generation if the predetermined value falls outside of the generator's range`() {
         val gen = int(0..10)
-        val tree = tree().withProvider(PredeterminedValueProvider(100))
-
-        expectThrows<IllegalStateException> { gen.generate(tree) }
+        val tree = tree().withPredeterminedValue(100)
+        expectThat(gen.generate(tree)).value.isIn(0..10)
     }
 }

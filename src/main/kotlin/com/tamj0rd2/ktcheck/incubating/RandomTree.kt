@@ -5,17 +5,28 @@ import com.tamj0rd2.ktcheck.core.Tree
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-internal data class RandomTree(
+@ConsistentCopyVisibility
+internal data class RandomTree private constructor(
     val provider: ValueProvider,
     override val lazyLeft: Lazy<RandomTree>,
     override val lazyRight: Lazy<RandomTree>,
 ) : Tree<ValueProvider>() {
+    override fun toString(): String = visualise(maxDepth = 10)
+
     override val data = provider
 
     override val left: RandomTree get() = lazyLeft.value
     override val right: RandomTree get() = lazyRight.value
 
-    fun withProvider(provider: ValueProvider): RandomTree = copy(provider = provider)
+    fun withPredeterminedValue(value: Int): RandomTree {
+        val provider = when (provider) {
+            is PredeterminedValueProvider -> provider.randomValueProvider
+            is RandomValueProvider -> provider
+        }
+
+        return copy(provider = PredeterminedValueProvider(value, provider))
+    }
+
     fun withLeft(left: RandomTree): RandomTree = copy(lazyLeft = lazyOf(left))
     fun withRight(right: RandomTree): RandomTree = copy(lazyRight = lazyOf(right))
 
@@ -74,7 +85,7 @@ internal sealed interface ValueProvider {
     fun int(range: IntRange): Int
 }
 
-internal data class RandomValueProvider(private val seed: Seed) : ValueProvider {
+private data class RandomValueProvider(private val seed: Seed) : ValueProvider {
     private val random get() = Random(seed.value)
 
     override fun int(range: IntRange): Int {
@@ -83,12 +94,18 @@ internal data class RandomValueProvider(private val seed: Seed) : ValueProvider 
 }
 
 @ConsistentCopyVisibility
-internal data class PredeterminedValueProvider private constructor(private val value: Any) : ValueProvider {
-    constructor(value: Int) : this(value as Any)
+private data class PredeterminedValueProvider private constructor(
+    private val value: Any,
+    val randomValueProvider: RandomValueProvider,
+) : ValueProvider {
+    constructor(value: Int, fallback: RandomValueProvider) : this(value as Any, fallback)
 
-    override fun int(range: IntRange): Int {
-        check(value is Int) { "expected an Int but got ${value::class.simpleName}" }
-        check(value in range) { "expected an Int in range $range but got $value" }
-        return value
-    }
+    override fun int(range: IntRange): Int =
+        when (value) {
+            !is Int,
+            !in range,
+                -> randomValueProvider.int(range)
+
+            else -> value
+        }
 }
