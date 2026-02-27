@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.incubating
 
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
+import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.contracts.BaseContract
 import com.tamj0rd2.ktcheck.contracts.GenResults
 import com.tamj0rd2.ktcheck.contracts.repeatTest
@@ -65,7 +66,11 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
     private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {
             for (shrink in shrinks) {
-                yield(generate(shrink))
+                try {
+                    yield(generate(shrink))
+                } catch (e: GenerationException) {
+                    // todo: I need to ensure the real test framework skips these shrinking failures too
+                }
             }
         }
 
