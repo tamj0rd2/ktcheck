@@ -34,8 +34,8 @@ internal interface DistinctListGeneratorContract : BaseContract {
 
         repeatTest { seed ->
             val result = gen.generate(tree(seed))
-            expectThat(result.value).hasSize(5)
-            expectThat(result.value.toSet()).hasSize(5)
+            expectThat(result).value.hasSize(5)
+            expectThat(result).value.get { toSet() }.hasSize(5)
         }
     }
 
@@ -60,25 +60,26 @@ internal interface DistinctListGeneratorContract : BaseContract {
 
     @Test
     fun `shrinks a list of 2 elements`() {
-        repeat(100) {
+        repeatTest { seed ->
             val gen = int(0..10).distinctList(size = 0..10)
+            val result = gen.generate(tree(seed))
+            if (result.value.size != 2) skipIteration()
 
-            val tree = gen.findTreeProducing { it == listOf(1, 4) }
-            val result = gen.generate(tree)
-            expectThat(result.value).isEqualTo(listOf(1, 4))
+            val firstValue = result.value[0]
+            val secondValue = result.value[1]
+
+            val firstValueShrunk = shrink(firstValue, 0..10).map { listOf(it, secondValue) }
+            val secondValueShrunk = shrink(secondValue, 0..10).map { listOf(firstValue, it) }
+            val expectedValueShrinks = (firstValueShrunk + secondValueShrunk).filter { it.toSet().size == 2 }.toList()
 
             expectThat(result).shrunkValues.isNotEmpty().containsExactlyInAnyOrder(
                 // tries reducing set size (now 0)
                 listOf(),
                 // continues reducing set size (now 1). From tail first, then head.
-                listOf(1),
-                listOf(4),
-                // shrinks values, starting with index 0
-                listOf(0, 4),
-                // continues shrinking values at index 1
-                listOf(1, 0),
-                listOf(1, 2),
-                listOf(1, 3),
+                listOf(firstValue),
+                listOf(secondValue),
+                // element shrinks
+                *expectedValueShrinks.toTypedArray(),
             )
         }
     }

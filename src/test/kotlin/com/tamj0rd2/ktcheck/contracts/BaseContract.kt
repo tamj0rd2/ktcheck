@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
+import com.tamj0rd2.ktcheck.HardcodedTestConfig
 import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
@@ -118,13 +119,17 @@ fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequi
 internal val <T> Assertion.Builder<GenResults<T>>.value get() = get { value }
 internal val <T> Assertion.Builder<GenResults<T>>.shrunkValues get() = get { shrunkValues }.describedAs { "shrunk values: ($this)" }
 
-internal fun <T> ignoreSkips(block: () -> T) {
+/**
+ * @return true if the property ran. false if the property was skipped
+ */
+internal fun <T> ignoreSkips(block: () -> T): Boolean =
     try {
         block()
+        true
     } catch (e: TestSkippedException) {
         // skip and continue to the next iteration
+        false
     }
-}
 
 internal fun repeatTest(property: (Seed) -> Unit) {
     assertTimeoutPreemptively(Duration.ofSeconds(2)) {
@@ -136,10 +141,7 @@ internal fun repeatTest(property: (Seed) -> Unit) {
 
             val seed = Seed.random()
             try {
-                property(seed)
-                successCount++
-            } catch (e: TestSkippedException) {
-                // skip and continue to the next iteration
+                if (ignoreSkips { property(seed) }) successCount += 1
             } catch (e: Throwable) {
                 println("Test failed on iteration $iteration - $seed")
                 println("Successes beforehand: $successCount")
@@ -147,6 +149,12 @@ internal fun repeatTest(property: (Seed) -> Unit) {
             }
         }
     }
+}
+
+@HardcodedTestConfig
+@Suppress("unused")
+internal fun repeatTest(seed: Long, property: (Seed) -> Unit) {
+    assertTimeoutPreemptively(Duration.ofSeconds(2)) { property(Seed(seed)) }
 }
 
 internal fun skipIteration(): Nothing = throw TestSkippedException()
