@@ -36,7 +36,7 @@ internal sealed class GenImpl<T> : Gen<T> {
 
     override fun list(size: IntRange) = ListGen(this, size)
 
-    override fun distinctList(size: IntRange) = DistinctListGen(this, size)
+    override fun distinctList(size: IntRange) = TODO()
 }
 
 internal data class GenResultV2<T>(

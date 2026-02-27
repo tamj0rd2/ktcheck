@@ -63,7 +63,7 @@ internal class ListGen<T>(
     private fun generateElements(
         initialTree: RandomTree,
         size: Int,
-    ): List<GenResultV2<T>> {
+    ): MutableList<GenResultV2<T>> {
         val results = mutableListOf<GenResultV2<T>>()
         var tree = initialTree
 

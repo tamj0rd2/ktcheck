@@ -18,11 +18,8 @@ internal data class RandomTree private constructor(
     override val left: RandomTree get() = lazyLeft.value
     override val right: RandomTree get() = lazyRight.value
 
-    // todo: inline this?
     fun withPredeterminedValue(value: Int): RandomTree =
-        withProvider(PredeterminedValueProvider(value, provider))
-
-    fun withProvider(provider: ValueProvider): RandomTree = copy(provider = provider)
+        copy(provider = PredeterminedValueProvider(value, provider))
 
     fun withLeft(left: RandomTree): RandomTree = copy(lazyLeft = lazyOf(left))
     fun withRight(right: RandomTree): RandomTree = copy(lazyRight = lazyOf(right))
