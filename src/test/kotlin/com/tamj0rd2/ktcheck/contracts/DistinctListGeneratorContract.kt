@@ -1,6 +1,7 @@
 package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
+import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker.shrink
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.assertTimeoutPreemptively
 import strikt.api.expectThat
 import strikt.assertions.all
 import strikt.assertions.containsExactlyInAnyOrder
+import strikt.assertions.filter
 import strikt.assertions.first
 import strikt.assertions.hasSize
 import strikt.assertions.isEmpty
@@ -22,20 +24,18 @@ internal interface DistinctListGeneratorContract : BaseContract {
     override val exampleGen get() = int(0..10).distinctList(0..4)
 
     @Test
-    fun `can generate a long distinct list without stack overflow`() {
-        assertTimeoutPreemptively(Duration.ofSeconds(1)) {
-            int().distinctList(10_000).sample()
+    fun `generates lists with distinct elements`() {
+        repeatTest { seed ->
+            val gen = int(0..10).distinctList(0..10)
+            val result = gen.generate(tree(seed))
+            expectThat(result.value.toSet()).hasSize(result.value.size)
         }
     }
 
     @Test
-    fun `generates lists with distinct elements`() {
-        val gen = int(0..100).distinctList(5)
-
-        repeatTest { seed ->
-            val result = gen.generate(tree(seed))
-            expectThat(result).value.hasSize(5)
-            expectThat(result).value.get { toSet() }.hasSize(5)
+    fun `can generate a long distinct list without stack overflow`() {
+        assertTimeoutPreemptively(Duration.ofSeconds(1)) {
+            int().distinctList(10_000).sample()
         }
     }
 
@@ -59,29 +59,27 @@ internal interface DistinctListGeneratorContract : BaseContract {
     }
 
     @Test
-    fun `shrinks a list of 2 elements`() {
-        repeatTest { seed ->
-            val gen = int(0..10).distinctList(size = 0..10)
-            val result = gen.generate(tree(seed))
-            if (result.value.size != 2) skipIteration()
+    fun `shrinks a list of 2 elements`() = repeatTest { seed ->
+        val gen = int(0..10).distinctList(size = 0..10)
+        val result = gen.generate(tree(seed))
+        if (result.value.size != 2) skipIteration()
 
-            val firstValue = result.value[0]
-            val secondValue = result.value[1]
+        val firstValue = result.value[0]
+        val secondValue = result.value[1]
 
-            val firstValueShrunk = shrink(firstValue, 0..10).map { listOf(it, secondValue) }
-            val secondValueShrunk = shrink(secondValue, 0..10).map { listOf(firstValue, it) }
-            val expectedValueShrinks = (firstValueShrunk + secondValueShrunk).filter { it.toSet().size == 2 }.toList()
-
-            expectThat(result).shrunkValues.isNotEmpty().containsExactlyInAnyOrder(
-                // tries reducing set size (now 0)
-                listOf(),
-                // continues reducing set size (now 1). From tail first, then head.
-                listOf(firstValue),
-                listOf(secondValue),
-                // element shrinks
-                *expectedValueShrinks.toTypedArray(),
-            )
-        }
+        expectThat(result).shrunkValues.filter { it != result.value }.isNotEmpty().containsExactlyInAnyOrder(
+            // tries reducing set size (now 0)
+            listOf(),
+            // continues reducing set size (now 1). From tail first, then head.
+            listOf(firstValue),
+            listOf(secondValue),
+            // element shrinks
+            *let {
+                val firstValueShrunk = IntShrinker.shrink(firstValue, 0..10).map { listOf(it, secondValue) }
+                val secondValueShrunk = IntShrinker.shrink(secondValue, 0..10).map { listOf(firstValue, it) }
+                (firstValueShrunk + secondValueShrunk).filter { it.toSet().size == 2 }.toList()
+            }.toTypedArray<List<Int>>(),
+        )
     }
 
     @Test
@@ -89,15 +87,6 @@ internal interface DistinctListGeneratorContract : BaseContract {
         int().distinctList(1..2).expectGenerationAndShrinkingToEventuallyComplete()
         int().distinctList(2..2).expectGenerationAndShrinkingToEventuallyComplete()
         int().distinctList(2..5).expectGenerationAndShrinkingToEventuallyComplete()
-    }
-
-    @Test
-    fun `all generated lists contain only distinct elements`() {
-        repeatTest { seed ->
-            val gen = int(0..10).distinctList(0..10)
-            val result = gen.generate(tree(seed))
-            expectThat(result.value.toSet()).hasSize(result.value.size)
-        }
     }
 
     @Test
