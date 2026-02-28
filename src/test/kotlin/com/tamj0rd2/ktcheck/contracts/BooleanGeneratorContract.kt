@@ -13,7 +13,7 @@ internal interface BooleanGeneratorContract : BaseContract {
 
     // todo: should a boolean have edge cases? maybe the edge case is whichever value we're not shrinking toward?
     //  check what other property based testing libraries do.
-    override val genShouldHaveEdgeCases get() = false
+    override val genSupportsEdgeCases get() = false
 
     @Test
     fun `generates a reasonable distribution of values over multiple runs`() {

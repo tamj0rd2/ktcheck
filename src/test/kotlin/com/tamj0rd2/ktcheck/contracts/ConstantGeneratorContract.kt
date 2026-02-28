@@ -7,7 +7,8 @@ import strikt.assertions.isEqualTo
 
 internal interface ConstantGeneratorContract : BaseContract {
     override val exampleGen get() = constant("hello")
-    override val genShouldHaveEdgeCases get() = false
+    override val genSupportsShrinking get() = false
+    override val genSupportsEdgeCases get() = false
 
     @Test
     fun `constant always produces the same value and doesn't shrink`() {

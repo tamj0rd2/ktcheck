@@ -23,7 +23,8 @@ import java.time.Duration
 
 internal interface BaseContract : GenBuilders {
     val exampleGen: Gen<*>?
-    val genShouldHaveEdgeCases: Boolean get() = true
+    val genSupportsShrinking: Boolean get() = true
+    val genSupportsEdgeCases: Boolean get() = true
 
     fun getGenIfDefined(): Gen<Any> {
         val gen = exampleGen
@@ -33,13 +34,25 @@ internal interface BaseContract : GenBuilders {
     }
 
     @Test
-    fun `generated values and their shrinks are deterministic`() {
+    fun `generated values are deterministic`() {
         repeatTest { seed ->
             val gen = getGenIfDefined()
             val originalResult = gen.generate(tree(seed))
             val regenerated = gen.generate(tree(seed))
 
             expectThat(regenerated).value.isEqualTo(originalResult.value)
+        }
+    }
+
+    @Test
+    fun `shrinks of generated values are deterministic`() {
+        Assumptions.assumeTrue(genSupportsShrinking, "skipped as this gen doesn't support shrinking")
+
+        repeatTest { seed ->
+            val gen = getGenIfDefined()
+            val originalResult = gen.generate(tree(seed))
+            val regenerated = gen.generate(tree(seed))
+
             expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalResult.shrunkValues)
             // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
             expectThat(regenerated).shrunkValues.isEqualTo(originalResult.shrunkValues)

@@ -96,12 +96,14 @@ internal interface DistinctListGeneratorContract : BaseContract {
     @Test
     fun `does not produce any shrinks when the list size is equal to the number of distinct values`() {
         // note: there are only 3 possible distinct values. So a distinct list of size 3 can only ever be achieved once
-        val intGen = int(1..3)
-        val gen = intGen.distinctList(3)
+        repeatTest { seed ->
+            val intGen = int(1..3)
+            val gen = intGen.distinctList(3)
 
-        val result = gen.generate(tree())
-        expectThat(result).value.hasSize(3)
-        expectThat(result).shrunkValues.isEmpty()
+            val result = gen.generate(tree(seed))
+            expectThat(result).value.hasSize(3)
+            expectThat(result).shrunkValues.isEmpty()
+        }
     }
 
     @Test
