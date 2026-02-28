@@ -18,6 +18,9 @@ internal data class RandomTree private constructor(
     override val left: RandomTree get() = lazyLeft.value
     override val right: RandomTree get() = lazyRight.value
 
+    // todo: make this a tree type of its own, rather than a provider?
+    val isTerminator: Boolean get() = provider is TerminalValueProvider
+
     fun withPredeterminedValue(value: Int): RandomTree =
         copy(provider = PredeterminedValueProvider(value, provider))
 
@@ -27,10 +30,13 @@ internal data class RandomTree private constructor(
     fun skipRight(amount: Int) = walkRight(this, amount)
 
     fun replaceLeftAtOffset(rightOffset: Int, newLeftTree: RandomTree): RandomTree {
-        return walkRightAndReplaceLeftTrees(listOf(rightOffset to newLeftTree))
+        return walkRightAndReplaceLeftTrees(listOf(rightOffset to newLeftTree), null)
     }
 
-    fun walkRightAndReplaceLeftTrees(newTrees: List<Pair<Int, RandomTree>>): RandomTree {
+    fun walkRightAndReplaceLeftTrees(
+        newTrees: List<Pair<Int, RandomTree>>,
+        terminator: RandomTree?,
+    ): RandomTree {
         if (newTrees.isEmpty()) return this
 
         val indicesToReplace = newTrees.map { it.first }.toSet()
@@ -41,7 +47,7 @@ internal data class RandomTree private constructor(
         // todo: make this tail recursive.
         fun RandomTree.replaceLeftTree(index: Int): RandomTree = when {
             index > maxIndex -> {
-                this
+                terminator ?: this
             }
 
             index !in indicesToReplace -> {
@@ -66,6 +72,13 @@ internal data class RandomTree private constructor(
             lazyRight = lazy { new(seed.next(2)) },
         )
 
+        val terminal
+            get(): RandomTree = RandomTree(
+                provider = TerminalValueProvider,
+                lazyLeft = lazy { terminal },
+                lazyRight = lazy { terminal },
+            )
+
         val forEdgeCases = new(Seed(0))
 
         private tailrec fun walkRight(tree: RandomTree, amount: Int): RandomTree = when (amount) {
@@ -81,6 +94,12 @@ internal sealed interface ValueProvider {
 
 internal interface DecoratedValueProvider : ValueProvider {
     val delegate: ValueProvider
+}
+
+data object TerminalValueProvider : ValueProvider {
+    override fun int(range: IntRange): Int {
+        error("${TerminalValueProvider::class.simpleName} cannot produce values")
+    }
 }
 
 private data class RandomValueProvider(private val seed: Seed) : ValueProvider {

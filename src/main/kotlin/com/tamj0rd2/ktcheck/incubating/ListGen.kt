@@ -18,7 +18,8 @@ internal class ListGen<T>(
                 val elementResults = List(sizeResult.value) { elementResult }
 
                 val elementResultsTree = root.right.walkRightAndReplaceLeftTrees(
-                    elementResults.mapIndexed { index, elementResult -> index to elementResult.tree }
+                    elementResults.mapIndexed { index, elementResult -> index to elementResult.tree },
+                    RandomTree.terminal,
                 )
 
                 val reproducibleTree = root

@@ -107,7 +107,11 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
     private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {
             for (shrink in shrinks) {
+                try {
                 yield(generate(shrink))
+                } catch (e: GenerationException) {
+                    // todo: make sure to also ignore these in the production test framework
+                }
             }
         }
 

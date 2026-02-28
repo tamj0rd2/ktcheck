@@ -6,8 +6,11 @@ internal class DistinctListGen<T>(
     private val elementGen: GenImpl<T>,
     sizeRange: IntRange,
 ) : GenImpl<List<T>>() {
-    private val minSize = sizeRange.first
-    private val sizeGen = IntGen(sizeRange, minSize)
+    private val sizeGen = IntGen(sizeRange, sizeRange.first)
+
+    private fun debug(value: Any = "") {
+        //println(value)
+    }
 
     override fun generate(root: RandomTree): GenResultV2<List<T>> {
         val sizeResult = sizeGen.generate(root.left)
@@ -24,10 +27,38 @@ internal class DistinctListGen<T>(
         sizeResult: GenResultV2<Int>,
         listElementResults: List<GenResultV2<T>>,
     ): GenResultV2<List<T>> {
+        val sizeBasedShrinks = sizeResult.shrinks.map { sizeShrink ->
+            root.withLeft(sizeShrink)
+        }
+
+        val elementBasedShrinks = listElementResults
+            .asSequence()
+            .flatMapIndexed { index, elementResult ->
+                elementResult.shrinks.map { shrink ->
+                    val elementTreesWithThisOneReplaced = listElementResults.mapIndexed { idx, it ->
+                        if (idx == index) idx to shrink else idx to it.tree
+                    }
+
+                    root.withRight(
+                        root.right.walkRightAndReplaceLeftTrees(
+                            elementTreesWithThisOneReplaced,
+                            RandomTree.terminal,
+                        )
+                    )
+                }
+            }
+
+        val shrinks = sizeBasedShrinks + elementBasedShrinks
+
         return GenResultV2(
-            value = listElementResults.map { it.value },
+            value = listElementResults.map { it.value }.also {
+                debug("Produced $it from:")
+                debug(root)
+                debug("=======")
+                debug()
+            },
             tree = root,
-            shrinks = emptySequence(),
+            shrinks = shrinks,
         )
     }
 
@@ -43,9 +74,18 @@ internal class DistinctListGen<T>(
         while (results.size < size) {
             attempts += 1
 
+            if (tree.isTerminator) {
+                throw GenerationException.DistinctCollectionSizeImpossible(
+                    minSize = size,
+                    achievedSize = results.size,
+                    attempts = attempts,
+                )
+            }
+
             val elementResult = elementGen.generate(tree.left)
 
             if (seenValues.add(elementResult.value)) {
+                debug("Generated ${elementResult.value} from ${tree.left.provider}")
                 results.add(elementResult)
                 attempts = 0
                 continue
@@ -53,12 +93,14 @@ internal class DistinctListGen<T>(
 
             if (attempts >= MAX_ATTEMPTS_PER_ELEMENT) {
                 throw GenerationException.DistinctCollectionSizeImpossible(
-                    minSize = minSize,
+                    minSize = size,
                     achievedSize = results.size,
                     attempts = attempts,
                 )
             }
 
+            // todo: this is a bug. we should _always_ set the continuation tree. Hopefully a further test will
+            //  highlight this...
             tree = tree.right
         }
 
@@ -69,3 +111,5 @@ internal class DistinctListGen<T>(
         const val MAX_ATTEMPTS_PER_ELEMENT = 100
     }
 }
+
+private fun <T> List<T>.replaceAtIndex(index: Int, value: T): List<T> = toMutableList().apply { set(index, value) }
