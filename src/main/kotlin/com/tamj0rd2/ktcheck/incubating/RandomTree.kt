@@ -31,53 +31,6 @@ internal data class RandomTree private constructor(
 
     fun skipRight(amount: Int) = walkRight(this, amount)
 
-    fun replaceLeftAtOffset(rightOffset: Int, newLeftTree: RandomTree): RandomTree =
-        walkRightAndReplaceLeftTrees(
-            newTrees = listOf(rightOffset to newLeftTree),
-            terminator = null
-        )
-
-    fun walkRightAndReplaceLeftTrees(
-        newTrees: List<RandomTree>,
-        terminator: RandomTree?,
-    ): RandomTree = walkRightAndReplaceLeftTrees(
-        newTrees = newTrees.mapIndexed { index, tree -> index to tree },
-        terminator = terminator
-    )
-
-    @JvmName("walkRightAndReplaceLeftTreesIndexed")
-    fun walkRightAndReplaceLeftTrees(
-        newTrees: List<Pair<Int, RandomTree>>,
-        terminator: RandomTree?,
-    ): RandomTree {
-        if (newTrees.isEmpty()) return this
-
-        val indicesToReplace = newTrees.map { it.first }.toSet()
-        val maxIndex = indicesToReplace.max()
-        val newTrees = newTrees.sortedBy { it.first }.map { it.second }
-        var newTreeMarker = 0
-
-        // todo: make this tail recursive.
-        fun RandomTree.replaceLeftTree(index: Int): RandomTree = when {
-            index > maxIndex -> {
-                terminator ?: this
-            }
-
-            index !in indicesToReplace -> {
-                withRight(right.replaceLeftTree(index + 1))
-            }
-
-            else -> {
-                val newTree = newTrees[newTreeMarker]
-                newTreeMarker += 1
-                withLeft(newTree).withRight(right.replaceLeftTree(index + 1))
-            }
-        }
-
-        return replaceLeftTree(0)
-    }
-
-
     companion object {
         fun new(seed: Seed = Seed.random()): RandomTree = RandomTree(
             provider = RandomValueProvider(seed),
