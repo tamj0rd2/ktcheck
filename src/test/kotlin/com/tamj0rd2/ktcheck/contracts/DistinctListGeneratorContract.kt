@@ -53,8 +53,12 @@ internal interface DistinctListGeneratorContract : BaseContract {
             if (result.value.size != 1) skipIteration()
 
             val expectedValueShrinks = shrink(result.value.single(), 0..10).map { listOf(it) }.toList()
-            expectThat(result).shrunkValues.first().isEqualTo(emptyList())
-            expectThat(result).shrunkValues.get { drop(1) }.isEqualTo(expectedValueShrinks)
+            expectThat(result).shrunkValues.isEqualTo(
+                listOf(
+                    emptyList(),
+                    *expectedValueShrinks.toTypedArray(),
+                )
+            )
         }
     }
 
