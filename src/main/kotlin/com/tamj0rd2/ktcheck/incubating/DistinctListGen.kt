@@ -66,12 +66,13 @@ internal class DistinctListGen<T>(
         initialTree: RandomTree,
         size: Int,
     ): MutableList<GenResultV2<T>> {
+        val trees = initialTree.traversingRight().iterator()
         val results = mutableListOf<GenResultV2<T>>()
         val seenValues = mutableSetOf<T>()
-        var tree = initialTree
         var attempts = 0
 
         while (results.size < size) {
+            val tree = trees.next()
             attempts += 1
 
             if (tree.isTerminator) {
@@ -98,10 +99,6 @@ internal class DistinctListGen<T>(
                     attempts = attempts,
                 )
             }
-
-            // todo: this is a bug. we should _always_ set the continuation tree. Hopefully a further test will
-            //  highlight this...
-            tree = tree.right
         }
 
         return results

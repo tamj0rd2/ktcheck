@@ -8,7 +8,7 @@ internal class FilterGen<T>(
     private val predicate: (T) -> Boolean,
 ) : GenImpl<T>() {
     override fun generate(root: RandomTree): GenResultV2<T> {
-        return generateSequence(root) { it.right }
+        return root.traversingRight()
             .take(threshold)
             .map { gen.generate(it.left) }
             .filter { predicate(it.value) }

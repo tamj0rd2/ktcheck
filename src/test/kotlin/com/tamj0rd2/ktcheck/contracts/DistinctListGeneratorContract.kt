@@ -3,6 +3,7 @@ package com.tamj0rd2.ktcheck.contracts
 import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker.shrink
+import com.tamj0rd2.ktcheck.full
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.assertTimeoutPreemptively
@@ -11,6 +12,7 @@ import strikt.assertions.all
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.filter
 import strikt.assertions.first
+import strikt.assertions.get
 import strikt.assertions.hasSize
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
@@ -153,6 +155,23 @@ internal interface DistinctListGeneratorContract : BaseContract {
             val result = gen.generate(tree(seed))
             val originalSize = result.value.size
             expectThat(result).shrunkValues.all { size.isIn(minSize..originalSize) }
+        }
+    }
+
+    @Test
+    fun `follows the left generation, right continuation pattern`() {
+        repeatTest { seed ->
+            // using the full int range should make conflicts (and thereby flaky tests) incredibly unlikely.
+            val intGen = int(IntRange.full)
+            val listGen = intGen.distinctList(2)
+            val root = tree(seed)
+            val result = listGen.generate(root)
+
+            expectThat(result.value) {
+                // both preceded with root.right because root.left is used for size generation
+                get(0).isEqualTo(intGen.generate(root.right.left).value)
+                get(1).isEqualTo(intGen.generate(root.right.right.left).value)
+            }
         }
     }
 }

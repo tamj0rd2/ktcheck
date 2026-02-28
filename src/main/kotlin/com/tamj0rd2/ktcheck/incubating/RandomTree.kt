@@ -18,6 +18,8 @@ internal data class RandomTree private constructor(
     override val left: RandomTree get() = lazyLeft.value
     override val right: RandomTree get() = lazyRight.value
 
+    fun traversingRight() = generateSequence(this) { it.right }
+
     // todo: make this a tree type of its own, rather than a provider?
     val isTerminator: Boolean get() = provider is TerminalValueProvider
 
