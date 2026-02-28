@@ -5,11 +5,6 @@ import org.junit.jupiter.api.Disabled
 
 internal class DistinctListGeneratorTest : BaseContractImpl(), DistinctListGeneratorContract {
     @Disabled("todo: make this pass")
-    override fun `throws when unable to generate enough distinct elements`() {
-        super.`throws when unable to generate enough distinct elements`()
-    }
-
-    @Disabled("todo: make this pass")
     override fun `edge cases and their shrinks are reproducible via their returned tree`() {
         super.`edge cases and their shrinks are reproducible via their returned tree`()
     }
