@@ -31,10 +31,21 @@ internal data class RandomTree private constructor(
 
     fun skipRight(amount: Int) = walkRight(this, amount)
 
-    fun replaceLeftAtOffset(rightOffset: Int, newLeftTree: RandomTree): RandomTree {
-        return walkRightAndReplaceLeftTrees(listOf(rightOffset to newLeftTree), null)
-    }
+    fun replaceLeftAtOffset(rightOffset: Int, newLeftTree: RandomTree): RandomTree =
+        walkRightAndReplaceLeftTrees(
+            newTrees = listOf(rightOffset to newLeftTree),
+            terminator = null
+        )
 
+    fun walkRightAndReplaceLeftTrees(
+        newTrees: List<RandomTree>,
+        terminator: RandomTree?,
+    ): RandomTree = walkRightAndReplaceLeftTrees(
+        newTrees = newTrees.mapIndexed { index, tree -> index to tree },
+        terminator = terminator
+    )
+
+    @JvmName("walkRightAndReplaceLeftTreesIndexed")
     fun walkRightAndReplaceLeftTrees(
         newTrees: List<Pair<Int, RandomTree>>,
         terminator: RandomTree?,

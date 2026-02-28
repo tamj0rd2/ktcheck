@@ -27,28 +27,31 @@ internal class DistinctListGen<T>(
         sizeResult: GenResultV2<Int>,
         listElementResults: List<GenResultV2<T>>,
     ): GenResultV2<List<T>> {
-        val sizeBasedShrinks = sizeResult.shrinks.map { sizeShrink ->
-            root.withLeft(sizeShrink)
+        val sizeShrinks = sizeResult.shrinks.flatMap { sizeShrink ->
+            val appliedSizeShrink = root.withLeft(sizeShrink)
+
+            val newSize = sizeGen.generate(sizeShrink).value
+            // todo: convenience functions around this would be nice. doing the same thing in ListGen, and multiple
+            //  times across this file
+            val headRemovalShrink = appliedSizeShrink.withRight(
+                root.right.walkRightAndReplaceLeftTrees(
+                    newTrees = listElementResults.takeLast(newSize).map { it.tree },
+                    terminator = RandomTree.terminal,
+                )
+            )
+            sequenceOf(appliedSizeShrink, headRemovalShrink)
         }
 
-        val elementBasedShrinks = listElementResults
-            .asSequence()
-            .flatMapIndexed { index, elementResult ->
-                elementResult.shrinks.map { shrink ->
-                    val elementTreesWithThisOneReplaced = listElementResults.mapIndexed { idx, it ->
-                        if (idx == index) idx to shrink else idx to it.tree
-                    }
-
-                    root.withRight(
-                        root.right.walkRightAndReplaceLeftTrees(
-                            elementTreesWithThisOneReplaced,
-                            RandomTree.terminal,
-                        )
+        val elementBasedShrinks = listElementResults.asSequence().flatMapIndexed { index, elementResult ->
+            elementResult.shrinks.map { shrink ->
+                root.withRight(
+                    root.right.walkRightAndReplaceLeftTrees(
+                        newTrees = listElementResults.mapIndexed { idx, it -> if (idx == index) shrink else it.tree },
+                        terminator = RandomTree.terminal,
                     )
-                }
+                )
             }
-
-        val shrinks = sizeBasedShrinks + elementBasedShrinks
+        }
 
         return GenResultV2(
             value = listElementResults.map { it.value }.also {
@@ -58,7 +61,7 @@ internal class DistinctListGen<T>(
                 debug()
             },
             tree = root,
-            shrinks = shrinks,
+            shrinks = sizeShrinks + elementBasedShrinks,
         )
     }
 
@@ -73,7 +76,6 @@ internal class DistinctListGen<T>(
 
         while (results.size < size) {
             val tree = trees.next()
-            attempts += 1
 
             if (tree.isTerminator) {
                 throw GenerationException.DistinctCollectionSizeImpossible(
@@ -82,6 +84,8 @@ internal class DistinctListGen<T>(
                     attempts = attempts,
                 )
             }
+
+            attempts += 1
 
             val elementResult = elementGen.generate(tree.left)
 

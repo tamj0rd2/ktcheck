@@ -15,11 +15,6 @@ internal class DistinctListGeneratorTest : BaseContractImpl(), DistinctListGener
     }
 
     @Disabled("todo: make this pass")
-    override fun `shrinks a list of 2 elements`() {
-        super.`shrinks a list of 2 elements`()
-    }
-
-    @Disabled("todo: make this pass")
     override fun `can shrink lists with a minimum size greater than 0`() {
         super.`can shrink lists with a minimum size greater than 0`()
     }
