@@ -1,6 +1,10 @@
 package com.tamj0rd2.ktcheck.incubating
 
 import com.tamj0rd2.ktcheck.GenerationException
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.asFailure
+import dev.forkhandles.result4k.asSuccess
+import dev.forkhandles.result4k.onFailure
 
 internal class DistinctListGen<T>(
     elementGen: GenImpl<T>,
@@ -10,7 +14,7 @@ internal class DistinctListGen<T>(
     override fun generateElements(
         initialTree: RandomTree,
         size: Int,
-    ): List<GeneratedValue<T>> {
+    ): Result4k<List<GeneratedValue<T>>, GenerationException> {
         val trees = initialTree.traversingRight().iterator()
         val results = mutableListOf<GeneratedValue<T>>()
         val seenValues = mutableSetOf<T>()
@@ -20,16 +24,16 @@ internal class DistinctListGen<T>(
             val tree = trees.next()
 
             if (tree.isTerminator) {
-                throw GenerationException.DistinctCollectionSizeImpossible(
+                return GenerationException.DistinctCollectionSizeImpossible(
                     minSize = size,
                     achievedSize = results.size,
                     attempts = attempts,
-                )
+                ).asFailure()
             }
 
             attempts += 1
 
-            val elementResult = elementGen.generate(tree.left)
+            val elementResult = elementGen.generate(tree.left).onFailure { return it }
 
             if (seenValues.add(elementResult.value)) {
                 results.add(elementResult)
@@ -38,15 +42,15 @@ internal class DistinctListGen<T>(
             }
 
             if (attempts >= MAX_ATTEMPTS_PER_ELEMENT) {
-                throw GenerationException.DistinctCollectionSizeImpossible(
+                return GenerationException.DistinctCollectionSizeImpossible(
                     minSize = size,
                     achievedSize = results.size,
                     attempts = attempts,
-                )
+                ).asFailure()
             }
         }
 
-        return results
+        return results.asSuccess()
     }
 
     override fun edgeCases(root: RandomTree): List<GeneratedValue<List<T>>> {

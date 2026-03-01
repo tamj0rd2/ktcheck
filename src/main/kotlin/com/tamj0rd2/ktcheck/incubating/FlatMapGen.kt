@@ -1,13 +1,18 @@
 package com.tamj0rd2.ktcheck.incubating
 
+import com.tamj0rd2.ktcheck.GenerationException
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.asSuccess
+import dev.forkhandles.result4k.onFailure
+
 internal class FlatMapGen<T, R>(
     private val wrappedGen: GenImpl<T>,
     private val fn: (T) -> GenImpl<R>,
 ) : GenImpl<R>() {
-    override fun generate(root: RandomTree): GeneratedValue<R> {
-        val outerResult = wrappedGen.generate(root.left)
-        val innerResult = fn(outerResult.value).generate(root.right)
-        return buildResult(root = root, outerResult = outerResult, innerResult = innerResult)
+    override fun generate(root: RandomTree): Result4k<GeneratedValue<R>, GenerationException> {
+        val outerResult = wrappedGen.generate(root.left).onFailure { return it }
+        val innerResult = fn(outerResult.value).generate(root.right).onFailure { return it }
+        return buildResult(root = root, outerResult = outerResult, innerResult = innerResult).asSuccess()
     }
 
     override fun edgeCases(root: RandomTree): List<GeneratedValue<R>> {

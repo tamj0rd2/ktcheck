@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.incubating
 
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
-import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.contracts.BaseContract
 import com.tamj0rd2.ktcheck.contracts.GenResults
 import com.tamj0rd2.ktcheck.contracts.repeatTest
@@ -11,10 +10,12 @@ import com.tamj0rd2.ktcheck.contracts.skipIteration
 import com.tamj0rd2.ktcheck.contracts.value
 import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.Tree
+import dev.forkhandles.result4k.onFailure
+import dev.forkhandles.result4k.orThrow
+import dev.forkhandles.result4k.valueOrNull
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
-import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
 import kotlin.random.Random
 
@@ -23,7 +24,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
     fun `generated values are reproducible via their returned tree`() {
         repeatTest { seed ->
             val gen = getGenIfDefined() as GenImpl
-            val originalResult = gen.generate(tree(seed))
+            val originalResult = gen.generate(tree(seed)).orThrow()
             val regenerated = gen.generate(originalResult.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(originalResult.value)
@@ -36,20 +37,15 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
         repeatTest { seed ->
             val gen = getGenIfDefined() as GenImpl
-            val originalResult = gen.generate(tree(seed))
-            val originalShrunkValues = originalResult.shrinks.mapNotNull {
-                try {
-                    gen.generate(it).value
-                } catch (e: GenerationException) {
-                    null
-                }
-            }.distinct().toList()
+            val originalResult = gen.generate(tree(seed)).orThrow()
+            val originalShrunkValues = originalResult.shrinks
+                .mapNotNull { gen.generate(it).valueOrNull()?.value }
+                .distinct()
+                .toList()
             if (originalShrunkValues.isEmpty()) skipIteration()
 
             val regenerated = gen.generate(originalResult.usedTree as Tree<*>)
 
-            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalShrunkValues)
-            // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
             expectThat(regenerated).shrunkValues.isEqualTo(originalShrunkValues)
         }
     }
@@ -63,12 +59,10 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
             val edgeCases = gen.edgeCases(tree(seed))
 
             val anEdgeCase = edgeCases.random(Random(seed.value))
-            val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).value }.distinct().toList()
+            val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).orThrow().value }.distinct().toList()
             val regenerated = gen.generate(anEdgeCase.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(anEdgeCase.value)
-            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalShrunkValues)
-            // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
             expectThat(regenerated).shrunkValues.isEqualTo(originalShrunkValues)
         }
     }
@@ -83,12 +77,10 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
             val edgeCases = gen.edgeCases(tree(seed))
 
             val anEdgeCase = edgeCases.random(Random(seed.value))
-            val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).value }.distinct().toList()
+            val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).orThrow().value }.distinct().toList()
             val regenerated = gen.generate(anEdgeCase.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(anEdgeCase.value)
-            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalShrunkValues)
-            // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
             expectThat(regenerated).shrunkValues.isEqualTo(originalShrunkValues)
         }
     }
@@ -100,18 +92,15 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> Gen<T>.generate(tree: Tree<*>): GenResults<T> {
-        val result = (this as GenImpl).generate(tree as RandomTree)
+        val result = (this as GenImpl).generate(tree as RandomTree).orThrow()
         return GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
 
-    private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
+    private fun <T> GenImpl<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {
             for (shrink in shrinks) {
-                try {
-                yield(generate(shrink))
-                } catch (e: GenerationException) {
-                    // todo: make sure to also ignore these in the production test framework
-                }
+                val result = generate(shrink).onFailure { continue }
+                yield(GenResults(result.value, collectShrinksRecursively(result.shrinks)))
             }
         }
 

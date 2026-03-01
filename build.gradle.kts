@@ -21,6 +21,8 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.result4k)
+
     // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.strikt)

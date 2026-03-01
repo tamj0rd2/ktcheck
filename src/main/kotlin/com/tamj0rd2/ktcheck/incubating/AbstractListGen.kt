@@ -1,15 +1,20 @@
 package com.tamj0rd2.ktcheck.incubating
 
+import com.tamj0rd2.ktcheck.GenerationException
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.asSuccess
+import dev.forkhandles.result4k.onFailure
+
 internal sealed class AbstractListGen<T>(
     protected val elementGen: GenImpl<T>,
     sizeRange: IntRange,
 ) : GenImpl<List<T>>() {
     protected val sizeGen = IntGen(sizeRange, sizeRange.first)
 
-    final override fun generate(root: RandomTree): GeneratedValue<List<T>> {
-        val sizeResult = sizeGen.generate(root.left)
-        val listElementResults = generateElements(root.right, sizeResult.value)
-        return buildResult(root, sizeResult, listElementResults)
+    final override fun generate(root: RandomTree): Result4k<GeneratedValue<List<T>>, GenerationException> {
+        val sizeResult = sizeGen.generate(root.left).onFailure { return it }
+        val listElementResults = generateElements(root.right, sizeResult.value).onFailure { return it }
+        return buildResult(root, sizeResult, listElementResults).asSuccess()
     }
 
     protected fun buildResult(
@@ -18,14 +23,16 @@ internal sealed class AbstractListGen<T>(
         listElementResults: List<GeneratedValue<T>>,
     ): GeneratedValue<List<T>> {
         val sizeShrinks = sizeResult.shrinks.flatMap { sizeShrink ->
-            val removeElementsFromTail = root.withSizeTree(sizeShrink)
+            sequence {
+                val removeElementsFromTail = root.withSizeTree(sizeShrink)
+                yield(removeElementsFromTail)
 
-            val newSize = sizeGen.generate(sizeShrink).value
-            val removeElementsFromHead = root
-                .withSizeTree(sizeShrink)
-                .withElementTrees(listElementResults.takeLast(newSize))
-
-            sequenceOf(removeElementsFromTail, removeElementsFromHead)
+                val newSize = sizeGen.generate(sizeShrink).onFailure { return@sequence }.value
+                val removeElementsFromHead = root
+                    .withSizeTree(sizeShrink)
+                    .withElementTrees(listElementResults.takeLast(newSize))
+                yield(removeElementsFromHead)
+            }
         }
 
         val elementBasedShrinks = listElementResults.asSequence().flatMapIndexed { index, elementResult ->
@@ -41,7 +48,10 @@ internal sealed class AbstractListGen<T>(
         )
     }
 
-    protected abstract fun generateElements(initialTree: RandomTree, size: Int): List<GeneratedValue<T>>
+    protected abstract fun generateElements(
+        initialTree: RandomTree,
+        size: Int,
+    ): Result4k<List<GeneratedValue<T>>, GenerationException>
 
     protected fun RandomTree.withSizeTree(sizeShrink: RandomTree) = withLeft(sizeShrink)
 

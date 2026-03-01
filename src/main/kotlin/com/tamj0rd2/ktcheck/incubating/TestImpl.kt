@@ -5,6 +5,7 @@ import com.tamj0rd2.ktcheck.Property
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
+import dev.forkhandles.result4k.orThrow
 
 @OptIn(HardcodedTestConfig::class)
 internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>) {
@@ -14,7 +15,7 @@ internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>
         val input = if (iteration <= edgeCases.size) {
             edgeCases.elementAt(iteration - 1)
         } else {
-            gen.generate(RandomTree.new(config.seed.next(iteration)))
+            gen.generate(RandomTree.new(config.seed.next(iteration))).orThrow()
         }
 
         val testFailure = property.test(input.value) ?: return
@@ -82,7 +83,7 @@ private tailrec fun <T> GenImpl<T>.getSmallestCounterExample(
 ): Property.Falsification<T> {
     if (!candidates.hasNext() || tracker.shouldStopShrinking()) return smallestSoFar
 
-    val shrunkInputResult = generate(candidates.next())
+    val shrunkInputResult = generate(candidates.next()).orThrow()
     val testResult = property.test(shrunkInputResult.value)
 
     if (!tracker.recordShrinkAttempt(shrunkInputResult.value, testResult is Property.Falsification)) {

@@ -2,17 +2,20 @@ package com.tamj0rd2.ktcheck.incubating
 
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
+import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.core.Seed
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.orThrow
 import kotlin.reflect.KClass
 
 // todo: one thing on my mind is that each generator should do a final check to make sure the constraints are upheld
 //  post generation/edge case creation. put that in a contract somewhere.
 internal sealed class GenImpl<T> : Gen<T> {
-    abstract fun generate(root: RandomTree): GeneratedValue<T>
+    abstract fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException>
 
     abstract fun edgeCases(root: RandomTree): List<GeneratedValue<T>>
 
-    override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).value
+    override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).orThrow().value
 
     override fun <R> map(fn: (T) -> R) = MapGen(this, fn)
 

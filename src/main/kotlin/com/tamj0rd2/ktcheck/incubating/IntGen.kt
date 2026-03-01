@@ -1,6 +1,9 @@
 package com.tamj0rd2.ktcheck.incubating
 
+import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.asSuccess
 
 internal class IntGen(
     private val range: IntRange,
@@ -10,9 +13,9 @@ internal class IntGen(
         require(shrinkTarget in range) { "Shrink target $shrinkTarget must be within the range $range" }
     }
 
-    override fun generate(root: RandomTree): GeneratedValue<Int> {
+    override fun generate(root: RandomTree): Result4k<GeneratedValue<Int>, GenerationException> {
         val value = root.provider.int(range)
-        return buildResult(root, value)
+        return buildResult(root, value).asSuccess()
     }
 
     override fun edgeCases(root: RandomTree): List<GeneratedValue<Int>> {

@@ -1,20 +1,25 @@
 package com.tamj0rd2.ktcheck.incubating
 
 import com.tamj0rd2.ktcheck.GenerationException
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.asResultOr
+import dev.forkhandles.result4k.map
+import dev.forkhandles.result4k.recover
+import dev.forkhandles.result4k.valueOrNull
 
 internal class FilterGen<T>(
     private val gen: GenImpl<T>,
     private val threshold: Int,
     private val predicate: (T) -> Boolean,
 ) : GenImpl<T>() {
-    override fun generate(root: RandomTree): GeneratedValue<T> {
+    override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
         return root.traversingRight()
             .take(threshold)
-            .map { gen.generate(it.left) }
+            .mapNotNull { gen.generate(it.left).valueOrNull() }
             .filter { predicate(it.value) }
             .map { buildResult(root, it) }
             .firstOrNull()
-            ?: throw GenerationException.FilterLimitReached(threshold)
+            .asResultOr { GenerationException.FilterLimitReached(threshold) }
     }
 
     override fun edgeCases(root: RandomTree): List<GeneratedValue<T>> {
@@ -32,7 +37,7 @@ internal class FilterGen<T>(
         return GeneratedValue(
             value = result.value,
             shrinks = result.shrinks
-                .filter { predicate(gen.generate(it).value) }
+                .filter { gen.generate(it).map { predicate(it.value) }.recover { false } }
                 .map { root.withLeft(it) },
             usedTree = root.withLeft(result.usedTree),
         )

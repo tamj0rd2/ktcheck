@@ -1,5 +1,10 @@
 package com.tamj0rd2.ktcheck.incubating
 
+import com.tamj0rd2.ktcheck.GenerationException
+import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.asSuccess
+import dev.forkhandles.result4k.onFailure
+
 internal class ListGen<T>(
     elementGen: GenImpl<T>,
     sizeRange: IntRange,
@@ -8,10 +13,11 @@ internal class ListGen<T>(
     override fun generateElements(
         initialTree: RandomTree,
         size: Int,
-    ): List<GeneratedValue<T>> = initialTree.traversingRight()
-        .map { elementGen.generate(it.left) }
-        .take(size)
-        .toList()
+    ): Result4k<List<GeneratedValue<T>>, GenerationException> = buildList {
+        for (tree in initialTree.traversingRight().take(size)) {
+            add(elementGen.generate(tree.left).onFailure { return it })
+        }
+    }.asSuccess()
 
     override fun edgeCases(root: RandomTree): List<GeneratedValue<List<T>>> {
         return sizeGen.edgeCases(root.left).flatMap { sizeResult ->
