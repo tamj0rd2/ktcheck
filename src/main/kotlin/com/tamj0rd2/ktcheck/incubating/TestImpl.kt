@@ -5,6 +5,7 @@ import com.tamj0rd2.ktcheck.Property
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
+import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
 
 @OptIn(HardcodedTestConfig::class)
@@ -83,7 +84,12 @@ private tailrec fun <T> GenImpl<T>.getSmallestCounterExample(
 ): Property.Falsification<T> {
     if (!candidates.hasNext() || tracker.shouldStopShrinking()) return smallestSoFar
 
-    val shrunkInputResult = generate(candidates.next()).orThrow()
+    val shrunkInputResult = generate(candidates.next()).onFailure {
+        // todo: I feel like all this error handling is just begging for a pipeline. Multiple scenarios want to go this
+        //  exact route.
+        return getSmallestCounterExample(property, smallestSoFar, candidates, tracker)
+    }
+
     val testResult = property.test(shrunkInputResult.value)
 
     if (!tracker.recordShrinkAttempt(shrunkInputResult.value, testResult is Property.Falsification)) {
