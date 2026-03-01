@@ -57,7 +57,10 @@ data class TestConfig private constructor(
 interface ShrinkingConstraint {
     fun onStart() {}
     fun onStep() {}
+
+    // todo: contract
     fun shouldStopShrinking(): Boolean
+    fun shouldKeepShrinking(): Boolean = !shouldStopShrinking()
 
     companion object {
         fun infinite(): ShrinkingConstraint = Unconstrained

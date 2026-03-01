@@ -1,104 +1,99 @@
 package com.tamj0rd2.ktcheck.incubating
 
-import com.tamj0rd2.ktcheck.HardcodedTestConfig
 import com.tamj0rd2.ktcheck.Property
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
-import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
 import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
 
-@OptIn(HardcodedTestConfig::class)
 internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>) {
-    val edgeCases = gen.edgeCases(RandomTree.forEdgeCases)
-
-    fun runIteration(iteration: Int) {
-        val input = if (iteration <= edgeCases.size) {
-            edgeCases.elementAt(iteration - 1)
-        } else {
-            gen.generate(RandomTree.new(config.seed.next(iteration))).orThrow()
-        }
-
-        val testFailure = property.test(input.value) ?: return
-
-        val shrinkTracker = ShrinkTracker<T>(
-            printSteps = config.printShrinkSteps,
-            shrinkingConstraint = config.shrinkingConstraint.apply { onStart() }
-        )
-
-        val shrunkResult = gen.getSmallestCounterExample(
-            property = property,
-            smallestSoFar = testFailure,
-            candidates = input.shrinks.iterator(),
-            tracker = shrinkTracker,
-        )
-
-        PropertyFalsifiedException(
-            seed = config.seed.value,
-            iteration = iteration,
-            original = testFailure,
-            shrunk = shrunkResult.takeIf { it.input != testFailure.input },
-            shrinkSteps = shrinkTracker.shrinkSteps
-        ).also {
-            config.reporter.reportFailure(it)
-            throw it
-        }
-    }
-
-    val startingIteration = (config.replayIteration ?: 1)
-    (startingIteration..<startingIteration + config.iterations).forEach(::runIteration)
-    config.reporter.reportSuccess(config.iterations)
+    TestRunner(config = config, gen = gen, property = property).run()
 }
 
-private class ShrinkTracker<T>(
-    private val printSteps: Boolean,
-    private val shrinkingConstraint: ShrinkingConstraint,
+private class TestRunner<T>(
+    private val config: TestConfig,
+    private val gen: GenImpl<T>,
+    private val property: Property<T>,
 ) {
-    var shrinkSteps: Int = 0
-        private set
+    private val edgeCases = gen.edgeCases(RandomTree.forEdgeCases)
 
-    private val seenValues = mutableSetOf<T>()
+    fun run() {
+        val startingIteration = (config.replayIteration ?: 1)
+        repeat(config.iterations) {
+            val iteration = startingIteration + it
 
-    fun shouldStopShrinking(): Boolean =
-        shrinkingConstraint.shouldStopShrinking()
+            val result = runIteration(iteration - 1)
+            if (result !is TestIterationResult.DidFalsify<*>) return@repeat
 
-    fun recordShrinkAttempt(input: T, falsified: Boolean): Boolean {
-        if (!seenValues.add(input)) return false
-
-        shrinkingConstraint.onStep()
-        shrinkSteps += 1
-
-        if (printSteps) {
-            val prefix = if (falsified) "was falsified" else "not falsified"
-            println("$prefix: step ${shrinkSteps}: $input")
+            val exception = PropertyFalsifiedException(
+                seed = config.seed.value,
+                iteration = iteration,
+                original = result.originalFalsification,
+                shrunk = result.shrunkFalsification.takeIf { it.input != result.originalFalsification.input },
+                shrinkSteps = result.shrinkSteps
+            )
+            // todo: do I really need a reporter? Could just throw a nicely formatted exception...
+            config.reporter.reportFailure(exception)
+            throw exception
         }
-        return true
-    }
-}
 
-private tailrec fun <T> GenImpl<T>.getSmallestCounterExample(
-    property: Property<T>,
-    smallestSoFar: Property.Falsification<T>,
-    candidates: Iterator<RandomTree>,
-    tracker: ShrinkTracker<T>,
-): Property.Falsification<T> {
-    if (!candidates.hasNext() || tracker.shouldStopShrinking()) return smallestSoFar
-
-    val shrunkInputResult = generate(candidates.next()).onFailure {
-        // todo: I feel like all this error handling is just begging for a pipeline. Multiple scenarios want to go this
-        //  exact route.
-        return getSmallestCounterExample(property, smallestSoFar, candidates, tracker)
+        config.reporter.reportSuccess(config.iterations)
     }
 
-    val testResult = property.test(shrunkInputResult.value)
+    private fun runIteration(iterationIdx: Int): TestIterationResult {
+        val input = if (iterationIdx in edgeCases.indices) {
+            edgeCases.elementAt(iterationIdx)
+        } else {
+            gen.generate(RandomTree.new(config.seed.next(iterationIdx))).orThrow()
+        }
 
-    if (!tracker.recordShrinkAttempt(shrunkInputResult.value, testResult is Property.Falsification)) {
-        return getSmallestCounterExample(property, smallestSoFar, candidates, tracker)
+        val originalFalsification = property.test(input.value) ?: return TestIterationResult.DidNotFalsify
+
+        val (shrunkFalsification, shrinkSteps) = findSimplestFalsification(input, originalFalsification)
+        return TestIterationResult.DidFalsify(
+            originalFalsification = originalFalsification,
+            shrunkFalsification = shrunkFalsification,
+            shrinkSteps = shrinkSteps
+        )
     }
 
-    return if (testResult is Property.Falsification) {
-        getSmallestCounterExample(property, testResult, shrunkInputResult.shrinks.iterator(), tracker)
-    } else {
-        getSmallestCounterExample(property, smallestSoFar, candidates, tracker)
+    private fun findSimplestFalsification(
+        originalGeneratedValue: GeneratedValue<T>,
+        originalFalsification: Property.Falsification<T>,
+    ): Pair<Property.Falsification<T>, Int> {
+        // todo: shrinkingConstraint is shared. if I wanted iterations to run concurrently, this would break in some way
+        //  i'm imagining shrinkingConstraint being a function that returns an auto closable Constraint which would
+        //  then allow things to work per-iteration.
+        config.shrinkingConstraint.onStart()
+
+        // todo: these 2 values are entirely coupled. They should probably be a single thing.
+        var simplestFalsification = originalFalsification
+        var candidates = originalGeneratedValue.shrinks.iterator()
+
+        val seenValues = mutableSetOf<T>()
+
+        while (config.shrinkingConstraint.shouldKeepShrinking() && candidates.hasNext()) {
+            val shrunkInput = gen.generate(candidates.next()).onFailure { continue }
+            if (!seenValues.add(shrunkInput.value)) continue
+
+            config.shrinkingConstraint.onStep()
+
+            val testResult = property.test(shrunkInput.value) ?: continue
+
+            simplestFalsification = testResult
+            candidates = shrunkInput.shrinks.iterator()
+        }
+
+        return simplestFalsification to seenValues.size
+    }
+
+    private sealed interface TestIterationResult {
+        data class DidFalsify<T>(
+            val originalFalsification: Property.Falsification<T>,
+            val shrunkFalsification: Property.Falsification<T>,
+            val shrinkSteps: Int,
+        ) : TestIterationResult
+
+        data object DidNotFalsify : TestIterationResult
     }
 }
