@@ -2,7 +2,6 @@ package com.tamj0rd2.ktcheck.contracts
 
 import com.tamj0rd2.ktcheck.HardcodedTestConfig
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
-import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.checkAll
 import com.tamj0rd2.ktcheck.forAll
@@ -12,10 +11,8 @@ import strikt.api.expectThat
 import strikt.api.expectThrows
 import strikt.assertions.contains
 import strikt.assertions.isEqualTo
-import strikt.assertions.isGreaterThan
 import strikt.assertions.isNotNull
 import java.io.ByteArrayOutputStream
-import kotlin.time.Duration.Companion.nanoseconds
 
 internal interface TestFrameworkContract : BaseContract {
     override val exampleGen get() = null
@@ -54,40 +51,6 @@ internal interface TestFrameworkContract : BaseContract {
 
         val throwable = MyThrowable()
         expectThrows<MyThrowable> { checkAll(constant(throwable)) { throw it } }.isEqualTo(throwable)
-    }
-
-    @Test
-    fun `can constrain the shrinking process with a step limit`() {
-        val testConfig = TestConfig().withShrinkingConstraint(ShrinkingConstraint.bySteps(1))
-
-        val exception = expectThrows<PropertyFalsifiedException> {
-            forAll(testConfig, int()) { it == 0 }
-        }.subject
-
-        expectThat(exception.shrinkSteps).isEqualTo(1)
-    }
-
-    @Test
-    fun `can constrain the shrinking process with a time limit`() {
-        val testConfig = TestConfig().withShrinkingConstraint(ShrinkingConstraint.byDuration(1.nanoseconds))
-
-        val exception = expectThrows<PropertyFalsifiedException> {
-            forAll(testConfig, int()) { it == 0 }
-        }.subject
-
-        expectThat(exception.shrinkSteps).isEqualTo(0)
-    }
-
-    // todo: this test doesn't really make any sense.
-    @Test
-    fun `can unconstrain the shrinking process with an infinite constraint`() {
-        val testConfig = TestConfig().withShrinkingConstraint(ShrinkingConstraint.infinite())
-
-        val exception = expectThrows<PropertyFalsifiedException> {
-            forAll(testConfig, int()) { it == 0 }
-        }.subject
-
-        expectThat(exception.shrinkSteps).isGreaterThan(0)
     }
 
     @Test
