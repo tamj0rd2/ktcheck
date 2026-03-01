@@ -26,19 +26,14 @@ private class TestRunner<T>(
             val result = runIteration(iteration - 1)
             if (result !is TestIterationResult.DidFalsify<*>) return@repeat
 
-            val exception = PropertyFalsifiedException(
+            throw PropertyFalsifiedException(
                 seed = config.seed.value,
                 iteration = iteration,
                 original = result.originalFalsification,
                 shrunk = result.shrunkFalsification.takeIf { it.input != result.originalFalsification.input },
                 shrinkSteps = result.shrinkSteps
             )
-            // todo: do I really need a reporter? Could just throw a nicely formatted exception...
-            config.reporter.reportFailure(exception)
-            throw exception
         }
-
-        config.reporter.reportSuccess(config.iterations)
     }
 
     private fun runIteration(iterationIdx: Int): TestIterationResult {

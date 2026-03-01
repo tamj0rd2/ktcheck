@@ -1,6 +1,9 @@
 package com.tamj0rd2.ktcheck
 
 import com.tamj0rd2.ktcheck.core.Seed
+import java.io.OutputStream
+import java.io.OutputStream.nullOutputStream
+import java.io.PrintStream
 import java.time.Instant
 import kotlin.random.Random
 import kotlin.time.Duration
@@ -18,17 +21,17 @@ data class TestConfig private constructor(
     internal val iterations: Int,
     internal val seed: Seed,
     internal val replayIteration: Int?,
-    internal val reporter: TestReporter,
     internal val shrinkingConstraintFactory: ShrinkingConstraintFactory,
     internal val printShrinkSteps: Boolean,
+    internal val reportingPrintStream: PrintStream,
 ) {
     constructor() : this(
         iterations = System.getProperty(SYSTEM_PROPERTY_TEST_ITERATIONS)?.toIntOrNull() ?: 1000,
         seed = Seed(Random.nextLong()),
         replayIteration = null,
-        reporter = PrintingTestReporter(),
         shrinkingConstraintFactory = ShrinkingConstraint.byDuration(1.seconds),
         printShrinkSteps = false,
+        reportingPrintStream = System.out,
     )
 
     fun withIterations(iterations: Int) = copy(iterations = iterations)
@@ -48,7 +51,9 @@ data class TestConfig private constructor(
         replayIteration = iteration
     )
 
-    fun withReporter(reporter: TestReporter) = copy(reporter = reporter)
+    fun withoutReporting() = withReportingStream(nullOutputStream())
+
+    fun withReportingStream(outputStream: OutputStream) = copy(reportingPrintStream = PrintStream(outputStream))
 
     companion object {
         internal const val SYSTEM_PROPERTY_TEST_ITERATIONS = "ktcheck.test.iterations"

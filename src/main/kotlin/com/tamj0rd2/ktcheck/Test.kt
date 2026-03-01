@@ -1,5 +1,7 @@
 package com.tamj0rd2.ktcheck
 
+import com.tamj0rd2.ktcheck.core.Tuple
+
 sealed interface Property<T> {
     fun test(input: T): Falsification<T>?
 
@@ -42,6 +44,8 @@ private fun <T> runPropertyTest(config: TestConfig, gen: Gen<T>, property: Prope
         is com.tamj0rd2.ktcheck.incubating.GenImpl -> com.tamj0rd2.ktcheck.incubating.test(config, gen, property)
         else -> throw IllegalArgumentException("Unsupported Gen implementation: ${gen::class}")
     }
+
+    config.reportingPrintStream.println("Success: ${config.iterations} iterations succeeded")
 }
 
 class PropertyFalsifiedException internal constructor(
@@ -50,7 +54,43 @@ class PropertyFalsifiedException internal constructor(
     val original: Property.Falsification<*>,
     val shrunk: Property.Falsification<*>?,
     val shrinkSteps: Int,
-) : AssertionError("Property falsified") {
+) : AssertionError() {
     internal val smallest = shrunk ?: original
     override val cause = smallest.error
+
+    override val message = buildString {
+        appendLine("Property falsified on iteration ${iteration}, seed $seed\n")
+
+        if (shrunk != null) {
+            appendLine(formatFalsification(prefix = "Shrunk ", result = shrunk))
+        } else {
+            appendLine("Warning - Could not shrink the input arguments")
+        }
+
+        appendLine(formatFalsification(prefix = "Original ", result = original))
+    }
+
+    private fun formatFalsification(
+        prefix: String,
+        result: Property.Falsification<*>,
+    ) = buildString {
+        appendLine("${prefix}Arguments:")
+        appendLine("--------------------")
+        when (result.input) {
+            is Tuple -> {
+                result.input.values.forEachIndexed { index, value ->
+                    appendLine("Arg ${index + 1} -> $value")
+                }
+            }
+
+            else -> appendLine(result.input)
+        }
+
+        if (result.error != null) {
+            appendLine()
+            appendLine("${prefix}Failure:")
+            appendLine("--------------------")
+            appendLine(result.error)
+        }
+    }
 }

@@ -30,21 +30,17 @@ internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>
             tracker = shrinkTracker,
         )
 
-        PropertyFalsifiedException(
+        throw PropertyFalsifiedException(
             seed = config.seed.value,
             iteration = iteration,
             original = testFailure,
             shrunk = shrunkResult.takeIf { it.input != testFailure.input },
             shrinkSteps = shrinkTracker.shrinkSteps
-        ).also {
-            config.reporter.reportFailure(it)
-            throw it
-        }
+        )
     }
 
     val startingIteration = (config.replayIteration ?: 1)
     (startingIteration..<startingIteration + config.iterations).forEach(::runIteration)
-    config.reporter.reportSuccess(config.iterations)
 }
 
 private class ShrinkTracker<T>(

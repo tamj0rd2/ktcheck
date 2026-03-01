@@ -3,7 +3,6 @@ package com.tamj0rd2.ktcheck.contracts
 import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.HardcodedTestConfig
-import com.tamj0rd2.ktcheck.NoOpTestReporter
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
 import com.tamj0rd2.ktcheck.core.Seed
@@ -110,7 +109,7 @@ fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequi
     try {
         assertTimeoutPreemptively(Duration.ofSeconds(1), "Shrinking took too long") {
             val ex = try {
-                forAll(TestConfig().withReporter(NoOpTestReporter), this) {
+                forAll(TestConfig().withoutReporting(), this) {
                     shrinksBeforeTimeout += 1
                     false
                 }
