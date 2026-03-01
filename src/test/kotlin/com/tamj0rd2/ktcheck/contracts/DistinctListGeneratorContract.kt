@@ -4,11 +4,15 @@ import com.tamj0rd2.ktcheck.GenerationException.DistinctCollectionSizeImpossible
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker.shrink
 import com.tamj0rd2.ktcheck.full
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.assertTimeoutPreemptively
 import strikt.api.expectThat
 import strikt.assertions.all
+import strikt.assertions.any
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.filter
 import strikt.assertions.first
@@ -16,9 +20,11 @@ import strikt.assertions.get
 import strikt.assertions.hasSize
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
 import strikt.assertions.isIn
 import strikt.assertions.isLessThanOrEqualTo
 import strikt.assertions.isNotEmpty
+import strikt.assertions.none
 import strikt.assertions.size
 import java.time.Duration
 
@@ -171,6 +177,79 @@ internal interface DistinctListGeneratorContract : BaseContract {
                 // both preceded with root.right because root.left is used for size generation
                 get(0).isEqualTo(intGen.generate(root.right.left).value)
                 get(1).isEqualTo(intGen.generate(root.right.right.left).value)
+            }
+        }
+    }
+
+    @TestFactory
+    fun `edge case generation`(): List<DynamicTest> {
+        data class TestCase(
+            val sizeRange: IntRange,
+            val shouldHaveEmpty: Boolean,
+            val shouldHaveSingleton: Boolean,
+            val shouldHaveMultipleValues: Boolean,
+        ) {
+            val description = "for a list with sizeRange $sizeRange"
+        }
+
+        val testCases = listOf(
+            TestCase(
+                sizeRange = 0..5,
+                shouldHaveEmpty = true,
+                shouldHaveSingleton = true,
+                shouldHaveMultipleValues = true,
+            ),
+            TestCase(
+                sizeRange = 1..5,
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = true,
+                shouldHaveMultipleValues = true,
+            ),
+            TestCase(
+                sizeRange = 3..5,
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = false,
+                shouldHaveMultipleValues = true,
+            ),
+            TestCase(
+                sizeRange = 0..0,
+                shouldHaveEmpty = true,
+                shouldHaveSingleton = false,
+                shouldHaveMultipleValues = false,
+            ),
+            TestCase(
+                sizeRange = 2..2,
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = false,
+                shouldHaveMultipleValues = true,
+            ),
+            TestCase(
+                sizeRange = 1..1,
+                shouldHaveEmpty = false,
+                shouldHaveSingleton = true,
+                shouldHaveMultipleValues = false,
+            )
+        )
+
+        return testCases.map { tc ->
+            dynamicTest(tc.description) {
+                val gen = int(0..10).list(tc.sizeRange)
+                val edgeCaseValues = gen.edgeCases().map { it.value }.toList()
+
+                when (tc.shouldHaveEmpty) {
+                    true -> expectThat(edgeCaseValues).any { isEmpty() }
+                    false -> expectThat(edgeCaseValues).none { isEmpty() }
+                }
+
+                when (tc.shouldHaveSingleton) {
+                    true -> expectThat(edgeCaseValues).any { size.isEqualTo(1) }
+                    false -> expectThat(edgeCaseValues).none { size.isEqualTo(1) }
+                }
+
+                when (tc.shouldHaveMultipleValues) {
+                    true -> expectThat(edgeCaseValues).any { size.isGreaterThan(1) }
+                    false -> expectThat(edgeCaseValues).none { size.isGreaterThan(1) }
+                }
             }
         }
     }

@@ -32,7 +32,7 @@ internal interface FilterGeneratorContract : BaseContract {
         }.checkPercentages("has-shrinks", mapOf(true to 10.0))
 
         // todo: add some - deeply shrunk values are finite function. call it above.
-        gen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
+        gen.expectGenerationAndShrinkingToEventuallyComplete()
     }
 
     // todo: will need a similar test for exception generation
@@ -81,7 +81,7 @@ internal interface FilterGeneratorContract : BaseContract {
         }.checkPercentages("has-shrinks", mapOf(true to 45.0))
 
         // todo: add some - deeply shrunk values are finite function. call it above.
-        possiblyThrowingGen.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired = false)
+        possiblyThrowingGen.expectGenerationAndShrinkingToEventuallyComplete()
     }
 
     @Test

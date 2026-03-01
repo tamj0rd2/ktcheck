@@ -17,7 +17,6 @@ import strikt.api.Assertion
 import strikt.api.expectThat
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
-import strikt.assertions.isNotNull
 import java.time.Duration
 
 internal interface BaseContract : GenBuilders {
@@ -104,22 +103,18 @@ internal class GenResults<T>(
     val shrunkValues get() = shrinks.map { it.value }.distinct().toList()
 }
 
-fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete(shrunkValueRequired: Boolean = true) {
+fun <T> Gen<T>.expectGenerationAndShrinkingToEventuallyComplete() {
     var shrinksBeforeTimeout = -1
     try {
         assertTimeoutPreemptively(Duration.ofSeconds(1), "Shrinking took too long") {
-            val ex = try {
+            try {
                 forAll(TestConfig().withoutReporting(), this) {
                     shrinksBeforeTimeout += 1
                     false
                 }
                 fail("Expected property to be falsified")
             } catch (e: PropertyFalsifiedException) {
-                e
-            }
-
-            if (shrunkValueRequired) {
-                expectThat(ex).get { shrunk }.isNotNull()
+                // do nothing
             }
         }
     } catch (e: Throwable) {

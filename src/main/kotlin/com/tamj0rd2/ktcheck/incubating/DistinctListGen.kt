@@ -54,7 +54,17 @@ internal class DistinctListGen<T>(
     }
 
     override fun edgeCases(root: RandomTree): List<GeneratedValue<List<T>>> {
-        return emptyList()
+        return sizeGen.edgeCases(root.left).map { sizeResult ->
+            val elementResults = elementGen.edgeCases(root.right)
+                .distinctBy { it.value }
+                .take(sizeResult.value)
+
+            val reproducibleTree = root
+                .withSizeTree(sizeResult.usedTree)
+                .withElementTrees(elementResults)
+
+            buildResult(reproducibleTree, sizeResult, elementResults)
+        }
     }
 
     private companion object {

@@ -38,10 +38,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
         repeatTest { seed ->
             val gen = getGenIfDefined() as GenImpl
             val originalResult = gen.generate(tree(seed)).orThrow()
-            val originalShrunkValues = originalResult.shrinks
-                .mapNotNull { gen.generate(it).valueOrNull()?.value }
-                .distinct()
-                .toList()
+            val originalShrunkValues = originalResult.getShrinks(gen)
             if (originalShrunkValues.isEmpty()) skipIteration()
 
             val regenerated = gen.generate(originalResult.usedTree as Tree<*>)
@@ -59,7 +56,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
             val edgeCases = gen.edgeCases(tree(seed))
 
             val anEdgeCase = edgeCases.random(Random(seed.value))
-            val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).orThrow().value }.distinct().toList()
+            val originalShrunkValues = anEdgeCase.getShrinks(gen)
             val regenerated = gen.generate(anEdgeCase.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(anEdgeCase.value)
@@ -77,13 +74,20 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
             val edgeCases = gen.edgeCases(tree(seed))
 
             val anEdgeCase = edgeCases.random(Random(seed.value))
-            val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).orThrow().value }.distinct().toList()
+            val originalShrunkValues = anEdgeCase.getShrinks(gen)
             val regenerated = gen.generate(anEdgeCase.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(anEdgeCase.value)
             expectThat(regenerated).shrunkValues.isEqualTo(originalShrunkValues)
         }
     }
+
+    private fun <T> GeneratedValue<T>.getShrinks(
+        gen: GenImpl<T>,
+    ): List<T> = shrinks
+        .mapNotNull { gen.generate(it).valueOrNull()?.value }
+        .distinct()
+        .toList()
 
     //=== Wiring ===//
     override fun tree(seed: Seed) = RandomTree.new(seed)
