@@ -7,7 +7,7 @@ internal class FilterGen<T>(
     private val threshold: Int,
     private val predicate: (T) -> Boolean,
 ) : GenImpl<T>() {
-    override fun generate(root: RandomTree): GenResultV2<T> {
+    override fun generate(root: RandomTree): GeneratedValue<T> {
         return root.traversingRight()
             .take(threshold)
             .map { gen.generate(it.left) }
@@ -17,7 +17,7 @@ internal class FilterGen<T>(
             ?: throw GenerationException.FilterLimitReached(threshold)
     }
 
-    override fun edgeCases(root: RandomTree): List<GenResultV2<T>> {
+    override fun edgeCases(root: RandomTree): List<GeneratedValue<T>> {
         return gen.edgeCases(root)
             .filter { predicate(it.value) }
             .map { buildResult(root, it) }
@@ -25,16 +25,16 @@ internal class FilterGen<T>(
 
     private fun buildResult(
         root: RandomTree,
-        result: GenResultV2<T>,
-    ): GenResultV2<T> {
+        result: GeneratedValue<T>,
+    ): GeneratedValue<T> {
         check(predicate(result.value)) { "internal error - value did not match the predicate" }
 
-        return GenResultV2(
+        return GeneratedValue(
             value = result.value,
-            tree = root.withLeft(result.tree),
             shrinks = result.shrinks
                 .filter { predicate(gen.generate(it).value) }
                 .map { root.withLeft(it) },
+            usedTree = root.withLeft(result.usedTree),
         )
     }
 }

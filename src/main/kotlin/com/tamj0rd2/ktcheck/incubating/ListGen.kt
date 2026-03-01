@@ -8,18 +8,18 @@ internal class ListGen<T>(
     override fun generateElements(
         initialTree: RandomTree,
         size: Int,
-    ): List<GenResultV2<T>> = initialTree.traversingRight()
+    ): List<GeneratedValue<T>> = initialTree.traversingRight()
         .map { elementGen.generate(it.left) }
         .take(size)
         .toList()
 
-    override fun edgeCases(root: RandomTree): List<GenResultV2<List<T>>> {
+    override fun edgeCases(root: RandomTree): List<GeneratedValue<List<T>>> {
         return sizeGen.edgeCases(root.left).flatMap { sizeResult ->
             elementGen.edgeCases(root.right).map { elementResult ->
                 val elementResults = List(sizeResult.value) { elementResult }
 
                 val reproducibleTree = root
-                    .withSizeTree(sizeResult.tree)
+                    .withSizeTree(sizeResult.usedTree)
                     .withElementTrees(elementResults)
 
                 buildResult(reproducibleTree, sizeResult, elementResults)

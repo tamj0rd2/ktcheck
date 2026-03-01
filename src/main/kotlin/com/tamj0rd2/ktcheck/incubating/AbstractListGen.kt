@@ -6,7 +6,7 @@ internal sealed class AbstractListGen<T>(
 ) : GenImpl<List<T>>() {
     protected val sizeGen = IntGen(sizeRange, sizeRange.first)
 
-    final override fun generate(root: RandomTree): GenResultV2<List<T>> {
+    final override fun generate(root: RandomTree): GeneratedValue<List<T>> {
         val sizeResult = sizeGen.generate(root.left)
         val listElementResults = generateElements(root.right, sizeResult.value)
         return buildResult(root, sizeResult, listElementResults)
@@ -14,9 +14,9 @@ internal sealed class AbstractListGen<T>(
 
     protected fun buildResult(
         root: RandomTree,
-        sizeResult: GenResultV2<Int>,
-        listElementResults: List<GenResultV2<T>>,
-    ): GenResultV2<List<T>> {
+        sizeResult: GeneratedValue<Int>,
+        listElementResults: List<GeneratedValue<T>>,
+    ): GeneratedValue<List<T>> {
         val sizeShrinks = sizeResult.shrinks.flatMap { sizeShrink ->
             val removeElementsFromTail = root.withSizeTree(sizeShrink)
 
@@ -30,24 +30,24 @@ internal sealed class AbstractListGen<T>(
 
         val elementBasedShrinks = listElementResults.asSequence().flatMapIndexed { index, elementResult ->
             elementResult.shrinks.map { shrink ->
-                root.withElementTrees(listElementResults.map { it.tree }.replaceAtIndex(index, shrink))
+                root.withElementTrees(listElementResults.map { it.usedTree }.replaceAtIndex(index, shrink))
             }
         }
 
-        return GenResultV2(
+        return GeneratedValue(
             value = listElementResults.map { it.value },
-            tree = root,
             shrinks = sizeShrinks + elementBasedShrinks,
+            usedTree = root,
         )
     }
 
-    protected abstract fun generateElements(initialTree: RandomTree, size: Int): List<GenResultV2<T>>
+    protected abstract fun generateElements(initialTree: RandomTree, size: Int): List<GeneratedValue<T>>
 
     protected fun RandomTree.withSizeTree(sizeShrink: RandomTree) = withLeft(sizeShrink)
 
     @JvmName("withElementResults")
-    protected fun RandomTree.withElementTrees(elementResults: List<GenResultV2<T>>) =
-        withElementTrees(elementResults.map { it.tree })
+    protected fun RandomTree.withElementTrees(elementResults: List<GeneratedValue<T>>) =
+        withElementTrees(elementResults.map { it.usedTree })
 
     protected fun RandomTree.withElementTrees(elementTrees: List<RandomTree>): RandomTree {
         if (elementTrees.isEmpty()) return this

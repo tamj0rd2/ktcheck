@@ -8,7 +8,7 @@ internal class IgnoreExceptionGen<T>(
     private val klass: KClass<out Exception>,
     private val threshold: Int,
 ) : GenImpl<T>() {
-    override fun generate(root: RandomTree): GenResultV2<T> {
+    override fun generate(root: RandomTree): GeneratedValue<T> {
         var latestError: Exception? = null
 
         return generateSequence(root) { it.right }
@@ -25,7 +25,7 @@ internal class IgnoreExceptionGen<T>(
             .firstOrNull() ?: throw GenerationException.FilterLimitReached(threshold, latestError)
     }
 
-    override fun edgeCases(root: RandomTree): List<GenResultV2<T>> {
+    override fun edgeCases(root: RandomTree): List<GeneratedValue<T>> {
         return emptyList()
     }
 }

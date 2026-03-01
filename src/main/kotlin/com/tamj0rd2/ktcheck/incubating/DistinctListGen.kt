@@ -10,9 +10,9 @@ internal class DistinctListGen<T>(
     override fun generateElements(
         initialTree: RandomTree,
         size: Int,
-    ): List<GenResultV2<T>> {
+    ): List<GeneratedValue<T>> {
         val trees = initialTree.traversingRight().iterator()
-        val results = mutableListOf<GenResultV2<T>>()
+        val results = mutableListOf<GeneratedValue<T>>()
         val seenValues = mutableSetOf<T>()
         var attempts = 0
 
@@ -49,7 +49,7 @@ internal class DistinctListGen<T>(
         return results
     }
 
-    override fun edgeCases(root: RandomTree): List<GenResultV2<List<T>>> {
+    override fun edgeCases(root: RandomTree): List<GeneratedValue<List<T>>> {
         return emptyList()
     }
 

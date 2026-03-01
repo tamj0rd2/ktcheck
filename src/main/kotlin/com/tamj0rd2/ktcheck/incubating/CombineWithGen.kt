@@ -5,13 +5,13 @@ internal class CombineWithGen<T1, T2, R>(
     private val rightGen: GenImpl<T2>,
     private val combine: (T1, T2) -> R,
 ) : GenImpl<R>() {
-    override fun generate(root: RandomTree): GenResultV2<R> {
+    override fun generate(root: RandomTree): GeneratedValue<R> {
         val leftResult = leftGen.generate(root.left)
         val rightResult = rightGen.generate(root.right)
         return buildResult(root, leftResult, rightResult)
     }
 
-    override fun edgeCases(root: RandomTree): List<GenResultV2<R>> {
+    override fun edgeCases(root: RandomTree): List<GeneratedValue<R>> {
         val leftEdgeCases = leftGen.edgeCases(root.left)
         val rightEdgeCases = rightGen.edgeCases(root.right)
 
@@ -25,8 +25,8 @@ internal class CombineWithGen<T1, T2, R>(
         return leftEdgeCasesToUse.flatMap { leftEdgeCase ->
             rightEdgeCasesToUse.map { rightEdgeCase ->
                 val stableRoot = root
-                    .withLeft(leftEdgeCase.tree)
-                    .withRight(rightEdgeCase.tree)
+                    .withLeft(leftEdgeCase.usedTree)
+                    .withRight(rightEdgeCase.usedTree)
 
                 buildResult(stableRoot, leftEdgeCase, rightEdgeCase)
             }
@@ -35,9 +35,9 @@ internal class CombineWithGen<T1, T2, R>(
 
     private fun buildResult(
         root: RandomTree,
-        leftResult: GenResultV2<T1>,
-        rightResult: GenResultV2<T2>,
-    ): GenResultV2<R> {
+        leftResult: GeneratedValue<T1>,
+        rightResult: GeneratedValue<T2>,
+    ): GeneratedValue<R> {
         val leftBasedShrinks = leftResult.shrinks.map { root.withLeft(it) }
         val rightBasedShrinks = rightResult.shrinks.map { root.withRight(it) }
 
@@ -55,10 +55,10 @@ internal class CombineWithGen<T1, T2, R>(
             }
         }
 
-        return GenResultV2(
+        return GeneratedValue(
             value = combine(leftResult.value, rightResult.value),
-            tree = root,
             shrinks = cartesianShrinks + leftBasedShrinks + rightBasedShrinks,
+            usedTree = root,
         )
     }
 }

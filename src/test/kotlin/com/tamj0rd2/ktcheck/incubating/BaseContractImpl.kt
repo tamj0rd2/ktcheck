@@ -24,7 +24,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
         repeatTest { seed ->
             val gen = getGenIfDefined() as GenImpl
             val originalResult = gen.generate(tree(seed))
-            val regenerated = gen.generate(originalResult.tree as Tree<*>)
+            val regenerated = gen.generate(originalResult.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(originalResult.value)
         }
@@ -46,7 +46,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
             }.distinct().toList()
             if (originalShrunkValues.isEmpty()) skipIteration()
 
-            val regenerated = gen.generate(originalResult.tree as Tree<*>)
+            val regenerated = gen.generate(originalResult.usedTree as Tree<*>)
 
             expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalShrunkValues)
             // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
@@ -64,7 +64,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
             val anEdgeCase = edgeCases.random(Random(seed.value))
             val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).value }.distinct().toList()
-            val regenerated = gen.generate(anEdgeCase.tree as Tree<*>)
+            val regenerated = gen.generate(anEdgeCase.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(anEdgeCase.value)
             expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalShrunkValues)
@@ -84,7 +84,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
             val anEdgeCase = edgeCases.random(Random(seed.value))
             val originalShrunkValues = anEdgeCase.shrinks.map { gen.generate(it).value }.distinct().toList()
-            val regenerated = gen.generate(anEdgeCase.tree as Tree<*>)
+            val regenerated = gen.generate(anEdgeCase.usedTree as Tree<*>)
 
             expectThat(regenerated).value.isEqualTo(anEdgeCase.value)
             expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalShrunkValues)
