@@ -21,7 +21,7 @@ internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>
 
         val shrinkTracker = ShrinkTracker<T>(
             printSteps = config.printShrinkSteps,
-            shrinkingConstraint = config.shrinkingConstraint.apply { onStart() }
+            shrinkingConstraint = config.shrinkingConstraintFactory.new().apply { onStart() }
         )
 
         val shrunkResult = property.getSmallestCounterExample(

@@ -19,7 +19,7 @@ data class TestConfig private constructor(
     internal val seed: Seed,
     internal val replayIteration: Int?,
     internal val reporter: TestReporter,
-    internal val shrinkingConstraint: ShrinkingConstraint,
+    internal val shrinkingConstraintFactory: ShrinkingConstraintFactory,
     internal val printShrinkSteps: Boolean,
 ) {
     constructor() : this(
@@ -27,7 +27,7 @@ data class TestConfig private constructor(
         seed = Seed(Random.nextLong()),
         replayIteration = null,
         reporter = PrintingTestReporter(),
-        shrinkingConstraint = ShrinkingConstraint.byDuration(1.seconds),
+        shrinkingConstraintFactory = ShrinkingConstraint.byDuration(1.seconds),
         printShrinkSteps = false,
     )
 
@@ -35,7 +35,8 @@ data class TestConfig private constructor(
 
     fun withSeed(seed: Long) = copy(seed = Seed(seed))
 
-    fun withShrinkingConstraint(constraint: ShrinkingConstraint) = copy(shrinkingConstraint = constraint)
+    fun withShrinkingConstraint(constraint: ShrinkingConstraintFactory) =
+        copy(shrinkingConstraintFactory = constraint)
 
     @Deprecated("I might move this functionality to the Reporter")
     fun printShrinkSteps() = copy(printShrinkSteps = true)
@@ -54,18 +55,23 @@ data class TestConfig private constructor(
     }
 }
 
-interface ShrinkingConstraint {
+fun interface ShrinkingConstraintFactory {
+    fun new(): ShrinkingConstraint
+}
+
+interface ShrinkingConstraint : AutoCloseable {
     fun onStart() {}
     fun onStep() {}
+    override fun close() {}
 
     // todo: contract
     fun shouldStopShrinking(): Boolean
     fun shouldKeepShrinking(): Boolean = !shouldStopShrinking()
 
     companion object {
-        fun infinite(): ShrinkingConstraint = Unconstrained
-        fun bySteps(maxSteps: Int): ShrinkingConstraint = ConstrainedBySteps(maxSteps)
-        fun byDuration(duration: Duration): ShrinkingConstraint = ConstrainedByDuration(duration)
+        fun infinite(): ShrinkingConstraintFactory = { Unconstrained }
+        fun bySteps(maxSteps: Int): ShrinkingConstraintFactory = { ConstrainedBySteps(maxSteps) }
+        fun byDuration(duration: Duration): ShrinkingConstraintFactory = { ConstrainedByDuration(duration) }
     }
 }
 

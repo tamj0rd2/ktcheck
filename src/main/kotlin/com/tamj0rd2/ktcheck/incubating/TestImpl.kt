@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.incubating
 
 import com.tamj0rd2.ktcheck.Property
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
+import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
 import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
@@ -49,7 +50,14 @@ private class TestRunner<T>(
 
         val originalFalsification = property.test(input.value) ?: return TestIterationResult.DidNotFalsify
 
-        val (shrunkFalsification, shrinkSteps) = findSimplestFalsification(input, originalFalsification)
+        val (shrunkFalsification, shrinkSteps) = config.shrinkingConstraintFactory.new().use {
+            findSimplestFalsification(
+                originalGeneratedValue = input,
+                originalFalsification = originalFalsification,
+                shrinkingConstraint = it
+            )
+        }
+
         return TestIterationResult.DidFalsify(
             originalFalsification = originalFalsification,
             shrunkFalsification = shrunkFalsification,
@@ -60,11 +68,9 @@ private class TestRunner<T>(
     private fun findSimplestFalsification(
         originalGeneratedValue: GeneratedValue<T>,
         originalFalsification: Property.Falsification<T>,
+        shrinkingConstraint: ShrinkingConstraint,
     ): Pair<Property.Falsification<T>, Int> {
-        // todo: shrinkingConstraint is shared. if I wanted iterations to run concurrently, this would break in some way
-        //  i'm imagining shrinkingConstraint being a function that returns an auto closable Constraint which would
-        //  then allow things to work per-iteration.
-        config.shrinkingConstraint.onStart()
+        shrinkingConstraint.onStart()
 
         // todo: these 2 values are entirely coupled. They should probably be a single thing.
         var simplestFalsification = originalFalsification
@@ -72,11 +78,11 @@ private class TestRunner<T>(
 
         val seenValues = mutableSetOf<T>()
 
-        while (config.shrinkingConstraint.shouldKeepShrinking() && candidates.hasNext()) {
+        while (shrinkingConstraint.shouldKeepShrinking() && candidates.hasNext()) {
             val shrunkInput = gen.generate(candidates.next()).onFailure { continue }
             if (!seenValues.add(shrunkInput.value)) continue
 
-            config.shrinkingConstraint.onStep()
+            shrinkingConstraint.onStep()
 
             val testResult = property.test(shrunkInput.value) ?: continue
 
