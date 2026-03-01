@@ -96,6 +96,11 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
         return GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
 
+    override fun <T> Gen<T>.edgeCases(): List<GenResults<T>> {
+        val result = (this as GenImpl).edgeCases(RandomTree.forEdgeCases)
+        return result.map { GenResults(it.value, collectShrinksRecursively(it.shrinks)) }
+    }
+
     private fun <T> GenImpl<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {
             for (shrink in shrinks) {
@@ -103,9 +108,4 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
                 yield(GenResults(result.value, collectShrinksRecursively(result.shrinks)))
             }
         }
-
-    override fun <T> Gen<T>.edgeCases(): List<GenResults<T>> {
-        val result = (this as GenImpl).edgeCases(RandomTree.forEdgeCases)
-        return result.map { GenResults(it.value, collectShrinksRecursively(it.shrinks)) }
-    }
 }
