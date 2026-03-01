@@ -115,7 +115,7 @@ interface Gen<T> {
 
     fun list(size: Int): Gen<List<T>> = list(size..size)
 
-    fun distinctList(size: IntRange = 0..100): Gen<List<T>>
+    fun distinctList(size: IntRange): Gen<List<T>>
 
     fun distinctList(size: Int): Gen<List<T>> = distinctList(size..size)
 

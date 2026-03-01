@@ -110,7 +110,7 @@ internal interface DistinctListGeneratorContract : BaseContract {
 
     @Test
     fun `shrinks to empty list when list is not empty`() {
-        val gen = int(0..10).distinctList()
+        val gen = int(0..10).distinctList(0..5)
 
         repeatTest { seed ->
             val result = gen.generate(tree(seed))
@@ -138,7 +138,7 @@ internal interface DistinctListGeneratorContract : BaseContract {
     fun `all shrunk element values are within the generator range`() {
         repeatTest { seed ->
             val range = 0..10
-            val gen = int(range).distinctList()
+            val gen = int(range).distinctList(0..5)
 
             val result = gen.generate(tree(seed))
             if (result.value.isEmpty()) skipIteration()
