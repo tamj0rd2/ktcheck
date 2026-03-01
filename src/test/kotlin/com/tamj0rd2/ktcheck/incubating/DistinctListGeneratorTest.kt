@@ -13,14 +13,4 @@ internal class DistinctListGeneratorTest : BaseContractImpl(), DistinctListGener
     override fun `shrinks of edge cases are reproducible via their returned tree`() {
         super.`shrinks of edge cases are reproducible via their returned tree`()
     }
-
-    @Disabled("todo: make this pass")
-    override fun `shrinks to empty list when list is not empty`() {
-        super.`shrinks to empty list when list is not empty`()
-    }
-
-    @Disabled("todo: make this pass")
-    override fun `all shrunk element values are within the generator range`() {
-        super.`all shrunk element values are within the generator range`()
-    }
 }
