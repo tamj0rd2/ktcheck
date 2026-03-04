@@ -1,4 +1,4 @@
-package com.tamj0rd2.ktcheck.incubating
+package com.tamj0rd2.ktcheck.current
 
 internal class EdgeCasesDisabledGen<T>(
     private val delegate: GenImpl<T>,
