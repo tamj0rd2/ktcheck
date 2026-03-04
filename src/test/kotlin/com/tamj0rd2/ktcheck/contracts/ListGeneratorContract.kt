@@ -92,11 +92,7 @@ internal interface ListGeneratorContract : BaseContract {
         }
 
         repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-
-        // todo: if I decide to keep current, remove condition.
-        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
-            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
-        }
+        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @Test
@@ -109,11 +105,7 @@ internal interface ListGeneratorContract : BaseContract {
         }
 
         repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-
-        // todo: if I decide to keep current, remove condition.
-        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
-            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
-        }
+        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @Test
@@ -129,11 +121,7 @@ internal interface ListGeneratorContract : BaseContract {
         }
 
         repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-
-        // todo: if I decide to keep current, remove condition.
-        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
-            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
-        }
+        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @Test
@@ -147,11 +135,7 @@ internal interface ListGeneratorContract : BaseContract {
         }
 
         repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-
-        // todo: if I decide to keep current, remove condition.
-        if (this !is com.tamj0rd2.ktcheck.current.BaseContractImpl) {
-            gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
-        }
+        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @TestFactory

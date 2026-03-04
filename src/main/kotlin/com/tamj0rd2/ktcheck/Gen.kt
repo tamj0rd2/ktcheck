@@ -13,7 +13,7 @@ import com.tamj0rd2.ktcheck.core.Tuple8
 import com.tamj0rd2.ktcheck.core.Tuple9
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import com.tamj0rd2.ktcheck.core.tuple
-import com.tamj0rd2.ktcheck.current.GenV2Builders
+import com.tamj0rd2.ktcheck.incubating.GenV2Builders
 import java.util.*
 import kotlin.collections.plus
 import kotlin.plus
