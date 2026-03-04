@@ -1,47 +1,51 @@
 package com.tamj0rd2.ktcheck.current
 
-import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.core.Seed
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.orThrow
 import kotlin.reflect.KClass
+import com.tamj0rd2.ktcheck.Gen as IGen
 
 // todo: one thing on my mind is that each generator should do a final check to make sure the constraints are upheld
 //  post generation/edge case creation. put that in a contract somewhere.
-internal sealed interface GenImpl<T> : Gen<T> {
+internal sealed interface GenImpl<T> {
     fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException>
 
     fun edgeCases(root: RandomTree): List<GeneratedValue<T>>
+}
 
-    override fun withoutDefaultEdgeCases() = EdgeCasesDisabledGen(this)
-
+internal data class Gen<T>(
+    private val generator: GenImpl<T>,
+) : IGen<T>, GenImpl<T> by generator {
     override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).orThrow().value
 
-    override fun <R> map(fn: (T) -> R) = MapGen(this, fn)
+    override fun withoutDefaultEdgeCases() = Gen(EdgeCasesDisabledGen(this))
+
+    override fun <R> map(fn: (T) -> R) = Gen(MapGen(this, fn))
 
     @Suppress("UNCHECKED_CAST")
-    override fun <R> flatMap(fn: (T) -> Gen<R>) = FlatMapGen(this, fn as (T) -> GenImpl<R>)
+    override fun <R> flatMap(fn: (T) -> IGen<R>) = Gen(FlatMapGen(this, fn as (T) -> Gen<R>))
 
     override fun <T2, R> combineWith(
-        nextGen: Gen<T2>,
+        nextGen: IGen<T2>,
         combine: (T, T2) -> R,
-    ) = CombineWithGen(this, nextGen as GenImpl<T2>, combine)
+    ) = Gen(CombineWithGen(this, nextGen as Gen<T2>, combine))
 
     override fun filter(
         threshold: Int,
         predicate: (T) -> Boolean,
-    ) = FilterGen(this, threshold, predicate)
+    ) = Gen(FilterGen(this, threshold, predicate))
 
     override fun ignoreExceptions(
         klass: KClass<out Exception>,
         threshold: Int,
-    ) = IgnoreExceptionGen(this, klass, threshold)
+    ) = Gen(IgnoreExceptionGen(this, klass, threshold))
 
-    override fun list(size: IntRange) = ListGen(this, size)
+    override fun list(size: IntRange) = Gen(ListGen(this, size))
 
-    override fun distinctList(size: IntRange) = DistinctListGen(this, size)
+    override fun distinctList(size: IntRange) = Gen(DistinctListGen(this, size))
 }
 
 internal data class GeneratedValue<T>(
@@ -52,12 +56,10 @@ internal data class GeneratedValue<T>(
 
 internal object GenV2Builders : GenBuilders {
 
-    override fun <T> constant(value: T) = ConstantGen(value)
+    override fun <T> constant(value: T) = Gen(ConstantGen(value))
 
-    override fun int(range: IntRange, shrinkTarget: Int) = IntGen(range, shrinkTarget)
+    override fun int(range: IntRange, shrinkTarget: Int) = Gen(IntGen(range, shrinkTarget))
 
-    override fun long(): Gen<Long> {
-        // todo: implement properly
-        return int().map { it.toLong() }
-    }
+    // todo: implement properly
+    override fun long() = int().map { it.toLong() }
 }

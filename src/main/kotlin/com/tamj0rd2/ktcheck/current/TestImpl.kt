@@ -7,13 +7,13 @@ import com.tamj0rd2.ktcheck.TestConfig
 import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
 
-internal fun <T> test(config: TestConfig, gen: GenImpl<T>, property: Property<T>) {
+internal fun <T> test(config: TestConfig, gen: Gen<T>, property: Property<T>) {
     TestRunner(config = config, gen = gen, property = property).run()
 }
 
 private class TestRunner<T>(
     private val config: TestConfig,
-    private val gen: GenImpl<T>,
+    private val gen: Gen<T>,
     private val property: Property<T>,
 ) {
     private val edgeCases = gen.edgeCases(RandomTree.forEdgeCases)
