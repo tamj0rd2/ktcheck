@@ -7,7 +7,7 @@ import dev.forkhandles.result4k.map
 internal class MapGen<T, R>(
     private val wrappedGen: GenImpl<T>,
     private val fn: (T) -> R,
-) : GenImpl<R>() {
+) : GenImpl<R> {
     override fun generate(root: RandomTree): Result4k<GeneratedValue<R>, GenerationException> {
         return wrappedGen.generate(root).map { it.map(fn) }
     }

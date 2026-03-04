@@ -11,7 +11,7 @@ internal class FilterGen<T>(
     private val gen: GenImpl<T>,
     private val threshold: Int,
     private val predicate: (T) -> Boolean,
-) : GenImpl<T>() {
+) : GenImpl<T> {
     override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
         return root.traversingRight()
             .take(threshold)

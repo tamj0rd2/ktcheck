@@ -8,7 +8,7 @@ import dev.forkhandles.result4k.onFailure
 internal sealed class AbstractListGen<T>(
     protected val elementGen: GenImpl<T>,
     sizeRange: IntRange,
-) : GenImpl<List<T>>() {
+) : GenImpl<List<T>> {
     protected val sizeGen = IntGen(sizeRange, sizeRange.first)
 
     final override fun generate(root: RandomTree): Result4k<GeneratedValue<List<T>>, GenerationException> {

@@ -10,7 +10,7 @@ internal class CombineWithGen<T1, T2, R>(
     private val leftGen: GenImpl<T1>,
     private val rightGen: GenImpl<T2>,
     private val combine: (T1, T2) -> R,
-) : GenImpl<R>() {
+) : GenImpl<R> {
     override fun generate(root: RandomTree): Result4k<GeneratedValue<R>, GenerationException> {
         val leftResult = leftGen.generate(root.left).onFailure { return it }
         val rightResult = rightGen.generate(root.right).onFailure { return it }

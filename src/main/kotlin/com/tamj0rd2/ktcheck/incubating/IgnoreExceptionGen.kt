@@ -10,7 +10,7 @@ internal class IgnoreExceptionGen<T>(
     private val wrappedGen: GenImpl<T>,
     private val klass: KClass<out Exception>,
     private val threshold: Int,
-) : GenImpl<T>() {
+) : GenImpl<T> {
     override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
         var latestError: Exception? = null
 
