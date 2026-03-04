@@ -15,6 +15,8 @@ internal sealed interface GenImpl<T> : Gen<T> {
 
     fun edgeCases(root: RandomTree): List<GeneratedValue<T>>
 
+    override fun withoutDefaultEdgeCases() = EdgeCasesDisabledGen(this)
+
     override fun sample(seed: Long) = generate(RandomTree.new(Seed(seed))).orThrow().value
 
     override fun <R> map(fn: (T) -> R) = MapGen(this, fn)

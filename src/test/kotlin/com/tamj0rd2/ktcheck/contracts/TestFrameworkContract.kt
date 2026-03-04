@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import strikt.api.expectDoesNotThrow
 import strikt.api.expectThat
 import strikt.api.expectThrows
-import strikt.assertions.contains
+import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import java.io.ByteArrayOutputStream
@@ -62,7 +62,21 @@ internal interface TestFrameworkContract : BaseContract {
             true
         }
 
-        expectThat(seenValues).contains(0, 1, -1, Int.MIN_VALUE, Int.MIN_VALUE + 1, Int.MAX_VALUE, Int.MAX_VALUE - 1)
+        val expectedEdges = setOf(0, 1, -1, Int.MIN_VALUE, Int.MIN_VALUE + 1, Int.MAX_VALUE, Int.MAX_VALUE - 1)
+        expectThat(seenValues.take(expectedEdges.size)).containsExactlyInAnyOrder(expectedEdges)
+    }
+
+    @Test
+    fun `can disable edge cases`() {
+        val seenValues = mutableSetOf<Int>()
+
+        forAll(int().withoutDefaultEdgeCases()) {
+            seenValues.add(it)
+            true
+        }
+
+        val expectedEdges = setOf(0, 1, -1, Int.MIN_VALUE, Int.MIN_VALUE + 1, Int.MAX_VALUE, Int.MAX_VALUE - 1)
+        expectThat(seenValues.take(expectedEdges.size)).not().containsExactlyInAnyOrder(expectedEdges)
     }
 
     @Test

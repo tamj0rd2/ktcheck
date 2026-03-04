@@ -10,6 +10,10 @@ internal sealed class GenImpl<T> : Gen<T> {
 
     open fun edgeCases(): List<GenResultV2<T>> = emptyList()
 
+    override fun withoutDefaultEdgeCases(): GenImpl<T> {
+        TODO("Not yet implemented")
+    }
+
     override fun sample(seed: Long) = generate(randomTree(Seed(seed))).value
 
     override fun <R> map(fn: (T) -> R) = MapGen(this, fn)
