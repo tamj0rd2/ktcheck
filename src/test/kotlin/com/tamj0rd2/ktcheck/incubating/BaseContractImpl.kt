@@ -13,7 +13,6 @@ import com.tamj0rd2.ktcheck.core.Tree
 import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
 import dev.forkhandles.result4k.valueOrNull
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
@@ -33,7 +32,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
     @Test
     open fun `shrinks of generated values are reproducible via their returned tree`() {
-        Assumptions.assumeTrue(genSupportsShrinking, "skipped as this gen doesn't support shrinking")
+        runIfGenSupportsShrinking()
 
         repeatTest { seed ->
             val gen = getGenIfDefined() as GenImpl
@@ -49,7 +48,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
     @Test
     open fun `edge cases are reproducible via their returned tree`() {
-        Assumptions.assumeTrue(genSupportsEdgeCases, "skipped as this gen doesn't support edge cases")
+        runIfGenSupportsEdgeCases()
 
         repeatTest { seed ->
             val gen = getGenIfDefined() as GenImpl
@@ -66,8 +65,8 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
     @Test
     open fun `shrinks of edge cases are reproducible via their returned tree`() {
-        Assumptions.assumeTrue(genSupportsEdgeCases, "skipped as this gen doesn't support edge cases")
-        Assumptions.assumeTrue(genSupportsShrinking, "skipped as this gen doesn't support shrinking")
+        runIfGenSupportsShrinking()
+        runIfGenSupportsEdgeCases()
 
         repeatTest { seed ->
             val gen = getGenIfDefined() as GenImpl

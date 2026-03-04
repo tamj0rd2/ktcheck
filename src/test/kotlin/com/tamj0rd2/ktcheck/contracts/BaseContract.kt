@@ -31,6 +31,12 @@ internal interface BaseContract : GenBuilders {
         return gen as Gen<Any>
     }
 
+    fun runIfGenSupportsShrinking() =
+        Assumptions.assumeTrue(genSupportsShrinking, "skipped as this gen doesn't support shrinking")
+
+    fun runIfGenSupportsEdgeCases() =
+        Assumptions.assumeTrue(genSupportsEdgeCases, "skipped as this gen doesn't support edge cases")
+
     @Test
     fun `generated values are deterministic`() {
         repeatTest { seed ->
@@ -44,7 +50,7 @@ internal interface BaseContract : GenBuilders {
 
     @Test
     fun `shrinks of generated values are deterministic`() {
-        Assumptions.assumeTrue(genSupportsShrinking, "skipped as this gen doesn't support shrinking")
+        runIfGenSupportsShrinking()
 
         repeatTest { seed ->
             val gen = getGenIfDefined()
