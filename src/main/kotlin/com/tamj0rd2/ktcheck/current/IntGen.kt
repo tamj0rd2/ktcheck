@@ -13,7 +13,7 @@ internal class IntGen(
         require(shrinkTarget in range) { "Shrink target $shrinkTarget must be within the range $range" }
     }
 
-    override fun generate(root: RandomTree): Result4k<GeneratedValue<Int>, GenerationException> {
+    override fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<Int>, GenerationException> {
         val value = root.provider.int(range)
         return buildResult(root, value).asSuccess()
     }

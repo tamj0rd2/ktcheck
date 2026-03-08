@@ -17,7 +17,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> IGen<T>.generate(tree: Tree<*>): GenResults<T> {
-        val result = (this as Gen).generate(tree as RandomTree).orThrow()
+        val result = (this as Gen).generate(tree as RandomTree, GenerationMode.InitialGeneration).orThrow()
         return GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
 
@@ -36,7 +36,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
     private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {
             for (shrink in shrinks) {
-                val result = generate(shrink).onFailure { continue }
+                val result = generate(shrink, GenerationMode.Shrinking).onFailure { continue }
                 yield(GenResults(result.value, collectShrinksRecursively(result.shrinks)))
             }
         }

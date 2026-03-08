@@ -13,6 +13,7 @@ internal class DistinctListGen<T>(
 
     override fun generateElements(
         initialTree: RandomTree,
+        mode: GenerationMode,
         size: Int,
     ): Result4k<List<WithUsedTree<GeneratedValue<T>>>, GenerationException> {
         val trees = initialTree.traversingRight().iterator()
@@ -33,7 +34,7 @@ internal class DistinctListGen<T>(
 
             attempts += 1
 
-            val elementResult = elementGen.generate(tree.left).onFailure { return it }
+            val elementResult = elementGen.generate(tree.left, mode).onFailure { return it }
 
             if (seenValues.add(elementResult.value)) {
                 results.add(WithUsedTree(tree.left, elementResult))
