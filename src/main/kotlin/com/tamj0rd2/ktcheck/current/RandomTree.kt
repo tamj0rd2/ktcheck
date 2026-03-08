@@ -45,8 +45,6 @@ internal data class RandomTree private constructor(
                 lazyRight = lazy { terminal },
             )
 
-        val forEdgeCases = new(Seed(0))
-
         private tailrec fun walkRight(tree: RandomTree, amount: Int): RandomTree = when (amount) {
             0 -> tree
             else -> walkRight(tree.right, amount - 1)

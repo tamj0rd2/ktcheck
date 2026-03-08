@@ -18,6 +18,7 @@ import strikt.api.expectThat
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
 import java.time.Duration
+import kotlin.random.Random
 
 internal interface BaseContract : GenBuilders {
     val exampleGen: Gen<*>?
@@ -63,6 +64,35 @@ internal interface BaseContract : GenBuilders {
         }
     }
 
+    @Test
+    fun `edge cases are deterministic`() {
+        runIfGenSupportsEdgeCases()
+
+        repeatTest { seed ->
+            val gen = getGenIfDefined()
+            val originalResult = gen.edgeCases(tree(seed)).random(Random(seed.value))
+            val regenerated = gen.edgeCases(tree(seed)).random(Random(seed.value))
+
+            expectThat(regenerated).value.isEqualTo(originalResult.value)
+        }
+    }
+
+    @Test
+    fun `shrinks of edge cases are deterministic`() {
+        runIfGenSupportsEdgeCases()
+        runIfGenSupportsShrinking()
+
+        repeatTest { seed ->
+            val gen = getGenIfDefined()
+            val originalResult = gen.edgeCases(tree(seed)).random(Random(seed.value))
+            val regenerated = gen.edgeCases(tree(seed)).random(Random(seed.value))
+
+            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalResult.shrunkValues)
+            // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
+            expectThat(regenerated).shrunkValues.isEqualTo(originalResult.shrunkValues)
+        }
+    }
+
     //=== Wiring ===//
     fun tree(seed: Seed = Seed.random()): Tree<*>
     fun Tree<*>.withLeft(left: Tree<*>): Tree<*>
@@ -76,7 +106,7 @@ internal interface BaseContract : GenBuilders {
 
     fun <T> Gen<T>.generate(tree: Tree<*> = tree()): GenResults<T>
 
-    fun <T> Gen<T>.edgeCases(): List<GenResults<T>>
+    fun <T> Gen<T>.edgeCases(tree: Tree<*> = tree()): List<GenResults<T>>
 
     fun <T> Gen<T>.sequence(): Sequence<GenResults<T>> =
         generateSequence { generate() }
