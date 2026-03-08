@@ -18,13 +18,6 @@ internal class IntGen(
         return buildResult(root, value).asSuccess()
     }
 
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<Int>> {
-        return setOf(0, range.first, range.last)
-            .flatMap { listOf(it, it - 1, it + 1) }
-            .filter { it in range }
-            .map { buildResult(root = root.withPredeterminedValue(it), value = it) }
-    }
-
     private fun buildResult(
         root: RandomTree,
         value: Int,
@@ -34,7 +27,6 @@ internal class IntGen(
         return GeneratedValue(
             value = value,
             shrinks = shrinks,
-            usedTree = root,
         )
     }
 }

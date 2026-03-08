@@ -4,7 +4,6 @@ import com.tamj0rd2.ktcheck.GenerationException
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.asSuccess
 import dev.forkhandles.result4k.onFailure
-import dev.forkhandles.result4k.orThrow
 
 internal class CombineWithGen<T1, T2, R>(
     private val leftGen: GenImpl<T1>,
@@ -15,28 +14,6 @@ internal class CombineWithGen<T1, T2, R>(
         val leftResult = leftGen.generate(root.left).onFailure { return it }
         val rightResult = rightGen.generate(root.right).onFailure { return it }
         return buildResult(root, leftResult, rightResult).asSuccess()
-    }
-
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<R>> {
-        val leftEdgeCases = leftGen.edgeCases(root.left)
-        val rightEdgeCases = rightGen.edgeCases(root.right)
-
-        if (leftEdgeCases.isEmpty() && rightEdgeCases.isEmpty()) {
-            return emptyList()
-        }
-
-        val leftEdgeCasesToUse = leftEdgeCases.ifEmpty { listOf(leftGen.generate(root.left).orThrow()) }
-        val rightEdgeCasesToUse = rightEdgeCases.ifEmpty { listOf(rightGen.generate(root.right).orThrow()) }
-
-        return leftEdgeCasesToUse.flatMap { leftEdgeCase ->
-            rightEdgeCasesToUse.map { rightEdgeCase ->
-                val stableRoot = root
-                    .withLeft(leftEdgeCase.usedTree)
-                    .withRight(rightEdgeCase.usedTree)
-
-                buildResult(stableRoot, leftEdgeCase, rightEdgeCase)
-            }
-        }
     }
 
     private fun buildResult(
@@ -64,7 +41,6 @@ internal class CombineWithGen<T1, T2, R>(
         return GeneratedValue(
             value = combine(leftResult.value, rightResult.value),
             shrinks = cartesianShrinks + leftBasedShrinks + rightBasedShrinks,
-            usedTree = root,
         )
     }
 }

@@ -27,7 +27,7 @@ internal interface BaseContract : GenBuilders {
 
     fun getGenIfDefined(): Gen<Any> {
         val gen = exampleGen
-        Assumptions.assumeTrue(gen != null)
+        Assumptions.assumeTrue(gen != null, "skipped as there is no example gen defined")
         @Suppress("UNCHECKED_CAST")
         return gen as Gen<Any>
     }

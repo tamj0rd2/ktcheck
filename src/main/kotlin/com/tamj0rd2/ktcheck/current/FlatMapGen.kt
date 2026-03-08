@@ -15,18 +15,6 @@ internal class FlatMapGen<T, R>(
         return buildResult(root = root, outerResult = outerResult, innerResult = innerResult).asSuccess()
     }
 
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<R>> {
-        return wrappedGen.edgeCases(root.left).flatMap { outerEdgeCase ->
-            fn(outerEdgeCase.value).edgeCases(root.right).map { innerEdgeCase ->
-                val stableRoot = root
-                    .withLeft(outerEdgeCase.usedTree)
-                    .withRight(innerEdgeCase.usedTree)
-
-                buildResult(root = stableRoot, outerResult = outerEdgeCase, innerResult = innerEdgeCase)
-            }
-        }
-    }
-
     private fun buildResult(
         root: RandomTree,
         outerResult: GeneratedValue<T>,
@@ -39,7 +27,6 @@ internal class FlatMapGen<T, R>(
         return GeneratedValue(
             value = innerResult.value,
             shrinks = shrinks,
-            usedTree = root,
         )
     }
 }

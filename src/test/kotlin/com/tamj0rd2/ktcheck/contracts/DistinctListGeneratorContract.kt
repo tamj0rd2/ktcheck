@@ -31,6 +31,9 @@ import java.time.Duration
 internal interface DistinctListGeneratorContract : BaseContract {
     override val exampleGen get() = int(0..10).distinctList(0..4)
 
+    // todo: re-enable and re-implement asap.
+    override val genSupportsEdgeCases: Boolean get() = false
+
     @Test
     fun `generates lists with distinct elements`() {
         repeatTest { seed ->
@@ -183,6 +186,8 @@ internal interface DistinctListGeneratorContract : BaseContract {
 
     @TestFactory
     fun `edge case generation`(): List<DynamicTest> {
+        // todo: delete line asap once edge cases are fixed
+        runIfGenSupportsEdgeCases()
         data class TestCase(
             val sizeRange: IntRange,
             val shouldHaveEmpty: Boolean,

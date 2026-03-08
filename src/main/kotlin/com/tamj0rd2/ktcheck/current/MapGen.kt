@@ -12,13 +12,8 @@ internal class MapGen<T, R>(
         return wrappedGen.generate(root).map { it.map(fn) }
     }
 
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<R>> {
-        return wrappedGen.edgeCases(root).map { it.map(fn) }
-    }
-
     fun GeneratedValue<T>.map(fn: (T) -> R): GeneratedValue<R> = GeneratedValue(
         value = fn(value),
         shrinks = shrinks,
-        usedTree = usedTree,
     )
 }

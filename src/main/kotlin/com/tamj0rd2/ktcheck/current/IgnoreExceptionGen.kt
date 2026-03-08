@@ -28,8 +28,4 @@ internal class IgnoreExceptionGen<T>(
             .firstOrNull()
             .asResultOr { GenerationException.FilterLimitReached(threshold, latestError) }
     }
-
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<T>> {
-        return emptyList()
-    }
 }

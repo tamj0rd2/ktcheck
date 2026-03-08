@@ -14,9 +14,9 @@ internal class DistinctListGen<T>(
     override fun generateElements(
         initialTree: RandomTree,
         size: Int,
-    ): Result4k<List<GeneratedValue<T>>, GenerationException> {
+    ): Result4k<List<WithUsedTree<GeneratedValue<T>>>, GenerationException> {
         val trees = initialTree.traversingRight().iterator()
-        val results = mutableListOf<GeneratedValue<T>>()
+        val results = mutableListOf<WithUsedTree<GeneratedValue<T>>>()
         val seenValues = mutableSetOf<T>()
         var attempts = 0
 
@@ -36,7 +36,7 @@ internal class DistinctListGen<T>(
             val elementResult = elementGen.generate(tree.left).onFailure { return it }
 
             if (seenValues.add(elementResult.value)) {
-                results.add(elementResult)
+                results.add(WithUsedTree(tree.left, elementResult))
                 attempts = 0
                 continue
             }
@@ -51,20 +51,6 @@ internal class DistinctListGen<T>(
         }
 
         return results.asSuccess()
-    }
-
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<List<T>>> {
-        return sizeGen.edgeCases(root.left).map { sizeResult ->
-            val elementResults = elementGen.edgeCases(root.right)
-                .distinctBy { it.value }
-                .take(sizeResult.value)
-
-            val reproducibleTree = root
-                .withSizeTree(sizeResult.usedTree)
-                .withElementTrees(elementResults)
-
-            buildResult(reproducibleTree, sizeResult, elementResults)
-        }
     }
 
     private companion object {

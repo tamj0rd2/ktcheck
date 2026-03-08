@@ -8,9 +8,5 @@ internal class ConstantGen<T>(
     private val value: T,
 ) : GenImpl<T> {
     override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> =
-        GeneratedValue(value = value, shrinks = emptySequence(), usedTree = root).asSuccess()
-
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<T>> {
-        return emptyList()
-    }
+        GeneratedValue(value = value, shrinks = emptySequence()).asSuccess()
 }

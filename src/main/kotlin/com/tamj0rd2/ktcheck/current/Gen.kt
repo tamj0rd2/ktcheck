@@ -12,8 +12,6 @@ import com.tamj0rd2.ktcheck.Gen as IGen
 //  post generation/edge case creation. put that in a contract somewhere.
 internal sealed interface GenImpl<T> {
     fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException>
-
-    fun edgeCases(root: RandomTree): List<GeneratedValue<T>>
 }
 
 internal data class Gen<T>(
@@ -51,7 +49,6 @@ internal data class Gen<T>(
 internal data class GeneratedValue<T>(
     val value: T,
     val shrinks: Sequence<RandomTree>,
-    val usedTree: RandomTree,
 )
 
 internal object GenV2Builders : GenBuilders {

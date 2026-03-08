@@ -20,7 +20,7 @@ internal sealed class AbstractListGen<T>(
     protected fun buildResult(
         root: RandomTree,
         sizeResult: GeneratedValue<Int>,
-        listElementResults: List<GeneratedValue<T>>,
+        listElementResults: List<WithUsedTree<GeneratedValue<T>>>,
     ): GeneratedValue<List<T>> {
         val sizeShrinks = sizeResult.shrinks.flatMap { sizeShrink ->
             sequence {
@@ -35,28 +35,32 @@ internal sealed class AbstractListGen<T>(
             }
         }
 
-        val elementBasedShrinks = listElementResults.asSequence().flatMapIndexed { index, elementResult ->
-            elementResult.shrinks.map { shrink ->
+        val elementBasedShrinks = listElementResults.asSequence().flatMapIndexed { index, elementResultWithTree ->
+            elementResultWithTree.data.shrinks.map { shrink ->
                 root.withElementTrees(listElementResults.map { it.usedTree }.replaceAtIndex(index, shrink))
             }
         }
 
         return GeneratedValue(
-            value = listElementResults.map { it.value },
+            value = listElementResults.map { it.data.value },
             shrinks = sizeShrinks + elementBasedShrinks,
-            usedTree = root,
         )
     }
+
+    protected data class WithUsedTree<T>(
+        val usedTree: RandomTree,
+        val data: T,
+    )
 
     protected abstract fun generateElements(
         initialTree: RandomTree,
         size: Int,
-    ): Result4k<List<GeneratedValue<T>>, GenerationException>
+    ): Result4k<List<WithUsedTree<GeneratedValue<T>>>, GenerationException>
 
     protected fun RandomTree.withSizeTree(sizeShrink: RandomTree) = withLeft(sizeShrink)
 
     @JvmName("withElementResults")
-    protected fun RandomTree.withElementTrees(elementResults: List<GeneratedValue<T>>) =
+    protected fun RandomTree.withElementTrees(elementResults: List<WithUsedTree<GeneratedValue<T>>>) =
         withElementTrees(elementResults.map { it.usedTree })
 
     protected fun RandomTree.withElementTrees(elementTrees: List<RandomTree>): RandomTree {

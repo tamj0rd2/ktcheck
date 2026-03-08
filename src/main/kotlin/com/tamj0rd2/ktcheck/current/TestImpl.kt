@@ -4,7 +4,6 @@ import com.tamj0rd2.ktcheck.Property
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.ShrinkingConstraint
 import com.tamj0rd2.ktcheck.TestConfig
-import com.tamj0rd2.ktcheck.core.Seed
 import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
 
@@ -17,7 +16,7 @@ private class TestRunner<T>(
     private val gen: Gen<T>,
     private val property: Property<T>,
 ) {
-    private val edgeCases = gen.edgeCases(RandomTree.new(Seed(0)))
+    private val edgeCases = emptyList<GeneratedValue<T>>()
 
     fun run() {
         val startingIteration = (config.replayIteration ?: 1)

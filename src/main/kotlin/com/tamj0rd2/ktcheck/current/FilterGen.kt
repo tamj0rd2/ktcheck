@@ -22,12 +22,6 @@ internal class FilterGen<T>(
             .asResultOr { GenerationException.FilterLimitReached(threshold) }
     }
 
-    override fun edgeCases(root: RandomTree): List<GeneratedValue<T>> {
-        return gen.edgeCases(root)
-            .filter { predicate(it.value) }
-            .map { buildResult(root, it) }
-    }
-
     private fun buildResult(
         root: RandomTree,
         result: GeneratedValue<T>,
@@ -39,7 +33,6 @@ internal class FilterGen<T>(
             shrinks = result.shrinks
                 .filter { gen.generate(it).map { predicate(it.value) }.recover { false } }
                 .map { root.withLeft(it) },
-            usedTree = root.withLeft(result.usedTree),
         )
     }
 }
