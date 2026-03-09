@@ -31,7 +31,11 @@ internal class FilterGen<T>(
         return GeneratedValue(
             value = result.value,
             shrinks = result.shrinks
-                .filter { gen.generate(it, GenerationMode.Shrinking).map { predicate(it.value) }.recover { false } }
+                .filter { shrunkTree ->
+                    gen.generate(shrunkTree, GenerationMode.Shrinking)
+                        .map { predicate(it.value) }
+                        .recover { false }
+                }
                 .map { root.withLeft(it) },
         )
     }

@@ -12,20 +12,27 @@ internal class IgnoreExceptionGen<T>(
     private val threshold: Int,
 ) : Generator<T> {
     override fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>, GenerationException> {
-        var latestError: Exception? = null
+        var latestError: Throwable? = null
 
-        return generateSequence(root) { it.right }
+        return root.traversingRight()
             .take(threshold)
-            .mapNotNull {
-                try {
-                    wrappedGen.generate(it.left, mode).valueOrNull()
-                } catch (e: Exception) {
-                    if (!klass.isInstance(e)) throw e
-                    latestError = e
-                    null
-                }
-            }
+            .mapNotNull { tryGenerating(it.left, mode).onFailure { ex -> latestError = ex }.getOrNull() }
+            .map { buildResult(root, it) }
             .firstOrNull()
             .asResultOr { GenerationException.FilterLimitReached(threshold, latestError) }
     }
+
+    private fun buildResult(
+        root: RandomTree,
+        result: GeneratedValue<T>,
+    ): GeneratedValue<T> = GeneratedValue(
+        value = result.value,
+        shrinks = result.shrinks
+            .filter { tryGenerating(it, GenerationMode.Shrinking).isSuccess }
+            .map { root.withLeft(it) },
+    )
+
+    private fun tryGenerating(tree: RandomTree, mode: GenerationMode) =
+        runCatching { wrappedGen.generate(tree, mode).valueOrNull() }
+            .onFailure { if (!klass.isInstance(it)) throw it }
 }
