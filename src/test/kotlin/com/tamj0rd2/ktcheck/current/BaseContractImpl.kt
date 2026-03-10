@@ -22,7 +22,7 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
     }
 
     // TODO: re-implement this. I'm having second thoughts about edge cases.
-    override fun <T> IGen<T>.edgeCases(tree: Tree<*>): List<GenResults<T>> {
+    override fun <T> IGen<T>.edgeCases(seed: Seed): List<GenResults<T>> {
         /**
          * I don't think I ever should have introduced an EdgeCases method. If you have a flatmap for example,
          * the only time you'll ever see edge cases are if the left and right gens both produce edge cases.
