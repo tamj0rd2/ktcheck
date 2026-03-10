@@ -7,6 +7,8 @@ import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.Tree
 import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
+import org.junit.jupiter.api.assertTimeoutPreemptively
+import java.time.Duration
 import com.tamj0rd2.ktcheck.Gen as IGen
 
 internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Builders {
@@ -21,17 +23,22 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
         return GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
 
-    // TODO: re-implement this. I'm having second thoughts about edge cases.
-    override fun <T> IGen<T>.edgeCases(seed: Seed): List<GenResults<T>> {
-        /**
-         * I don't think I ever should have introduced an EdgeCases method. If you have a flatmap for example,
-         * the only time you'll ever see edge cases are if the left and right gens both produce edge cases.
-         * You don't get edge cases alongside other random generations. which is significantly less useful.
-         *
-         * An edge case needs to be something that's used alongside other randomly generated values
-         */
-        return emptyList()
+    override fun <T> IGen<T>.edgeCase(tree: Tree<*>): GenResults<T>? {
+        val result = (this as Gen).edgeCase(tree as RandomTree, GenerationMode.InitialGeneration)
+            .orThrow()
+            ?: return null
+
+        return GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
+
+    override fun <T> IGen<T>.edgeCases(seed: Seed): List<GenResults<T>> =
+        assertTimeoutPreemptively(Duration.ofSeconds(2)) {
+            trees(seed)
+                .take(1000)
+                .mapNotNull { edgeCase(it) }
+                .toList()
+                .distinctBy { it.value }
+        }
 
     private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {

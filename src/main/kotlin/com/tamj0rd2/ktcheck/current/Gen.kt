@@ -4,6 +4,8 @@ import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.core.Seed
 import dev.forkhandles.result4k.Result4k
+import dev.forkhandles.result4k.asSuccess
+import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.orThrow
 import kotlin.reflect.KClass
 import com.tamj0rd2.ktcheck.Gen as IGen
@@ -17,11 +19,29 @@ enum class GenerationMode {
 //  post generation/edge case creation. put that in a contract somewhere.
 internal sealed interface Generator<T> {
     fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>, GenerationException>
+
+    fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>?, GenerationException> {
+        // todo: remove this default implementation
+        return null.asSuccess()
+    }
 }
 
 internal data class Gen<T>(
     private val generator: Generator<T>,
-) : IGen<T>, Generator<T> by generator {
+    private val onlyIncludeEdgeCases: Boolean = false,
+) : IGen<T>, Generator<T> {
+    override fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>, GenerationException> {
+        if (onlyIncludeEdgeCases && mode == GenerationMode.InitialGeneration) {
+            return edgeCase(root, mode).flatMap { it?.asSuccess() ?: generator.generate(root, mode) }
+        }
+
+        return generator.generate(root, mode)
+    }
+
+    override fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>?, GenerationException> {
+        return generator.edgeCase(root, mode)
+    }
+
     override fun sample(seed: Long) =
         generate(RandomTree.new(Seed(seed)), GenerationMode.InitialGeneration).orThrow().value
 

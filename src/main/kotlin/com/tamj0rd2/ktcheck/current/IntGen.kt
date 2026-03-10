@@ -18,6 +18,18 @@ internal class IntGen(
         return buildResult(root, value).asSuccess()
     }
 
+    private val edgeCases by lazy {
+        listOf(0, range.first, range.last)
+            .flatMap { listOf(it, it - 1, it + 1) }
+            .distinct()
+            .filter { it in range }
+    }
+
+    override fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<Int>?, GenerationException> {
+        val edgeCase = edgeCases[root.provider.int(edgeCases.indices)]
+        return buildResult(root = root.withPredeterminedValue(edgeCase), value = edgeCase).asSuccess()
+    }
+
     private fun buildResult(
         root: RandomTree,
         value: Int,

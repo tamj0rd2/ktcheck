@@ -66,8 +66,8 @@ data object TerminalValueProvider : ValueProvider {
     }
 }
 
-private data class RandomValueProvider(private val seed: Seed) : ValueProvider {
-    private val random get() = Random(seed.value)
+internal data class RandomValueProvider(private val seed: Seed) : ValueProvider {
+    val random get() = Random(seed.value)
 
     override fun int(range: IntRange): Int {
         return random.nextInt(range)

@@ -17,8 +17,8 @@ import strikt.api.Assertion
 import strikt.api.expectThat
 import strikt.assertions.containsExactlyInAnyOrder
 import strikt.assertions.isEqualTo
+import strikt.assertions.isNotNull
 import java.time.Duration
-import kotlin.random.Random
 
 internal interface BaseContract : GenBuilders {
     val exampleGen: Gen<*>?
@@ -70,10 +70,11 @@ internal interface BaseContract : GenBuilders {
 
         repeatTest { seed ->
             val gen = getGenIfDefined()
-            val originalResult = gen.edgeCases(seed).random(Random(seed.value))
-            val regenerated = gen.edgeCases(seed).random(Random(seed.value))
+            val originalResult = gen.edgeCase(tree(seed))
+            val regenerated = gen.edgeCase(tree(seed))
+            if (originalResult == null) skipIteration()
 
-            expectThat(regenerated).value.isEqualTo(originalResult.value)
+            expectThat(regenerated).isNotNull().value.isEqualTo(originalResult.value)
         }
     }
 
@@ -84,12 +85,13 @@ internal interface BaseContract : GenBuilders {
 
         repeatTest { seed ->
             val gen = getGenIfDefined()
-            val originalResult = gen.edgeCases(seed).random(Random(seed.value))
-            val regenerated = gen.edgeCases(seed).random(Random(seed.value))
+            val originalResult = gen.edgeCase(tree(seed))
+            val regenerated = gen.edgeCase(tree(seed))
+            if (originalResult == null) skipIteration()
 
-            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalResult.shrunkValues)
+            expectThat(regenerated).isNotNull().shrunkValues.containsExactlyInAnyOrder(originalResult.shrunkValues)
             // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
-            expectThat(regenerated).shrunkValues.isEqualTo(originalResult.shrunkValues)
+            expectThat(regenerated).isNotNull().value.isEqualTo(originalResult.value)
         }
     }
 
@@ -105,6 +107,8 @@ internal interface BaseContract : GenBuilders {
         trees(seed).take(1_000_000).first(predicate)
 
     fun <T> Gen<T>.generate(tree: Tree<*> = tree()): GenResults<T>
+
+    fun <T> Gen<T>.edgeCase(tree: Tree<*> = tree()): GenResults<T>?
 
     fun <T> Gen<T>.edgeCases(seed: Seed = Seed.random()): List<GenResults<T>>
 
