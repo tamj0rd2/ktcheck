@@ -9,10 +9,14 @@ internal class MapGen<T, R>(
     private val fn: (T) -> R,
 ) : Generator<R> {
     override fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<R>, GenerationException> {
-        return wrappedGen.generate(root, mode).map { it.map(fn) }
+        return wrappedGen.generate(root, mode).map { it.map() }
     }
 
-    fun GeneratedValue<T>.map(fn: (T) -> R): GeneratedValue<R> = GeneratedValue(
+    override fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<R>?, GenerationException> {
+        return wrappedGen.edgeCase(root, mode).map { it?.map() }
+    }
+
+    private fun GeneratedValue<T>.map(): GeneratedValue<R> = GeneratedValue(
         value = fn(value),
         shrinks = shrinks,
     )
