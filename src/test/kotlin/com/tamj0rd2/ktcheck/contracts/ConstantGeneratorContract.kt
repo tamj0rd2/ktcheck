@@ -8,16 +8,18 @@ import strikt.assertions.isEqualTo
 internal interface ConstantGeneratorContract : BaseContract {
     override val exampleGen get() = constant("hello")
     override val genSupportsShrinking get() = false
-    override val genSupportsEdgeCases get() = false
 
     @Test
-    fun `constant always produces the same value and doesn't shrink`() {
+    fun `constant generator always produces the same value and doesn't shrink`() {
         val gen = constant(10)
-        repeatTest {
-            val result = gen.generate(tree())
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
             expectThat(result.value).isEqualTo(10)
             expectThat(result).shrunkValues.isEmpty()
-            expectThat(gen.edgeCases()).isEmpty()
+
+            val edgeCase = gen.edgeCase(tree(seed))
+            expectThat(edgeCase).value.isEqualTo(10)
+            expectThat(edgeCase).shrunkValues.isEmpty()
         }
     }
 }

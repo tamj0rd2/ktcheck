@@ -2,6 +2,7 @@ package com.tamj0rd2.ktcheck.current
 
 import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
+import com.tamj0rd2.ktcheck.current.GenerationMode.*
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.asSuccess
 
@@ -14,8 +15,18 @@ internal class IntGen(
     }
 
     override fun generate(root: RandomTree): Result4k<GeneratedValue<Int>, GenerationException> {
-        val value = root.provider.int(range)
-        return buildResult(root, value).asSuccess()
+        val value = when (root.generationMode) {
+            Random,
+            Shrinking,
+                -> root.provider.int(range)
+
+            EdgeCase -> edgeCases[root.provider.int(edgeCases.indices)]
+        }
+
+        return GeneratedValue(
+            value = value,
+            shrinks = IntShrinker.shrink(value = value, range = range, target = shrinkTarget).map(root::withShrunkValue)
+        ).asSuccess()
     }
 
     private val edgeCases by lazy {
@@ -23,21 +34,5 @@ internal class IntGen(
             .flatMap { listOf(it, it - 1, it + 1) }
             .distinct()
             .filter { it in range }
-    }
-
-    override fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<Int>?, GenerationException> {
-        val edgeCase = edgeCases[root.provider.int(edgeCases.indices)]
-        return buildResult(root = root, value = edgeCase).asSuccess()
-    }
-
-    private fun buildResult(
-        root: RandomTree,
-        value: Int,
-    ): GeneratedValue<Int> {
-        val shrinks = IntShrinker.shrink(value, range, shrinkTarget).map {
-            root.withProvider(PredeterminedValueProvider(it, root.provider))
-        }
-
-        return GeneratedValue(value = value, shrinks = shrinks)
     }
 }

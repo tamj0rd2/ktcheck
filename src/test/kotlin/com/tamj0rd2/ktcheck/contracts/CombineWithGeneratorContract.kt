@@ -111,15 +111,4 @@ internal interface CombineWithGeneratorContract : BaseContract {
             .map { it.value.second }
             .isEqualTo(gen2.edgeCases().map { it.value })
     }
-
-    @Test
-    fun `combineWith doesn't yield any edge cases if neither generator has any`() {
-        val gen1 = constant("hello")
-        val gen2 = constant("world")
-        val combinedGen = gen1.combineWith(gen2, ::Pair)
-
-        expectThat(gen1.edgeCases()).describedAs { "gen1 edge cases - $this" }.isEmpty()
-        expectThat(gen2.edgeCases()).describedAs { "gen2 edge cases - $this" }.isEmpty()
-        expectThat(combinedGen.edgeCases()).isEmpty()
-    }
 }

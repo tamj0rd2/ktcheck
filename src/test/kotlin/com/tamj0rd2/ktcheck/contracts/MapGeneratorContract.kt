@@ -3,7 +3,6 @@ package com.tamj0rd2.ktcheck.contracts
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import strikt.assertions.isNotNull
 
 internal interface MapGeneratorContract : BaseContract {
     override val exampleGen get() = int(-100..100).map { it * 2 }
@@ -30,10 +29,9 @@ internal interface MapGeneratorContract : BaseContract {
         repeatTest { seed ->
             val originalEdgeCase = originalGen.edgeCase(tree(seed))
             val doubledEdgeCase = doublingGen.edgeCase(tree(seed))
-            if (originalEdgeCase == null) skipIteration()
 
-            expectThat(doubledEdgeCase).isNotNull().value.isEqualTo(originalEdgeCase.value * 2)
-            expectThat(doubledEdgeCase).isNotNull().shrunkValues.isEqualTo(originalEdgeCase.shrunkValues.map { it * 2 })
+            expectThat(doubledEdgeCase).value.isEqualTo(originalEdgeCase.value * 2)
+            expectThat(doubledEdgeCase).shrunkValues.isEqualTo(originalEdgeCase.shrunkValues.map { it * 2 })
         }
     }
 }

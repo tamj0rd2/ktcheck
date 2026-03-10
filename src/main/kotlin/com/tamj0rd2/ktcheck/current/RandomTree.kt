@@ -10,6 +10,7 @@ internal data class RandomTree private constructor(
     val provider: ValueProvider,
     override val lazyLeft: Lazy<RandomTree>,
     override val lazyRight: Lazy<RandomTree>,
+    val generationMode: GenerationMode,
 ) : Tree<ValueProvider>() {
     override fun toString(): String = visualise(maxDepth = 10)
 
@@ -23,8 +24,13 @@ internal data class RandomTree private constructor(
     // todo: make this a tree type of its own, rather than a provider?
     val isTerminator: Boolean get() = provider is TerminalValueProvider
 
-    fun withProvider(provider: ValueProvider): RandomTree =
-        copy(provider = provider)
+    fun switchToEdgeCaseMode() = copy(generationMode = GenerationMode.EdgeCase)
+
+    fun withShrunkValue(value: Any): RandomTree =
+        copy(
+            provider = PredeterminedValueProvider(value, provider),
+            generationMode = GenerationMode.Shrinking,
+        )
 
     fun withLeft(left: RandomTree): RandomTree = copy(lazyLeft = lazyOf(left))
     fun withRight(right: RandomTree): RandomTree = copy(lazyRight = lazyOf(right))
@@ -36,6 +42,7 @@ internal data class RandomTree private constructor(
             provider = RandomValueProvider(seed),
             lazyLeft = lazy { new(seed.next(1)) },
             lazyRight = lazy { new(seed.next(2)) },
+            generationMode = GenerationMode.Random,
         )
 
         val terminal
@@ -43,6 +50,7 @@ internal data class RandomTree private constructor(
                 provider = TerminalValueProvider,
                 lazyLeft = lazy { terminal },
                 lazyRight = lazy { terminal },
+                generationMode = GenerationMode.Random,
             )
 
         private tailrec fun walkRight(tree: RandomTree, amount: Int): RandomTree = when (amount) {
@@ -53,8 +61,6 @@ internal data class RandomTree private constructor(
 }
 
 internal sealed interface ValueProvider {
-    val generationMode: GenerationMode
-
     fun int(range: IntRange): Int
 }
 
@@ -63,17 +69,12 @@ internal interface DecoratedValueProvider : ValueProvider {
 }
 
 data object TerminalValueProvider : ValueProvider {
-    override val generationMode: GenerationMode
-        get() = error("${TerminalValueProvider::class.simpleName} cannot produce values")
-
     override fun int(range: IntRange): Int {
         error("${TerminalValueProvider::class.simpleName} cannot produce values")
     }
 }
 
 internal data class RandomValueProvider(private val seed: Seed) : ValueProvider {
-    override val generationMode = GenerationMode.Random
-
     val random get() = Random(seed.value)
 
     override fun int(range: IntRange): Int {
@@ -81,14 +82,17 @@ internal data class RandomValueProvider(private val seed: Seed) : ValueProvider 
     }
 }
 
-@ConsistentCopyVisibility
-internal data class PredeterminedValueProvider private constructor(
+internal data class PredeterminedValueProvider(
     private val value: Any,
     override val delegate: ValueProvider,
 ) : DecoratedValueProvider {
-    constructor(value: Int, fallback: ValueProvider) : this(value as Any, fallback)
-
-    override val generationMode = GenerationMode.Shrinking
+    init {
+        val valueIsSupported = when (value) {
+            is Int -> true
+            else -> false
+        }
+        require(valueIsSupported) { "internal error - predetermined value was not a supported primitive" }
+    }
 
     override fun int(range: IntRange): Int =
         when (value) {
@@ -99,14 +103,3 @@ internal data class PredeterminedValueProvider private constructor(
             else -> value
         }
 }
-
-@ConsistentCopyVisibility
-internal data class EdgeCaseProvider private constructor(
-    private val value: Any,
-    override val delegate: ValueProvider,
-) : DecoratedValueProvider, ValueProvider by delegate {
-    constructor(value: Int, fallback: ValueProvider) : this(value as Any, fallback)
-
-    override val generationMode = GenerationMode.EdgeCase
-}
-

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.assertThrows
 import strikt.api.expectThat
-import strikt.assertions.containsExactlyInAnyOrder
+import strikt.assertions.isContainedIn
 import strikt.assertions.isEqualTo
 import strikt.assertions.isIn
 import kotlin.random.Random
@@ -87,11 +87,14 @@ internal interface IntGeneratorContract : BaseContract {
 
     @Test
     fun `creates common edge cases and their shrinks`() {
-        val edgeCases = int(-10..10).edgeCases()
-        expectThat(edgeCases.map { it.value }).containsExactlyInAnyOrder(listOf(-10, -9, -1, 0, 1, 9, 10))
+        val range = -10..10
 
-        val edgeCaseFor9 = edgeCases.single { it.value == 9 }
-        val expectedShrinks = IntShrinker.shrink(9, 0..10, 0).toList()
-        expectThat(edgeCaseFor9).shrunkValues.isEqualTo(expectedShrinks)
+        repeatTest { seed ->
+            val edgeCase = int(range).edgeCase(tree(seed))
+            expectThat(edgeCase).value.isContainedIn(setOf(-10, -9, -1, 0, 1, 9, 10))
+
+            val expectedShrinks = IntShrinker.shrink(edgeCase.value, range, 0).toList()
+            expectThat(edgeCase).shrunkValues.isEqualTo(expectedShrinks)
+        }
     }
 }

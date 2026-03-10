@@ -4,51 +4,48 @@ import com.tamj0rd2.ktcheck.GenBuilders
 import com.tamj0rd2.ktcheck.GenerationException
 import com.tamj0rd2.ktcheck.core.Seed
 import dev.forkhandles.result4k.Result4k
-import dev.forkhandles.result4k.asSuccess
-import dev.forkhandles.result4k.flatMap
 import dev.forkhandles.result4k.orThrow
 import kotlin.reflect.KClass
 import com.tamj0rd2.ktcheck.Gen as IGen
 
 enum class GenerationMode {
     Random,
-    EdgeCase,
     Shrinking,
+    EdgeCase,
 }
 
 // todo: one thing on my mind is that each generator should do a final check to make sure the constraints are upheld
 //  post generation/edge case creation. put that in a contract somewhere.
 internal sealed interface Generator<T> {
     fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException>
-
-    fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>?, GenerationException> {
-        // todo: remove this default implementation
-        return null.asSuccess()
-    }
 }
 
+// todo: make sure "plain" generators are not being newed up by other gens. because then I'll lose out on configuration.
+//  in, implementations of Generator should just not depend on implementations of Generator. They should depend on Gen.
+//  should prevent any weird issues down the line.
 internal data class Gen<T>(
     private val generator: Generator<T>,
     private val onlyIncludeEdgeCases: Boolean = false,
 ) : IGen<T>, Generator<T> {
+
+    // this is a convenient place to control edge case chance for all generators at all nesting levels.
     override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
-        val mode = root.provider.generationMode
+        val mode = root.generationMode
 
         if (onlyIncludeEdgeCases && mode == GenerationMode.Random) {
-            return edgeCase(root, mode).flatMap { it?.asSuccess() ?: generator.generate(root) }
+            return generator.generate(root.switchToEdgeCaseMode())
         }
 
         return generator.generate(root)
-    }
-
-    override fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>?, GenerationException> {
-        return generator.edgeCase(root, mode)
     }
 
     override fun sample(seed: Long) =
         generate(RandomTree.new(Seed(seed))).orThrow().value
 
     override fun withoutDefaultEdgeCases() = Gen(EdgeCasesDisabledGen(this))
+
+    @Deprecated("introduce something else that allows to configure the chance of edge cases, and document.")
+    override fun edgeCasesOnly() = copy(onlyIncludeEdgeCases = true)
 
     override fun <R> map(fn: (T) -> R) = Gen(MapGen(this, fn))
 
