@@ -11,14 +11,15 @@ import kotlin.reflect.KClass
 import com.tamj0rd2.ktcheck.Gen as IGen
 
 enum class GenerationMode {
-    InitialGeneration,
+    Random,
+    EdgeCase,
     Shrinking,
 }
 
 // todo: one thing on my mind is that each generator should do a final check to make sure the constraints are upheld
 //  post generation/edge case creation. put that in a contract somewhere.
 internal sealed interface Generator<T> {
-    fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>, GenerationException>
+    fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException>
 
     fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>?, GenerationException> {
         // todo: remove this default implementation
@@ -30,12 +31,14 @@ internal data class Gen<T>(
     private val generator: Generator<T>,
     private val onlyIncludeEdgeCases: Boolean = false,
 ) : IGen<T>, Generator<T> {
-    override fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>, GenerationException> {
-        if (onlyIncludeEdgeCases && mode == GenerationMode.InitialGeneration) {
-            return edgeCase(root, mode).flatMap { it?.asSuccess() ?: generator.generate(root, mode) }
+    override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
+        val mode = root.provider.generationMode
+
+        if (onlyIncludeEdgeCases && mode == GenerationMode.Random) {
+            return edgeCase(root, mode).flatMap { it?.asSuccess() ?: generator.generate(root) }
         }
 
-        return generator.generate(root, mode)
+        return generator.generate(root)
     }
 
     override fun edgeCase(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>?, GenerationException> {
@@ -43,7 +46,7 @@ internal data class Gen<T>(
     }
 
     override fun sample(seed: Long) =
-        generate(RandomTree.new(Seed(seed)), GenerationMode.InitialGeneration).orThrow().value
+        generate(RandomTree.new(Seed(seed))).orThrow().value
 
     override fun withoutDefaultEdgeCases() = Gen(EdgeCasesDisabledGen(this))
 

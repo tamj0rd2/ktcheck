@@ -13,10 +13,9 @@ internal sealed class AbstractListGen<T>(
 
     final override fun generate(
         root: RandomTree,
-        mode: GenerationMode,
     ): Result4k<GeneratedValue<List<T>>, GenerationException> {
-        val sizeResult = sizeGen.generate(root.left, mode).onFailure { return it }
-        val listElementResults = generateElements(root.right, mode, sizeResult.value).onFailure { return it }
+        val sizeResult = sizeGen.generate(root.left).onFailure { return it }
+        val listElementResults = generateElements(root.right, sizeResult.value).onFailure { return it }
         return buildResult(root, sizeResult, listElementResults).asSuccess()
     }
 
@@ -30,7 +29,7 @@ internal sealed class AbstractListGen<T>(
                 val removeElementsFromTail = root.withSizeTree(sizeShrink)
                 yield(removeElementsFromTail)
 
-                val newSize = sizeGen.generate(sizeShrink, GenerationMode.Shrinking).onFailure { return@sequence }.value
+                val newSize = sizeGen.generate(sizeShrink).onFailure { return@sequence }.value
                 val removeElementsFromHead = root
                     .withSizeTree(sizeShrink)
                     .withElementTrees(listElementResults.takeLast(newSize))
@@ -57,7 +56,6 @@ internal sealed class AbstractListGen<T>(
 
     protected abstract fun generateElements(
         initialTree: RandomTree,
-        mode: GenerationMode,
         size: Int,
     ): Result4k<List<WithUsedTree<GeneratedValue<T>>>, GenerationException>
 

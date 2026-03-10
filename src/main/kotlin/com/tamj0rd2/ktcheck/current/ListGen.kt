@@ -13,12 +13,11 @@ internal class ListGen<T>(
 
     override fun generateElements(
         initialTree: RandomTree,
-        mode: GenerationMode,
         size: Int,
     ): Result4k<List<WithUsedTree<GeneratedValue<T>>>, GenerationException> = buildList {
         for (tree in initialTree.traversingRight().take(size)) {
             add(
-                elementGen.generate(tree.left, mode)
+                elementGen.generate(tree.left)
                     .map { WithUsedTree(tree.left, it) }
                     .onFailure { return it }
             )

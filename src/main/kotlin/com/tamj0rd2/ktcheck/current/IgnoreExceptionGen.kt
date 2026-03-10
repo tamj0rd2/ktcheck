@@ -11,12 +11,12 @@ internal class IgnoreExceptionGen<T>(
     private val klass: KClass<out Exception>,
     private val threshold: Int,
 ) : Generator<T> {
-    override fun generate(root: RandomTree, mode: GenerationMode): Result4k<GeneratedValue<T>, GenerationException> {
+    override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
         var latestError: Throwable? = null
 
         return root.traversingRight()
             .take(threshold)
-            .mapNotNull { tryGenerating(it.left, mode).onFailure { ex -> latestError = ex }.getOrNull() }
+            .mapNotNull { tryGenerating(it.left).onFailure { ex -> latestError = ex }.getOrNull() }
             .map { buildResult(root, it) }
             .firstOrNull()
             .asResultOr { GenerationException.FilterLimitReached(threshold, latestError) }
@@ -28,11 +28,11 @@ internal class IgnoreExceptionGen<T>(
     ): GeneratedValue<T> = GeneratedValue(
         value = result.value,
         shrinks = result.shrinks
-            .filter { tryGenerating(it, GenerationMode.Shrinking).isSuccess }
+            .filter { tryGenerating(it).isSuccess }
             .map { root.withLeft(it) },
     )
 
-    private fun tryGenerating(tree: RandomTree, mode: GenerationMode) =
-        runCatching { wrappedGen.generate(tree, mode).valueOrNull() }
+    private fun tryGenerating(tree: RandomTree) =
+        runCatching { wrappedGen.generate(tree).valueOrNull() }
             .onFailure { if (!klass.isInstance(it)) throw it }
 }

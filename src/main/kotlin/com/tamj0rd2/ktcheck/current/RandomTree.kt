@@ -23,8 +23,8 @@ internal data class RandomTree private constructor(
     // todo: make this a tree type of its own, rather than a provider?
     val isTerminator: Boolean get() = provider is TerminalValueProvider
 
-    fun withPredeterminedValue(value: Int): RandomTree =
-        copy(provider = PredeterminedValueProvider(value, provider))
+    fun withProvider(provider: ValueProvider): RandomTree =
+        copy(provider = provider)
 
     fun withLeft(left: RandomTree): RandomTree = copy(lazyLeft = lazyOf(left))
     fun withRight(right: RandomTree): RandomTree = copy(lazyRight = lazyOf(right))
@@ -53,6 +53,8 @@ internal data class RandomTree private constructor(
 }
 
 internal sealed interface ValueProvider {
+    val generationMode: GenerationMode
+
     fun int(range: IntRange): Int
 }
 
@@ -61,12 +63,17 @@ internal interface DecoratedValueProvider : ValueProvider {
 }
 
 data object TerminalValueProvider : ValueProvider {
+    override val generationMode: GenerationMode
+        get() = error("${TerminalValueProvider::class.simpleName} cannot produce values")
+
     override fun int(range: IntRange): Int {
         error("${TerminalValueProvider::class.simpleName} cannot produce values")
     }
 }
 
 internal data class RandomValueProvider(private val seed: Seed) : ValueProvider {
+    override val generationMode = GenerationMode.Random
+
     val random get() = Random(seed.value)
 
     override fun int(range: IntRange): Int {
@@ -75,11 +82,13 @@ internal data class RandomValueProvider(private val seed: Seed) : ValueProvider 
 }
 
 @ConsistentCopyVisibility
-private data class PredeterminedValueProvider private constructor(
+internal data class PredeterminedValueProvider private constructor(
     private val value: Any,
     override val delegate: ValueProvider,
 ) : DecoratedValueProvider {
     constructor(value: Int, fallback: ValueProvider) : this(value as Any, fallback)
+
+    override val generationMode = GenerationMode.Shrinking
 
     override fun int(range: IntRange): Int =
         when (value) {
@@ -90,3 +99,14 @@ private data class PredeterminedValueProvider private constructor(
             else -> value
         }
 }
+
+@ConsistentCopyVisibility
+internal data class EdgeCaseProvider private constructor(
+    private val value: Any,
+    override val delegate: ValueProvider,
+) : DecoratedValueProvider, ValueProvider by delegate {
+    constructor(value: Int, fallback: ValueProvider) : this(value as Any, fallback)
+
+    override val generationMode = GenerationMode.EdgeCase
+}
+
