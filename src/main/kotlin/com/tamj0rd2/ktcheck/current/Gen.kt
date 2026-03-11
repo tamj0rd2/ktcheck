@@ -25,27 +25,11 @@ internal sealed interface Generator<T> {
 //  should prevent any weird issues down the line.
 internal data class Gen<T>(
     private val generator: Generator<T>,
-    private val onlyIncludeEdgeCases: Boolean = false,
-) : IGen<T>, Generator<T> {
-
-    // this is a convenient place to control edge case chance for all generators at all nesting levels.
-    override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
-        val mode = root.generationMode
-
-        if (onlyIncludeEdgeCases && mode == GenerationMode.Random) {
-            return generator.generate(root.switchToEdgeCaseMode())
-        }
-
-        return generator.generate(root)
-    }
-
+) : IGen<T>, Generator<T> by generator {
     override fun sample(seed: Long) =
         generate(RandomTree.new(Seed(seed))).orThrow().value
 
     override fun withoutDefaultEdgeCases() = Gen(EdgeCasesDisabledGen(this))
-
-    @Deprecated("introduce something else that allows to configure the chance of edge cases, and document.")
-    override fun edgeCasesOnly() = copy(onlyIncludeEdgeCases = true)
 
     override fun <R> map(fn: (T) -> R) = Gen(MapGen(this, fn))
 

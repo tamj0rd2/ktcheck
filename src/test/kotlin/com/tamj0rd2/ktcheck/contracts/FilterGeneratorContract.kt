@@ -19,14 +19,12 @@ internal interface FilterGeneratorContract : BaseContract {
         val gen = int(1..10).filter { it % 2 == 0 }
 
         withCounter {
-            fun checkResult(result: GenResults<Int>) {
+            repeatTest { seed ->
+                val result = gen.generate(tree(seed))
                 expectThat(result).value.assertThat("is even") { it % 2 == 0 }
                 expectThat(result).shrunkValues.all { assertThat("is even") { it % 2 == 0 } }
                 collect("has-shrinks", result.shrunkValues.any())
             }
-
-            repeatTest { seed -> checkResult(gen.generate(tree(seed))) }
-            gen.edgeCases().forEach { ignoreSkips { checkResult(it) } }
         }.checkPercentages("has-shrinks", mapOf(true to 10.0))
 
         // todo: add some - deeply shrunk values are finite function. call it above.
@@ -38,14 +36,12 @@ internal interface FilterGeneratorContract : BaseContract {
         withCounter {
             val gen = int(1..10).filter { it % 2 == 0 }
 
-            fun checkResult(result: GenResults<Int>) {
+            repeatTest { seed ->
+                val result = gen.generate(tree(seed))
                 if (result.value <= 2) skipIteration()
                 expectThat(result).shrunkValues.all { isLessThanOrEqualTo(result.value) }
                 collect("has-shrinks", result.shrunkValues.any())
             }
-
-            repeatTest { seed -> checkResult(gen.generate(tree(seed))) }
-            gen.edgeCases().forEach { ignoreSkips { checkResult(it) } }
         }.checkPercentages("has-shrinks", mapOf(true to 10.0))
     }
 

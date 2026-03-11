@@ -84,47 +84,40 @@ internal interface ListGeneratorContract : BaseContract {
     fun `size shrinks include the first half of the list, and the second half of the list`() {
         val gen = int().list(0..20)
 
-        fun checkShrinks(result: GenResults<List<Int>>) {
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
             if (result.value.size < 2 || result.value.size % 2 != 0) skipIteration()
             val halfSize = result.value.size / 2
-
             expectThat(result).shrunkValues.isNotEmpty().contains(
                 result.value.take(halfSize),
                 result.value.takeLast(halfSize),
             )
         }
-
-        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @Test
     fun `shrinks to empty list when list is not empty`() {
         val gen = int(0..10).list()
 
-        fun checkShrinks(result: GenResults<List<Int>>) {
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
             if (result.value.isEmpty()) skipIteration()
             expectThat(result).shrunkValues.isNotEmpty().first().isEqualTo(emptyList())
         }
-
-        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @Test
     fun `shrunk element values do not exceed max original value`() {
         val gen = int(0..10).list(size = 0..4)
-        fun checkShrinks(result: GenResults<List<Int>>) {
+
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
             if (result.value.isEmpty()) skipIteration()
             val maxOriginalValue = result.value.max()
-
             expectThat(result).shrunkValues.isNotEmpty().all {
                 all { isLessThanOrEqualTo(maxOriginalValue) }
             }
         }
-
-        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @Test
@@ -132,13 +125,11 @@ internal interface ListGeneratorContract : BaseContract {
         val range = 0..10
         val gen = int(range).list()
 
-        fun checkShrinks(result: GenResults<List<Int>>) {
+        repeatTest { seed ->
+            val result = gen.generate(tree(seed))
             if (result.value.isEmpty()) skipIteration()
             expectThat(result).shrunkValues.isNotEmpty().all { all { isIn(range) } }
         }
-
-        repeatTest { seed -> checkShrinks(gen.generate(tree(seed))) }
-        gen.edgeCases().forEach { ignoreSkips { checkShrinks(it) } }
     }
 
     @TestFactory

@@ -20,18 +20,4 @@ internal interface MapGeneratorContract : BaseContract {
             expectThat(doubledResult).shrunkValues.isEqualTo(originalResult.shrunkValues.map { it * 2 })
         }
     }
-
-    @Test
-    fun `propagates mapped versions of the underlying edge cases and their shrinks`() {
-        val originalGen = int(0..10)
-        val doublingGen = originalGen.map { it * 2 }
-
-        repeatTest { seed ->
-            val originalEdgeCase = originalGen.edgeCase(tree(seed))
-            val doubledEdgeCase = doublingGen.edgeCase(tree(seed))
-
-            expectThat(doubledEdgeCase).value.isEqualTo(originalEdgeCase.value * 2)
-            expectThat(doubledEdgeCase).shrunkValues.isEqualTo(originalEdgeCase.shrunkValues.map { it * 2 })
-        }
-    }
 }

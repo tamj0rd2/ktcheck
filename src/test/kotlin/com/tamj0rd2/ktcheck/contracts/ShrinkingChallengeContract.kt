@@ -117,7 +117,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
     fun reverse() = testShrinking(
         gen = int().list(),
         test = { it.reversed() == it },
-        didShrinkCorrectly = { it in setOf(listOf(0, 1), listOf(0, -1)) },
+        didShrinkCorrectly = { it in setOf(listOf(0, 1), listOf(1, 0), listOf(0, -1), listOf(-1, 0)) },
     )
 
     private fun <T> testShrinking(

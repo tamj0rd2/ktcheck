@@ -7,8 +7,6 @@ import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.Tree
 import dev.forkhandles.result4k.onFailure
 import dev.forkhandles.result4k.orThrow
-import org.junit.jupiter.api.assertTimeoutPreemptively
-import java.time.Duration
 import com.tamj0rd2.ktcheck.Gen as IGen
 
 internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Builders {
@@ -23,19 +21,9 @@ internal abstract class BaseContractImpl : BaseContract, GenBuilders by GenV2Bui
         return GenResults(result.value, collectShrinksRecursively(result.shrinks))
     }
 
-    override fun <T> IGen<T>.edgeCase(tree: Tree<*>): GenResults<T> {
-        return edgeCasesOnly().generate(tree)
-    }
-
     @Deprecated("killing this off. Use edge case directly in the tests.")
     override fun <T> IGen<T>.edgeCases(seed: Seed): List<GenResults<T>> =
-        assertTimeoutPreemptively(Duration.ofSeconds(2)) {
-            trees(seed)
-                .take(1000)
-                .map { edgeCase(it) }
-                .toList()
-                .distinctBy { it.value }
-        }
+        TODO()
 
     private fun <T> Gen<T>.collectShrinksRecursively(shrinks: Sequence<RandomTree>): Sequence<GenResults<T>> =
         sequence {

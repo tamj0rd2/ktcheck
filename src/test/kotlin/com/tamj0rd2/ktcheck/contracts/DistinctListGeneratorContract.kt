@@ -171,7 +171,7 @@ internal interface DistinctListGeneratorContract : BaseContract {
     fun `follows the left generation, right continuation pattern`() {
         repeatTest { seed ->
             // using the full int range should make conflicts (and thereby flaky tests) incredibly unlikely.
-            val intGen = int(IntRange.full)
+            val intGen = int(IntRange.full).withoutDefaultEdgeCases()
             val listGen = intGen.distinctList(2)
             val root = tree(seed)
             val result = listGen.generate(root)

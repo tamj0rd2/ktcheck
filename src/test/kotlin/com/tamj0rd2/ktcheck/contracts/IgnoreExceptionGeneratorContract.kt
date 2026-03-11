@@ -66,14 +66,12 @@ internal interface IgnoreExceptionGeneratorContract : BaseContract {
                 }
                 .ignoreExceptions(TestException::class)
 
-            fun checkResult(result: GenResults<Int>) {
+            repeatTest { seed ->
+                val result = gen.generate(tree(seed))
                 if (result.value <= 2) skipIteration()
                 expectThat(result).shrunkValues.all { isLessThanOrEqualTo(result.value) }
                 collect("has-shrinks", result.shrunkValues.any())
             }
-
-            repeatTest { seed -> checkResult(gen.generate(tree(seed))) }
-            gen.edgeCases().forEach { ignoreSkips { checkResult(it) } }
         }.checkPercentages("has-shrinks", mapOf(true to 10.0))
     }
 

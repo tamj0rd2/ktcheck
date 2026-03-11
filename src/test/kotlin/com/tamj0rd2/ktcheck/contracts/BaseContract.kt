@@ -22,6 +22,8 @@ import java.time.Duration
 internal interface BaseContract : GenBuilders {
     val exampleGen: Gen<*>?
     val genSupportsShrinking: Boolean get() = true
+
+    @Deprecated("remove")
     val genSupportsEdgeCases: Boolean get() = true
 
     fun getGenIfDefined(): Gen<Any> {
@@ -34,6 +36,7 @@ internal interface BaseContract : GenBuilders {
     fun runIfGenSupportsShrinking() =
         Assumptions.assumeTrue(genSupportsShrinking, "skipped as this gen doesn't support shrinking")
 
+    @Deprecated("remove. it's up to the generator implementation whether or not it provides edge cases, however I'm no longer separating the APIs.")
     fun runIfGenSupportsEdgeCases() =
         Assumptions.assumeTrue(genSupportsEdgeCases, "skipped as this gen doesn't support edge cases")
 
@@ -63,35 +66,6 @@ internal interface BaseContract : GenBuilders {
         }
     }
 
-    @Test
-    fun `edge cases are deterministic`() {
-        runIfGenSupportsEdgeCases()
-
-        repeatTest { seed ->
-            val gen = getGenIfDefined()
-            val originalResult = gen.edgeCase(tree(seed))
-            val regenerated = gen.edgeCase(tree(seed))
-
-            expectThat(regenerated).value.isEqualTo(originalResult.value)
-        }
-    }
-
-    @Test
-    fun `shrinks of edge cases are deterministic`() {
-        runIfGenSupportsEdgeCases()
-        runIfGenSupportsShrinking()
-
-        repeatTest { seed ->
-            val gen = getGenIfDefined()
-            val originalResult = gen.edgeCase(tree(seed))
-            val regenerated = gen.edgeCase(tree(seed))
-
-            expectThat(regenerated).shrunkValues.containsExactlyInAnyOrder(originalResult.shrunkValues)
-            // this is the assertion I actually want, but the output is easier to read when split into 2 assertions.
-            expectThat(regenerated).value.isEqualTo(originalResult.value)
-        }
-    }
-
     //=== Wiring ===//
     fun tree(seed: Seed = Seed.random()): Tree<*>
     fun Tree<*>.withLeft(left: Tree<*>): Tree<*>
@@ -104,8 +78,6 @@ internal interface BaseContract : GenBuilders {
         trees(seed).take(1_000_000).first(predicate)
 
     fun <T> Gen<T>.generate(tree: Tree<*> = tree()): GenResults<T>
-
-    fun <T> Gen<T>.edgeCase(tree: Tree<*>): GenResults<T>
 
     @Deprecated("killing this off. Use edge case directly in the tests.")
     fun <T> Gen<T>.edgeCases(seed: Seed = Seed.random()): List<GenResults<T>>

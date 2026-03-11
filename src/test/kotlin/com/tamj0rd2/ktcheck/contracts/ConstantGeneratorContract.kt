@@ -16,10 +16,6 @@ internal interface ConstantGeneratorContract : BaseContract {
             val result = gen.generate(tree(seed))
             expectThat(result.value).isEqualTo(10)
             expectThat(result).shrunkValues.isEmpty()
-
-            val edgeCase = gen.edgeCase(tree(seed))
-            expectThat(edgeCase).value.isEqualTo(10)
-            expectThat(edgeCase).shrunkValues.isEmpty()
         }
     }
 }
