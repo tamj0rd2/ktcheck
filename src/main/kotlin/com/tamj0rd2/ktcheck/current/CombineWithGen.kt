@@ -1,6 +1,7 @@
 package com.tamj0rd2.ktcheck.current
 
 import com.tamj0rd2.ktcheck.GenerationException
+import com.tamj0rd2.ktcheck.current.GenerationMode.*
 import dev.forkhandles.result4k.Result4k
 import dev.forkhandles.result4k.asSuccess
 import dev.forkhandles.result4k.onFailure
@@ -11,9 +12,22 @@ internal class CombineWithGen<T1, T2, R>(
     private val combine: (T1, T2) -> R,
 ) : Generator<R> {
     override fun generate(root: RandomTree): Result4k<GeneratedValue<R>, GenerationException> {
-        val leftResult = leftGen.generate(root.left).onFailure { return it }
-        val rightResult = rightGen.generate(root.right).onFailure { return it }
-        return buildResult(root, leftResult, rightResult).asSuccess()
+        return when (root.generationMode) {
+            Random,
+            Shrinking,
+                -> {
+                val leftResult = leftGen.generate(root.left).onFailure { return it }
+                val rightResult = rightGen.generate(root.right).onFailure { return it }
+                buildResult(root, leftResult, rightResult).asSuccess()
+            }
+
+            EdgeCase -> {
+                val treeToUseForBothGens = if (root.provider.bool()) root.left else root.right
+                val leftResult = leftGen.generate(treeToUseForBothGens).onFailure { return it }
+                val rightResult = rightGen.generate(treeToUseForBothGens).onFailure { return it }
+                buildResult(root, leftResult, rightResult).asSuccess()
+            }
+        }
     }
 
     private fun buildResult(

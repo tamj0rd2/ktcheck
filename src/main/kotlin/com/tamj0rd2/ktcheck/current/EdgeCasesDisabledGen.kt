@@ -7,6 +7,6 @@ internal class EdgeCasesDisabledGen<T>(
     private val delegate: Generator<T>,
 ) : Generator<T> by delegate {
     override fun generate(root: RandomTree): Result4k<GeneratedValue<T>, GenerationException> {
-        return delegate.generate(root.switchToRandomGeneration())
+        return delegate.generate(root.withoutEdgeCases())
     }
 }

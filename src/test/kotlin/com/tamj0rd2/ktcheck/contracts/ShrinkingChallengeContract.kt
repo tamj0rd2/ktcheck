@@ -7,12 +7,12 @@ import com.tamj0rd2.ktcheck.Gen
 import com.tamj0rd2.ktcheck.Gens
 import com.tamj0rd2.ktcheck.PropertyFalsifiedException
 import com.tamj0rd2.ktcheck.TestConfig
+import com.tamj0rd2.ktcheck.core.Seed
 import com.tamj0rd2.ktcheck.core.tuple
 import com.tamj0rd2.ktcheck.forAll
 import com.tamj0rd2.ktcheck.positive
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertTimeoutPreemptively
-import strikt.api.expectThrows
 import java.time.Duration
 import kotlin.math.abs
 
@@ -39,8 +39,6 @@ internal interface ShrinkingChallengeContract : BaseContract {
 
     @Test
     fun `difference must not be zero`() {
-        // todo: delete line asap once edge cases are fixed
-        runIfGenSupportsEdgeCases()
         testShrinking(
             gen = Gens.zip(int(IntRange.positive), int(IntRange.positive)),
             test = { (a, b) -> a < 10 || abs(a - b) != 0 },
@@ -74,7 +72,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
     fun distinct() {
         testShrinking(
             gen = int().list(),
-            test = BooleanProperty { it.distinct().size < 3 },
+            test = { it.distinct().size < 3 },
             didShrinkCorrectly = { it.toSet() in setOf(setOf(0, 1, 2), setOf(0, -1, -2), setOf(0, 1, -1)) },
         )
     }
@@ -121,7 +119,6 @@ internal interface ShrinkingChallengeContract : BaseContract {
     )
 
     private fun <T> testShrinking(
-        testConfig: TestConfig = TestConfig().withIterations(500),
         gen: Gen<T>,
         test: BooleanProperty<T>,
         didShrinkCorrectly: (T) -> Boolean,
@@ -129,12 +126,19 @@ internal interface ShrinkingChallengeContract : BaseContract {
         categoriseShrinks: Counter.(Boolean, T, T) -> Unit = { _, _, _ -> },
     ): Unit = assertTimeoutPreemptively(Duration.ofSeconds(5)) {
         val exceptionsWithBadShrinks = mutableListOf<PropertyFalsifiedException>()
+        val notFalsified = mutableSetOf<Seed>()
 
         val counter = withCounter {
             repeatTest { seed ->
-                val exception = expectThrows<PropertyFalsifiedException> {
+                val exception = try {
                     forAll(TestConfig().withSeed(seed.value).withoutReporting(), gen, test)
-                }.subject
+                    collect("did-falsify", false)
+                    notFalsified.add(seed)
+                    return@repeatTest
+                } catch (e: PropertyFalsifiedException) {
+                    collect("did-falsify", true)
+                    e
+                }
 
                 @Suppress("UNCHECKED_CAST")
                 val originalArgs = exception.original.input as T
@@ -156,6 +160,11 @@ internal interface ShrinkingChallengeContract : BaseContract {
             }
         }
 
+        if (notFalsified.isNotEmpty()) {
+            println("\nSome seeds were not falsified:")
+            println(notFalsified.take(5).joinToString(", "))
+        }
+
         if (exceptionsWithBadShrinks.isNotEmpty()) {
             println("\nSome bad shrinks encountered:")
 
@@ -165,6 +174,7 @@ internal interface ShrinkingChallengeContract : BaseContract {
                 .forEach { println(it.asBadShrinkExample()) }
         }
 
+        counter.checkPercentages("did-falsify", mapOf(true to minConfidence))
         counter.checkPercentages("fully shrunk", mapOf(true to minConfidence))
     }
 

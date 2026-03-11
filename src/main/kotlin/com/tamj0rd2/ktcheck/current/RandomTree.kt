@@ -29,17 +29,17 @@ internal data class RandomTree private constructor(
     // todo: make this a tree type of its own, rather than a provider?
     val isTerminator: Boolean get() = provider is TerminalValueProvider
 
-    fun switchToRandomGeneration() = when (data.mode) {
-        Random -> this
-        Shrinking -> this
-        EdgeCase -> copy(data = data.copy(mode = Random))
-    }
+    fun withoutEdgeCases(): RandomTree = RandomTree(
+        data = when (data.mode) {
+            Random,
+            Shrinking,
+                -> data
 
-    fun switchToEdgeCaseMode() = when (data.mode) {
-        Random -> copy(data = data.copy(mode = EdgeCase))
-        Shrinking -> this
-        EdgeCase -> this
-    }
+            EdgeCase -> data.copy(mode = Random)
+        },
+        lazyLeft = lazy { left.withoutEdgeCases() },
+        lazyRight = lazy { right.withoutEdgeCases() }
+    )
 
     fun withShrunkValue(value: Any): RandomTree =
         copy(
@@ -55,16 +55,19 @@ internal data class RandomTree private constructor(
     fun skipRight(amount: Int) = walkRight(this, amount)
 
     companion object {
-        fun new(seed: Seed = Seed.random()): RandomTree {
-            val provider = RandomValueProvider(seed)
+        fun new(
+            seed: Seed = Seed.random(),
+            probability: EdgeCaseProbability = EdgeCaseProbability.default,
+        ): RandomTree {
+            val produceEdgeCase = probability.shouldProduceEdgeCase(seed)
+
             return RandomTree(
                 data = TreeData(
-                    provider = provider,
-                    // todo: inject edge case generation chance.
-                    mode = if (provider.random.nextDouble() > 0.08) Random else EdgeCase
+                    provider = RandomValueProvider(seed),
+                    mode = if (produceEdgeCase) EdgeCase else Random
                 ),
-                lazyLeft = lazy { new(seed.next(1)) },
-                lazyRight = lazy { new(seed.next(2)) },
+                lazyLeft = lazy { new(seed.next(1), probability) },
+                lazyRight = lazy { new(seed.next(2), probability) },
             )
         }
 
@@ -87,6 +90,8 @@ internal data class RandomTree private constructor(
 
 internal sealed interface ValueProvider {
     fun int(range: IntRange): Int
+
+    fun bool() = int(0..1) == 1
 }
 
 internal interface DecoratedValueProvider : ValueProvider {
@@ -127,4 +132,27 @@ internal data class PredeterminedValueProvider(
 
             else -> value
         }
+}
+
+internal sealed interface EdgeCaseProbability {
+    fun shouldProduceEdgeCase(seed: Seed): Boolean
+
+    companion object {
+        val default = BasedOnCoinFlips(4)
+    }
+
+    /**
+     * Deciding whether to use edge case mode based on simple probability of nextDouble doesn't work because it ends
+     * up skewing the values produced by the generator. e.g if the edge case probability is 2% so we generate an edge
+     * case, and the generator's edge case logic needs to pick a number between 0..99, it'll end up picking 2. Because
+     * it's using the same random source.
+     *
+     * So to prevent that, I derive the seed, and also determine the probability based on multiple coin flips.
+     */
+    data class BasedOnCoinFlips(private val requiredFlips: Int) : EdgeCaseProbability {
+        override fun shouldProduceEdgeCase(seed: Seed): Boolean {
+            val decider = kotlin.random.Random(seed.next(0).value)
+            return List(requiredFlips) { decider.nextBoolean() }.all { it }
+        }
+    }
 }

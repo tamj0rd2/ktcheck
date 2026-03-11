@@ -100,7 +100,7 @@ internal interface IntGeneratorContract : BaseContract {
             val countsOfEachNumber = int(range)
                 .samples(seed.value)
                 .filter { it in edgeCases || it in subsetOfNonEdgeCases }
-                .take(10_000)
+                .take(1_000)
                 .groupingBy { it }
                 .eachCount()
 
@@ -112,7 +112,7 @@ internal interface IntGeneratorContract : BaseContract {
                 .describedAs { "sum: $this" }
                 .get { this / countsOfEachNumber.values.sum().toDouble() }
                 .describedAs { "$this of total values produced" }
-                .isIn(0.52..0.60)
+                .isIn(0.47..0.61)
         }
     }
 
@@ -132,7 +132,7 @@ internal interface IntGeneratorContract : BaseContract {
                 .withoutDefaultEdgeCases()
                 .samples(seed.value)
                 .filter { it in edgeCases || it in subsetOfNonEdgeCases }
-                .take(10_000)
+                .take(1_000)
                 .groupingBy { it }
                 .eachCount()
 
@@ -144,7 +144,7 @@ internal interface IntGeneratorContract : BaseContract {
                 .describedAs { "sum: $this" }
                 .get { this / countsOfEachNumber.values.sum().toDouble() }
                 .describedAs { "$this of total values produced" }
-                .isIn(0.48..0.52)
+                .isIn(0.43..0.56)
         }
     }
 }

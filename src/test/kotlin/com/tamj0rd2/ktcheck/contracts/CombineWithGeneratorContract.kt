@@ -1,33 +1,28 @@
 package com.tamj0rd2.ktcheck.contracts
 
-import com.tamj0rd2.ktcheck.core.shrinkers.IntShrinker
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.contains
-import strikt.assertions.isEmpty
+import strikt.assertions.first
 import strikt.assertions.isEqualTo
+import strikt.assertions.isIn
 import strikt.assertions.isNotEmpty
-import strikt.assertions.map
+import strikt.assertions.second
 
 internal interface CombineWithGeneratorContract : BaseContract {
     override val exampleGen get() = int().combineWith(int(), ::Pair)
-
-    // todo: re-enable and re-implement asap.
-    override val genSupportsEdgeCases: Boolean get() = false
 
     @Test
     fun `combineWith merges two independent generators`() {
         val smallGen = int(0..5)
         val bigGen = int(10..20)
-        val gen = smallGen.combineWith(bigGen) { a, b -> a + b }
+        val combinedGen = smallGen.combineWith(bigGen, ::Pair)
 
         repeatTest { seed ->
             val tree = tree(seed)
-            val expectedOuterValue = smallGen.generate(tree.left).value
-            val expectedInnerValue = bigGen.generate(tree.right).value
-
-            val value = gen.generate(tree).value
-            expectThat(value).isEqualTo(expectedOuterValue + expectedInnerValue)
+            val value = combinedGen.generate(tree).value
+            expectThat(value).first.isIn(0..5)
+            expectThat(value).second.isIn(10..20)
         }
     }
 
@@ -46,69 +41,25 @@ internal interface CombineWithGeneratorContract : BaseContract {
         expectThat(result).shrunkValues.isNotEmpty().contains(
             // first value shrunk
             1 to 6,
+            // both values shrunk
+            1 to 4,
             // second value shrunk
             3 to 4,
         )
     }
 
     @Test
-    fun `combineWith produces edge case permutations from both generators`() {
-        // todo: delete line asap once edge cases are fixed
-        runIfGenSupportsEdgeCases()
+    fun `when the left and right gen are equivalent, produces edge cases that cause both values to be equal`() {
         val gen1 = int(0..10)
         val gen2 = int(0..10)
         val combined = gen1.combineWith(gen2, ::Pair)
 
-        val edgeCases = combined.edgeCases()
-        expectThat(edgeCases.map { it.value }).contains(
-            0 to 0,
-            0 to 10,
-            10 to 0,
-            10 to 10,
-        )
-
-        val shrinksFor10 = IntShrinker.shrink(10, 0..10, 0).toList()
-        val edgeCaseWhereBothAre10 = edgeCases.single { it.value == Pair(10, 10) }
-        expectThat(edgeCaseWhereBothAre10).shrunkValues.contains(
-            listOf(
-                shrinksFor10.map { Pair(it, it) },
-                shrinksFor10.map { Pair(it, 10) },
-                shrinksFor10.map { Pair(10, it) },
-            ).flatten().distinct()
-        )
-    }
-
-    @Test
-    fun `combineWith can still produce edge cases for the first generator if the second generator has no edge cases`() {
-        // todo: delete line asap once edge cases are fixed
-        runIfGenSupportsEdgeCases()
-        val gen1 = int(0..10)
-        val gen2 = constant("hello")
-        val combinedGen = gen1.combineWith(gen2, ::Pair)
-
-        expectThat(gen1.edgeCases()).describedAs { "gen1 edge cases - $this" }.isNotEmpty()
-        expectThat(gen2.edgeCases()).describedAs { "gen2 edge cases - $this" }.isEmpty()
-        expectThat(combinedGen.edgeCases())
-            .describedAs { "combined edge cases - $this" }
-            .isNotEmpty()
-            .map { it.value.first }
-            .isEqualTo(gen1.edgeCases().map { it.value })
-    }
-
-    @Test
-    fun `combineWith can still produce edge cases for the second generator if the first generator has no edge cases`() {
-        // todo: delete line asap once edge cases are fixed
-        runIfGenSupportsEdgeCases()
-        val gen1 = constant("hello")
-        val gen2 = int(0..10)
-        val combinedGen = gen1.combineWith(gen2, ::Pair)
-
-        expectThat(gen1.edgeCases()).describedAs { "gen1 edge cases - $this" }.isEmpty()
-        expectThat(gen2.edgeCases()).describedAs { "gen2 edge cases - $this" }.isNotEmpty()
-        expectThat(combinedGen.edgeCases())
-            .describedAs { "combined edge cases - $this" }
-            .isNotEmpty()
-            .map { it.value.second }
-            .isEqualTo(gen2.edgeCases().map { it.value })
+        repeatTest { seed ->
+            val generatedValues = trees(seed).map { combined.generate(it) }.take(1000).toSet()
+            expectThat(generatedValues.map { it.value }).contains(
+                0 to 0,
+                10 to 10,
+            )
+        }
     }
 }

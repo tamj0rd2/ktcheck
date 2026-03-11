@@ -16,8 +16,6 @@ private class TestRunner<T>(
     private val gen: Gen<T>,
     private val property: Property<T>,
 ) {
-    private val edgeCases = emptyList<GeneratedValue<T>>()
-
     fun run() {
         val startingIteration = (config.replayIteration ?: 1)
         repeat(config.iterations) {
@@ -37,11 +35,7 @@ private class TestRunner<T>(
     }
 
     private fun runIteration(iterationIdx: Int): TestIterationResult {
-        val input = if (iterationIdx in edgeCases.indices) {
-            edgeCases.elementAt(iterationIdx)
-        } else {
-            gen.generate(RandomTree.new(config.seed.next(iterationIdx))).orThrow()
-        }
+        val input = gen.generate(RandomTree.new(config.seed.next(iterationIdx))).orThrow()
 
         val originalFalsification = property.test(input.value) ?: return TestIterationResult.DidNotFalsify
 
